@@ -1,0 +1,4 @@
+UCI Wine Quality, dataset 186. CC BY 4.0.
+Citation: Cortez, P. et al. (2009). doi:10.24432/C56S3T
+Source: https://archive.ics.uci.edu/dataset/186/wine-quality
+Note: red/white split from the combined data.csv by the trailing color column.

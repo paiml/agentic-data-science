@@ -1,0 +1,22 @@
+name: ci
+on: { pull_request: {}, merge_group: {}, push: { branches: [main] } }
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  datasets:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-datasets
+  shacl:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-shacl
+  gate:
+    name: gate
+    if: always()
+    needs: [datasets, shacl]
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then exit 1; fi
