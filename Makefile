@@ -11,7 +11,7 @@ gate-shacl:
 	@scripts/shacl.sh
 
 gate-pmat:
-	@pmat quality-gate --strict >/dev/null 2>&1 && echo "pmat OK" || { echo "pmat FAIL (or unsupported: see docs/pilots/R5.md)"; exit 1; }
+	@pmat quality-gate --strict >/dev/null 2>&1 && echo "pmat OK" || { echo "pmat FAIL"; exit 1; }
 
 gate-r gate-julia gate-rust gate-kotlin gate-lean:
 	@echo "$@: not yet wired (G1+)"; exit 1

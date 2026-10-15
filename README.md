@@ -1,6 +1,6 @@
 # Agentic Data Science: code examples
 
-<!-- hero image: rendered by rmedia from a committed source; pending -->
+![Agentic Data Science](assets/hero.png)
 
 Runnable, tested code examples for the **Agentic Data Science** specialization by Pragmatic AI Labs: the same four data science problems solved in five languages with an AI coding agent in the loop, under strict quality gates.
 
@@ -32,3 +32,7 @@ make gate
 
 - Palmer Penguins: CC0 1.0 (Palmer Station LTER data policy).
 - UCI Wine Quality: CC BY 4.0. Cortez, P. et al. (2009), doi:10.24432/C56S3T.
+
+## Hero image
+
+`scripts/hero.sh` draws `assets/hero.svg` from `datasets/penguins/penguins.csv` (one dot per row); `rmedia svg2png` renders `assets/hero.png`.
