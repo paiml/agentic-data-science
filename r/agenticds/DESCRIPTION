@@ -6,6 +6,6 @@ Description: Code examples for the Agentic Data Science specialization,
     of the Palmer Penguins data.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: dplyr, readr, tibble, jsonlite
+Imports: dplyr, readr, tibble, jsonlite, parsnip
 Suggests: testthat (>= 3.0.0), withr
 Config/testthat/edition: 3
