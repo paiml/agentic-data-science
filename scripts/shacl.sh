@@ -14,4 +14,8 @@ for f in $files; do
     shacl validate --shapes "$s" --data "${TMPDIR:-/tmp}/ads-data.ttl" | grep -Eq 'sh:conforms +true' || { echo "FAIL $f vs $s"; exit 1; }
   done
 done
+for a in $(git ls-files "*artifact.ttl"); do
+  cat ontology/ads.ttl "$a" > "${TMPDIR:-/tmp}/ads-data.ttl"
+  shacl validate --shapes ontology/shapes/artifact.shape.ttl --data "${TMPDIR:-/tmp}/ads-data.ttl" | grep -Eq "sh:conforms +true" || { echo "FAIL $a vs artifact shape"; exit 1; }
+done
 echo "shacl OK"
