@@ -1,0 +1,10 @@
+# P3 (a): species decision tree. Usage: ADS_ROOT=/path/to/repo Rscript run.R
+root <- Sys.getenv("ADS_ROOT", unset = ".")
+library(agenticds)
+d <- na_policy(read_penguins(file.path(root, "datasets", "penguins", "penguins.csv")))
+s <- read_split(file.path(root, "datasets", "fixtures", "split.csv"))
+fit <- fit_species_clf(d[s == "train", ])
+pred <- predict_species_clf(fit, d[s == "test", ])
+truth <- factor(d$species[s == "test"], levels = levels(pred))
+print(confusion(truth, pred))
+cat("accuracy:", accuracy(truth, pred), "\n")
