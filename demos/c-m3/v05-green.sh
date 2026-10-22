@@ -12,5 +12,5 @@ s <- read_split("datasets/fixtures/split.csv")
 fit <- fit_species_clf(d[s == "train", ])
 pred <- predict_species_clf(fit, d[s == "test", ])
 print(confusion(factor(d$species[s == "test"], levels = levels(pred)), pred))
-stopifnot(sum(res$failed) == 0, sum(res$passed) > 0)
+stopifnot(sum(res$failed) == 0, sum(res$error) == 0, !any(res$skipped), sum(res$passed) > 0)
 cat("contract: c-m3 tests green OK\n")'

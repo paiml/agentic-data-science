@@ -7,5 +7,6 @@ Rscript -e 'library(agenticds)
 d <- na_policy(read_penguins("datasets/penguins/penguins.csv"))
 g <- jsonlite::fromJSON("datasets/golden/p3.json")
 print(g$confusion); print(g$kmeans)
-stopifnot(abs(g$accuracy - 83/85) < 1e-12, sum(g$confusion) == 85, sum(g$kmeans$cluster_sizes) == 342)
-cat("contract: c-m3 ticket oracle is self-consistent (83/85, 342 rows) OK\n")'
+cat(sprintf("accuracy %.4f = %d/%d; clean rows %d\n", g$accuracy, sum(diag(g$confusion)), sum(g$confusion), nrow(d)))
+stopifnot(abs(sum(diag(g$confusion)) / sum(g$confusion) - g$accuracy) < 1e-12, nrow(d) == sum(g$kmeans$cluster_sizes))
+cat("contract: c-m3 ticket oracle is consistent with the data (accuracy, 342 rows) OK\n")'

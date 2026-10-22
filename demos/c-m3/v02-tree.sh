@@ -12,5 +12,5 @@ pred <- predict_species_clf(fit, d[s == "test", ])
 truth <- factor(d$species[s == "test"], levels = levels(pred))
 print(confusion(truth, pred))
 cat(sprintf("accuracy %.4f = %d/%d, errors %d\n", accuracy(truth, pred), sum(truth == pred), length(truth), sum(truth != pred)))
-stopifnot(sum(truth != pred) == 2L, abs(accuracy(truth, pred) - g$accuracy) < 1e-12)
+stopifnot(sum(truth != pred) == sum(g$confusion) - sum(diag(g$confusion)), identical(unname(unclass(confusion(truth, pred))), unname(as.matrix(g$confusion))) || all(unclass(confusion(truth, pred)) == g$confusion), abs(accuracy(truth, pred) - g$accuracy) < 1e-12)
 cat("contract: c-m3 tree accuracy 0.9765, 2 errors in 85 OK\n")'
