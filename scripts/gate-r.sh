@@ -11,6 +11,16 @@ p <- covr::percent_coverage(cov)
 cat("covr:", p, "\n")
 print(covr::zero_coverage(cov))
 if (!isTRUE(p == 100)) quit(status = 1)
+# Measured figure for pmat quality-gate (which parses no R); untracked, rewritten every run.
+dir.create(file.path("..", "..", ".pmat-metrics"), showWarnings = FALSE)
+jsonlite::write_json(
+  list(
+    coverage = p, tool = "covr",
+    git_hash = system2("git", c("rev-parse", "HEAD"), stdout = TRUE),
+    generated_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+  ),
+  file.path("..", "..", ".pmat-metrics", "coverage.json"), auto_unbox = TRUE, digits = NA
+)
 l <- lintr::lint_package(".")
 cat("lintr:", length(l), "lints\n")
 if (length(l) > 0) { print(l); quit(status = 1) }

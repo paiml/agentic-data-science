@@ -22,11 +22,39 @@ Specialization: https://www.coursera.org/specialization/agentic-data-science (li
 - `ontology/`: vocabulary and SHACL shapes that every example's `example.ttl` must satisfy.
 - Language packages (`r/`, `julia/`, `kotlin/`, `rust/`, `lean/`) are added as each course's examples land.
 
+## Installation
+
+```bash
+git clone https://github.com/paiml/agentic-data-science
+cd agentic-data-science
+R CMD INSTALL r/agenticds   # needs R >= 4.3 and the packages named in r/agenticds/DESCRIPTION
+```
+
+The gates also need Apache Jena (`shacl`) on `PATH` and Java 17.
+
+## Usage
+
+```r
+library(agenticds)
+d <- na_policy(read_penguins("datasets/penguins/penguins.csv"))
+summarise_by_species(d)
+```
+
+Each example under `r/agenticds/inst/examples/` is a script that ends on a `contract: ... OK` line; `demos/` holds the scripted terminal runs used in the course videos.
+
 ## Run the gates
 
 ```bash
 make gate
 ```
+
+## Contributing
+
+Open a pull request against `main`. Every change keeps `make gate` green (datasets, SHACL, R gate at covr 100, lintr 0 and styler 0) and carries a test that fails when the behaviour breaks.
+
+## License
+
+MIT, see `LICENSE`. Datasets keep their own licences, below.
 
 ## Dataset licences
 
