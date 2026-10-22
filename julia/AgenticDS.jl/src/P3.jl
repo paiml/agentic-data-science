@@ -81,17 +81,17 @@ end
 
 # Grow below `rows`; returns `(node, errors)` where `errors` counts the training misclassifications
 # of the subtree. A split is kept only if it removes at least `CP * root_err` errors (rpart's cp).
-function grow(X, y, rows, nclass, root_dev, root_err, depth)
+function grow(X, y, rows, nclass, root_err, depth)
     counts = class_counts(y, rows, nclass)
     leaf = Leaf(majority(counts))
     leaf_err = length(rows) - maximum(counts)
     (length(rows) < MINSPLIT || depth >= MAXDEPTH || gini_dev(counts) == 0) &&
         return (leaf, leaf_err)
     best = best_split(X, y, rows, nclass, MINBUCKET)
-    best.gain < CP * root_dev && return (leaf, leaf_err)
+    best.var == 0 && return (leaf, leaf_err)
     go_left = X[rows, best.var] .< best.cut
-    left, left_err = grow(X, y, rows[go_left], nclass, root_dev, root_err, depth + 1)
-    right, right_err = grow(X, y, rows[.!go_left], nclass, root_dev, root_err, depth + 1)
+    left, left_err = grow(X, y, rows[go_left], nclass, root_err, depth + 1)
+    right, right_err = grow(X, y, rows[.!go_left], nclass, root_err, depth + 1)
     leaf_err - (left_err + right_err) < CP * root_err && return (leaf, leaf_err)
     return (Split(best.var, best.cut, left, right), left_err + right_err)
 end
@@ -99,23 +99,16 @@ end
 """
     fit_species_clf(train) -> NamedTuple
 
-Fit a CART decision tree on `NUMERIC_COLS` with rpart's default stopping rules
-(Gini, `minsplit` 20, `minbucket` 7, `cp` 0.01, midpoint cuts): `(; tree, classes)`.
+Fit a CART decision tree on `NUMERIC_COLS` with rpart's default parameters, matching rpart on the golden fixtures
+(Gini splits, `minsplit` 20, `minbucket` 7, midpoint cuts; a split survives only if it removes at least `cp` 0.01 of the root misclassifications. This is a per-node prune, not rpart's weakest-link rule): `(; tree, classes)`.
 """
 function fit_species_clf(train)
     classes = sort(unique(train.species))
     X = Matrix{Float64}(train[:, NUMERIC_COLS])
     y = [findfirst(==(s), classes) for s in train.species]
     counts = class_counts(y, 1:length(y), length(classes))
-    tree, _ = grow(
-        X,
-        y,
-        collect(1:length(y)),
-        length(classes),
-        gini_dev(counts),
-        length(y) - maximum(counts),
-        0,
-    )
+    tree, _ =
+        grow(X, y, collect(1:length(y)), length(classes), length(y) - maximum(counts), 0)
     return (; tree, classes)
 end
 

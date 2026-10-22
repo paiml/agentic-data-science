@@ -16,11 +16,11 @@ const CENTROIDS_PATH = joinpath(ROOT, "datasets", "fixtures", "centroids.csv")
     end
 
     @testset "confusion and accuracy" begin
-        truth = ["a", "a", "b", "b", "b"]
-        pred = ["a", "b", "b", "b", "a"]
-        @test confusion(truth, pred, ["a", "b"]) == [1 1; 1 2]
+        truth = ["a", "a", "b"]
+        pred = ["a", "b", "b"]
+        @test confusion(truth, pred, ["a", "b"]) == [1 1; 0 1]
         @test sum(confusion(truth, pred, ["a", "b"])) == length(truth)
-        @test accuracy(truth, pred) == 3 / 5
+        @test accuracy(truth, pred) == 2 / 3
     end
 
     @testset "decision tree" begin
@@ -39,17 +39,33 @@ const CENTROIDS_PATH = joinpath(ROOT, "datasets", "fixtures", "centroids.csv")
     end
 
     @testset "stopping rules" begin
-        # a pure node and a node below minsplit both become leaves
-        pure = DataFrame(;
-            species = fill("Adelie", 30),
-            bill_length_mm = collect(1.0:30),
-            bill_depth_mm = collect(1.0:30),
-            flipper_length_mm = collect(1.0:30),
-            body_mass_g = collect(1.0:30),
-        )
-        @test fit_species_clf(pure).tree == AgenticDS.Leaf(1)
-        few = first(d, 19)
-        @test fit_species_clf(few).tree isa AgenticDS.Leaf
+        function frame(species)
+            x = collect(1.0:length(species))
+            return DataFrame(;
+                species,
+                bill_length_mm = x,
+                bill_depth_mm = x,
+                flipper_length_mm = x,
+                body_mass_g = x,
+            )
+        end
+        # a pure node is a leaf
+        @test fit_species_clf(frame(fill("Adelie", 30))).tree == AgenticDS.Leaf(1)
+        # 19 mixed rows are below minsplit; 20 split at the midpoint of the class boundary
+        @test fit_species_clf(frame([fill("Adelie", 10); fill("Gentoo", 9)])).tree isa
+              AgenticDS.Leaf
+        split20 = fit_species_clf(frame([fill("Adelie", 10); fill("Gentoo", 10)])).tree
+        @test split20.var == 1 && split20.cut == 10.5
+        # minbucket 7: the clean 24|6 cut is refused, the nearest legal cut is 23|7
+        edge = fit_species_clf(frame([fill("Adelie", 24); fill("Gentoo", 6)])).tree
+        @test edge.var == 1 && edge.cut == 23.5
+        # identical features with mixed labels offer no split
+        same = frame([fill("Adelie", 15); fill("Gentoo", 15)])
+        same.bill_length_mm .= 1.0
+        same.bill_depth_mm .= 1.0
+        same.flipper_length_mm .= 1.0
+        same.body_mass_g .= 1.0
+        @test fit_species_clf(same).tree isa AgenticDS.Leaf
     end
 
     @testset "k-means" begin
@@ -64,6 +80,7 @@ const CENTROIDS_PATH = joinpath(ROOT, "datasets", "fixtures", "centroids.csv")
         far[3, :] .= 1e9
         gone = kmeans_fixed(d, far)
         @test count(==(3), gone.cluster) == 0
+        @test gone.objective > km.objective
     end
 
     @testset "p3_json" begin

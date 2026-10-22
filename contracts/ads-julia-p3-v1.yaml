@@ -6,7 +6,7 @@ metadata:
   created: "2026-10-22"
   kind: pattern
   author: "PAIML Engineering"
-  description: "fit_species_clf (hand-written CART with rpart defaults) and kmeans_fixed reproduce datasets/golden/p3.json: the confusion matrix and accuracy of the species tree on datasets/fixtures/split.csv, and the k-means objective and cluster sizes from datasets/fixtures/centroids.csv."
+  description: "fit_species_clf (hand-written CART with rpart default parameters and a per-node cp prune, matching rpart on these fixtures, not a general rpart reimplementation) and kmeans_fixed reproduce datasets/golden/p3.json: the confusion matrix and accuracy of the species tree on datasets/fixtures/split.csv, and the k-means objective and cluster sizes from datasets/fixtures/centroids.csv."
   references:
     - "julia/AgenticDS.jl/src/P3.jl"
     - "julia/AgenticDS.jl/test/p3.jl"
@@ -40,7 +40,7 @@ falsification_tests:
     rule: "Tree keeps only splits that cut at least cp of the root misclassifications"
     prediction: "make gate-julia passes"
     test: "scripts/gate-julia.sh"
-    mutation: "Remove the cp prune after the recursion: 4 Julia @test expectations fail and 2 error (tree shape and golden parity; measured 2026-10-22; line numbers omitted, they drift with formatting)"
+    mutation: "Remove the cp prune after the recursion: 4 Julia @test expectations fail and 2 error (re-measured after review) (tree shape and golden parity; measured 2026-10-22; line numbers omitted, they drift with formatting)"
     discriminates: "An over-grown tree cannot match the golden confusion matrix"
     if_fails: "Learners get a tree that differs from the R reference"
   - id: FALSIFY-ADS-JULIA-P3-002
@@ -50,3 +50,17 @@ falsification_tests:
     mutation: "Skip the centroid update: 2 Julia @test expectations fail (k-means golden and p3_json; measured 2026-10-22)"
     discriminates: "A k-means that never updates cannot reach the golden objective"
     if_fails: "Learners report a k-means objective that is not a local optimum"
+  - id: FALSIFY-ADS-JULIA-P3-003
+    rule: "Confusion matrix has truth in rows and prediction in columns"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Swap the comprehension order in confusion so truth is in columns: 1 Julia @test expectation fails (asymmetric hand case; measured 2026-10-22)"
+    discriminates: "The golden matrix is nearly symmetric, so only an asymmetric case can see a transpose"
+    if_fails: "Learners read precision as recall"
+  - id: FALSIFY-ADS-JULIA-P3-004
+    rule: "Tree stopping parameters are minsplit 20 and minbucket 7"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Set MINSPLIT to 2: 1 @test fails; set MINBUCKET to 1: 5 @test fail and 1 errors (measured 2026-10-22)"
+    discriminates: "Hand-built frames sit exactly on the minsplit and minbucket edges"
+    if_fails: "The tree grows to different leaves than rpart"
