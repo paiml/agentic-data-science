@@ -39,6 +39,6 @@ falsification_tests:
     rule: "Out-of-fold predictions only"
     prediction: "make gate-julia passes"
     test: "scripts/gate-julia.sh"
-    mutation: "Predict each fold with its own training rows: 3 Julia @test expectations fail: cv ols, cv species, p2_json cv species (measured 2026-10-22, p2.jl:43,44,74)"
+    mutation: "Predict each fold with its own training rows: 3 Julia @test expectations fail: cv ols, cv species, p2_json cv species (measured 2026-10-22; line numbers omitted, they drift with formatting)"
     discriminates: "A leaking CV cannot match the per-fold normal-equation oracle"
     if_fails: "Learners report an optimistic CV error"
