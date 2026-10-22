@@ -80,7 +80,7 @@ function best_split(X, y, rows, nclass, minbucket)
 end
 
 # Grow below `rows`; returns `(node, errors)` where `errors` counts the training misclassifications
-# of the subtree. A split is kept only if it removes at least `CP * root_err` errors (rpart's cp).
+# of the subtree. A split is kept only if it removes at least `CP * root_err` errors (a per-node prune, not rpart's weakest-link rule).
 function grow(X, y, rows, nclass, root_err, depth)
     counts = class_counts(y, rows, nclass)
     leaf = Leaf(majority(counts))

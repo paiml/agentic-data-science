@@ -40,7 +40,7 @@ falsification_tests:
     rule: "Tree keeps only splits that cut at least cp of the root misclassifications"
     prediction: "make gate-julia passes"
     test: "scripts/gate-julia.sh"
-    mutation: "Remove the cp prune after the recursion: 4 Julia @test expectations fail and 2 error (re-measured after review) (tree shape and golden parity; measured 2026-10-22; line numbers omitted, they drift with formatting)"
+    mutation: "Remove the cp prune after the recursion: 4 Julia @test expectations fail and 2 error (tree shape and golden parity; measured 2026-10-22; line numbers omitted, they drift with formatting)"
     discriminates: "An over-grown tree cannot match the golden confusion matrix"
     if_fails: "Learners get a tree that differs from the R reference"
   - id: FALSIFY-ADS-JULIA-P3-002
