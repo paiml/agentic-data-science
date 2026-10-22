@@ -1,0 +1,67 @@
+# ads-julia-p4-v1: Course B (Julia), Module 4, Problem P4 (Wine Quality pipeline, report artifact and benchmark)
+
+# Tickets: https://github.com/paiml/agentic-data-science/issues/35 and /36
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "pipeline_wine reproduces datasets/golden/p4.json (row counts and mean quality by colour exact, RMSE and R squared within 1e-6) and report_ttl writes the same ads:Artifact as datasets/golden/p4-artifact.ttl apart from the generator name; bench_wine times two equal aggregation engines with BenchmarkTools and never asserts a timing."
+  references:
+    - "julia/AgenticDS.jl/src/P4.jl"
+    - "julia/AgenticDS.jl/test/p4.jl"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_pipeline_matches_golden:
+    formula: |
+      df       = validate(red ++ white)               refuse NA, quality outside 0..10, unknown color
+      test     = rows with index % 5 == 0             train = the rest
+      beta     = X_train \ y_train                    X = [1, 11 measurements, color == white]
+      |rmse - golden| <= 1e-6, |r2 - golden| <= 1e-6, counts and colour means equal
+    domain: "6497 wine rows (1599 red, then 4898 white)"
+    codomain: "n_rows, n_train, n_test, rmse, r2, mean quality by colour, ads:Artifact report"
+    postconditions:
+      - "VALIDATE_FIRST: invalid data throws ArgumentError before any model is fitted"
+      - "FIXED_SPLIT: every fifth row is a test row, never an RNG"
+      - "NO_LEAKAGE: the model is fitted on train rows only and scored on test rows"
+      - "NO_TIMING_IN_GOLDEN: timings are never written to the report or compared"
+      - "CAN_FAIL: a different split, a missing colour term or a test-row fit changes RMSE and fails the golden tests"
+
+proof_obligations:
+  - type: invariant
+    property: "counts exact, RMSE and R squared within 1e-6 of the R golden, and both aggregation engines agree"
+    formal: "n == golden.n and |rmse - golden.rmse| <= 1e-6 and groupby == loop"
+    applies_to: p4_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P4-001
+    rule: "Every fifth row is a test row"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Split on every fourth row: 7 Julia @test expectations fail (measured 2026-10-22; line numbers omitted, they drift with formatting)"
+    discriminates: "A different split changes the counts and the RMSE"
+    if_fails: "Learners get a model scored on different rows than the R reference"
+  - id: FALSIFY-ADS-JULIA-P4-002
+    rule: "The colour term is part of the model"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Replace the white indicator with zeros: 3 @test expectations fail (measured 2026-10-22)"
+    discriminates: "Dropping the colour changes RMSE and R squared beyond 1e-6"
+    if_fails: "Learners report a weaker model than the reference"
+  - id: FALSIFY-ADS-JULIA-P4-003
+    rule: "The model is scored on rows it was not fitted on"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Fit on the test rows: 3 @test expectations fail (measured 2026-10-22)"
+    discriminates: "A leaking fit lowers the test RMSE below the golden"
+    if_fails: "Learners report an optimistic error"
+  - id: FALSIFY-ADS-JULIA-P4-004
+    rule: "Quality outside 0..10 is refused"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Delete the quality check in validate_wine: 2 @test expectations fail (measured 2026-10-22)"
+    discriminates: "Out-of-range scores no longer raise ArgumentError"
+    if_fails: "Bad data flows into the model"

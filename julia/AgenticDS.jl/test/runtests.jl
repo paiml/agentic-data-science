@@ -79,6 +79,7 @@ end
 
 include("p2.jl")
 include("p3.jl")
+include("p4.jl")
 
 @testset "Aqua" begin
     Aqua.test_all(AgenticDS)
