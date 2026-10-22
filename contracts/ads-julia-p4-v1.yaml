@@ -6,7 +6,7 @@ metadata:
   created: "2026-10-22"
   kind: pattern
   author: "PAIML Engineering"
-  description: "pipeline_wine reproduces datasets/golden/p4.json (row counts and mean quality by colour exact, RMSE and R squared within 1e-6) and report_ttl writes the same ads:Artifact as datasets/golden/p4-artifact.ttl apart from the generator name; bench_wine times two equal aggregation engines with BenchmarkTools and never asserts a timing."
+  description: "pipeline_wine reproduces datasets/golden/p4.json (row counts exact, mean quality by colour, RMSE and R squared within 1e-6) and report_ttl writes the same ads:Artifact as datasets/golden/p4-artifact.ttl apart from the generator name; bench_wine times two equal aggregation engines with BenchmarkTools and never asserts a timing."
   references:
     - "julia/AgenticDS.jl/src/P4.jl"
     - "julia/AgenticDS.jl/test/p4.jl"
@@ -20,7 +20,7 @@ equations:
       df       = validate(red ++ white)               refuse NA, quality outside 0..10, unknown color
       test     = rows with index % 5 == 0             train = the rest
       beta     = X_train \ y_train                    X = [1, 11 measurements, color == white]
-      |rmse - golden| <= 1e-6, |r2 - golden| <= 1e-6, counts and colour means equal
+      |rmse - golden| <= 1e-6, |r2 - golden| <= 1e-6, counts equal, colour means within 1e-6
     domain: "6497 wine rows (1599 red, then 4898 white)"
     codomain: "n_rows, n_train, n_test, rmse, r2, mean quality by colour, ads:Artifact report"
     postconditions:
@@ -32,7 +32,7 @@ equations:
 
 proof_obligations:
   - type: invariant
-    property: "counts exact, RMSE and R squared within 1e-6 of the R golden, and both aggregation engines agree"
+    property: "counts exact, colour means, RMSE and R squared within 1e-6 of the R golden, and both aggregation engines agree"
     formal: "n == golden.n and |rmse - golden.rmse| <= 1e-6 and groupby == loop"
     applies_to: p4_pipeline_matches_golden
 

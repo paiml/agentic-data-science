@@ -59,14 +59,14 @@ const WHITE = joinpath(WINE_DIR, "winequality-white.csv")
         )
         @test collect(keys(res)) ==
               ["n_rows", "n_train", "n_test", "rmse", "r2", "mean_quality_by_color"]
-        # the model is fitted on train rows only: its train RMSE is not the golden test RMSE
+        # a fit on the test rows scores them better; the pipeline's honest RMSE is not that number
         s = split_wine(wine)
-        beta = AgenticDS.wine_design(s.train) \ Float64.(s.train.quality)
-        train_rmse = regression_metrics(
-            Float64.(s.train.quality),
-            AgenticDS.wine_design(s.train) * beta,
-        ).rmse
-        @test abs(train_rmse - res["rmse"]) > 1e-3
+        x_test = AgenticDS.wine_design(s.test)
+        leaky = regression_metrics(
+            Float64.(s.test.quality),
+            x_test * (x_test \ Float64.(s.test.quality)),
+        )
+        @test leaky.rmse < res["rmse"] - 5e-3
     end
 
     @testset "report_ttl" begin
@@ -94,6 +94,7 @@ const WHITE = joinpath(WINE_DIR, "winequality-white.csv")
         @test a.n == [1599, 4898] && b.n == a.n
         @test isapprox(a.mean_quality, b.mean_quality; atol = 1e-12)
         @test isapprox(a.mean_quality[1], P4.mean_quality_by_color.red; atol = 1e-6)
+        @test isapprox(a.mean_quality[2], P4.mean_quality_by_color.white; atol = 1e-6)
         t = bench_wine(wine)
         @test t.engine == ["groupby", "loop"]
         @test all(t.seconds .> 0)

@@ -56,7 +56,7 @@ weakdeps = ["SparseArrays", "StaticArrays"]
     AdaptStaticArraysExt = "StaticArrays"
 
 [[deps.AgenticDS]]
-deps = ["BenchmarkTools", "CSV", "DataFrames", "JSON3", "MLJBase", "MLJLinearModels", "OrderedCollections", "Statistics"]
+deps = ["BenchmarkTools", "CSV", "DataFrames", "JSON3", "MLJBase", "MLJLinearModels", "OrderedCollections", "Printf", "Statistics"]
 path = "."
 uuid = "01576ccf-1e56-46e1-9a43-ebac06b34e1c"
 version = "0.1.0"
