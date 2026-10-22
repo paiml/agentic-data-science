@@ -18,7 +18,9 @@ JL
 echo '--- src/Scratch.jl as generated'
 cat Scratch/src/Scratch.jl
 echo '--- red: the test is written first'
-julia --project=Scratch Scratch/test/runtests.jl 2>&1 | grep -E 'Test Failed|Expression|Evaluated|Test Summary|greet' | sed -E 's/ +[0-9.]+m?[0-9.]*s$//; s/ +Time$//; s/ at .*\/(Scratch\/test\/runtests\.jl:[0-9]+)/ at \1/' || true
+if julia --project=Scratch Scratch/test/runtests.jl >"$work/red.log" 2>&1; then echo "red step passed: the test was not red"; exit 1; fi
+echo
+grep -E 'Test Failed|Expression|Evaluated|Test Summary|greet' "$work/red.log" | sed -E 's/ +[0-9.]+m?[0-9.]*s$//; s/ +Time$//; s/^Hello World!//; s/ at .*\/(Scratch\/test\/runtests\.jl:[0-9]+)/ at \1/'
 sed -i 's/Hello World!/Hello, Julia/;s/greet() = print(\(.*\))/greet() = \1/' Scratch/src/Scratch.jl
 echo '--- src/Scratch.jl implemented'
 cat Scratch/src/Scratch.jl
