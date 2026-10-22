@@ -55,7 +55,7 @@ falsification_tests:
     rule: "The model is scored on rows it was not fitted on"
     prediction: "make gate-julia passes"
     test: "scripts/gate-julia.sh"
-    mutation: "Fit on the test rows: 3 @test expectations fail (measured 2026-10-22)"
+    mutation: "Fit on the test rows: 4 @test expectations fail (measured 2026-10-22)"
     discriminates: "A leaking fit lowers the test RMSE below the golden"
     if_fails: "Learners report an optimistic error"
   - id: FALSIFY-ADS-JULIA-P4-004
