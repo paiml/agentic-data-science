@@ -7,6 +7,7 @@ mutate() {
   cp -r "$ADS_ROOT/r/agenticds" "$sc/pkg"
   cp -r "$ADS_ROOT/datasets" "$sc/datasets"
   sed -i "$expr" "$sc/pkg/R/$file"
+  if cmp -s "$ADS_ROOT/r/agenticds/R/$file" "$sc/pkg/R/$file"; then echo "mutation did not change R/$file"; rm -rf -- "${sc:?}"; return 1; fi
   echo "mutation in R/$file: sed '$expr'"
   diff <(cat "$ADS_ROOT/r/agenticds/R/$file") "$sc/pkg/R/$file" | grep '^[<>]' || true
   FILT="$filt" SCRATCH="$sc" ADS_ROOT="$sc" Rscript -e '
