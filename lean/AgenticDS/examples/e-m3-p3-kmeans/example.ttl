@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#e-m3-p3-kmeans> a ads:Example ;
+  ads:language "lean" ;
+  ads:course "E" ;
+  ads:module "3"^^xsd:integer ;
+  ads:problem "P3" ;
+  ads:dataset ads:penguins ;
+  ads:readme "lean/AgenticDS/examples/e-m3-p3-kmeans/README.md" ;
+  ads:sorryCount "0"^^xsd:integer ;
+  ads:axiomsClean true ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#25" ;
+  ads:contract "contracts/ads-lean-p3-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p3.json" .

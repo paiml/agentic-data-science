@@ -1,0 +1,50 @@
+# ads-lean-p3-v1: Course E (Lean 4), Module 3, Problem P3 (exact CART classifier and weighted k-means)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/24 and /25
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Exact-rational greedy CART with rpart's minsplit, minbucket and cost-complexity cut, and a weighted-distance Lloyd k-means, both reproducing datasets/golden/p3.json; the nearest-centroid step and the confusion total are kernel-checked."
+  references:
+    - "lean/AgenticDS/AgenticDS/Tree.lean"
+    - "lean/AgenticDS/AgenticDS/Kmeans.lean"
+    - "lean/AgenticDS/AgenticDS/Confusion.lean"
+    - "lean/AgenticDS/AgenticDSTest/P3.lean"
+    - "datasets/golden/p3.json"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, numeric parity against a golden file"
+
+equations:
+  p3_lean_tree_and_kmeans_parity:
+    formula: |
+      tree(train) = flipper < 207.5 ? (bill_length < 43.35 ? Adelie : Chinstrap) : Gentoo
+      confusion(test) = [[37,0,0],[0,16,1],[0,1,30]]     exact
+      |accuracy - golden|  <= 1e-12
+      |kmeans objective - golden| <= 1e-6, sizes = [133,123,86]
+    domain: "342 complete Penguins rows, fixed split.csv and centroids.csv"
+    codomain: "exact rationals compared to the R-produced golden"
+    postconditions:
+      - "TREE_SHAPE: the thresholds are rediscovered by the search, not hard-coded"
+      - "CONFUSION_TOTAL: confusion entries sum to the test-set size"
+      - "AXIOMS: assign_step_optimal and confusion_total depend only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: a changed split rule, tie-break or cp cut changes the tree and the confusion"
+
+proof_obligations:
+  - type: invariant
+    property: "Nearest-centroid assignment never does worse than any other assignment to the same centroids"
+    formal: "#print axioms assign_step_optimal subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p3_lean_tree_and_kmeans_parity
+  - type: invariant
+    property: "Confusion-matrix entries add up to the number of samples"
+    formal: "#print axioms confusion_total subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p3_lean_tree_and_kmeans_parity
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P3-001
+    rule: "Tree, confusion, accuracy and k-means equal the golden"
+    prediction: "make gate-lean prints lean OK"
+    test: "scripts/gate-lean.sh"
+    mutation: "Drop the prune step in Tree.lean: the tree gains extra splits and the shape check fails"
+    discriminates: "A hard-coded or unpruned tree cannot pass the shape and confusion checks together"
+    if_fails: "Learners prove theorems about a classifier that disagrees with the R reference"

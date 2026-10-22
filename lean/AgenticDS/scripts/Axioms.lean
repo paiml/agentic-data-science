@@ -7,3 +7,5 @@ open AgenticDS
 #print axioms variance_shift
 #print axioms ols_normal_equations
 #print axioms ols_residuals_sum_zero_real
+#print axioms assign_step_optimal
+#print axioms confusion_total
