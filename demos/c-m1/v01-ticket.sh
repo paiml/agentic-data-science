@@ -10,5 +10,5 @@ raw <- read_penguins("datasets/penguins/penguins.csv"); d <- na_policy(raw)
 cat(sprintf("raw rows %d, rows with no measurements %d, clean rows %d\n", nrow(raw), nrow(raw) - nrow(d), nrow(d)))
 ns <- vapply(g$species, function(s) s$n, numeric(1)); print(ns)
 cat(sprintf("golden n sums to %d\n", sum(ns)))
-stopifnot(sum(ns) == nrow(d), nrow(raw) == 344L, nrow(d) == 342L)
+stopifnot(identical(as.integer(ns), as.integer(table(d$species)[names(ns)])), sum(ns) == nrow(d), sum(rowSums(is.na(raw[, 3:6])) == 4L) == nrow(raw) - nrow(d), nrow(raw) == 344L, nrow(d) == 342L)
 cat("contract: c-m1 ticket oracle is consistent with the data (344 -> 342) OK\n")'

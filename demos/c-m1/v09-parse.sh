@@ -4,7 +4,7 @@
 # shellcheck source=../lib.sh
 source "$(dirname "$0")/../lib.sh"
 out="$(mktemp -d)"
-trap 'rm -rf -- "${out:?}"' EXIT
+trap 'rm -rf -- "${out:?}" "${DEMO_LIB:?}"' EXIT
 head -n 1 datasets/penguins/penguins.csv > "$out/bad.csv"
 echo "Adelie,Torgersen,39.1,18.7,181,heavy,male,2007" >> "$out/bad.csv"
 echo "Adelie,Torgersen,39.5,17.4,186,3800,female,2007" >> "$out/bad.csv"
