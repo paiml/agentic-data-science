@@ -27,3 +27,11 @@ path = "examples/a-m2-p2-ols/main.rs"
 [[example]]
 name = "a-m2-p2-cv"
 path = "examples/a-m2-p2-cv/main.rs"
+
+[[example]]
+name = "a-m3-p3-tree"
+path = "examples/a-m3-p3-tree/main.rs"
+
+[[example]]
+name = "a-m3-p3-kmeans"
+path = "examples/a-m3-p3-kmeans/main.rs"

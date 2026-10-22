@@ -7,5 +7,5 @@ cargo fmt --check
 cargo clippy --all-targets --locked -- -D warnings
 if cargo tree -i trueno --locked 2>/dev/null | grep -q 'registry+'; then echo "FAIL: crates.io trueno"; exit 1; fi
 cargo llvm-cov --all-targets --locked --fail-under-lines 100 --fail-under-functions 100 --fail-under-regions 95
-for e in a-m1-p1 a-m1-p1-profile a-m2-p2-ols a-m2-p2-cv; do ADS_ROOT="$root" cargo run -q --locked --example "$e" | tail -n 1 | grep -q '^contract: .* OK$' || { echo "FAIL example $e"; exit 1; }; done
+for e in a-m1-p1 a-m1-p1-profile a-m2-p2-ols a-m2-p2-cv a-m3-p3-tree a-m3-p3-kmeans; do ADS_ROOT="$root" cargo run -q --locked --example "$e" | tail -n 1 | grep -q '^contract: .* OK$' || { echo "FAIL example $e"; exit 1; }; done
 echo "rust gate OK"
