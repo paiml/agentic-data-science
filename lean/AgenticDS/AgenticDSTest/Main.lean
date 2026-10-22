@@ -35,7 +35,7 @@ def main (args : List String) : IO UInt32 := do
       let gm := (gc.getObjVal? "mean").toOption.bind jnum
       let gsd := (gc.getObjVal? "sd").toOption.bind jnum
       ok := (← check s!"{sp}.{c} mean" (gm.any (close (mean xs)))) && ok
-      -- sd² vs sample variance; sd has 15 sig. digits so compare squares at 1e-6 relative scale
-      ok := (← check s!"{sp}.{c} sd" (gsd.any (fun s => close (s * s / 1000) (sampleVariance xs / 1000) || (if s*s < sampleVariance xs then sampleVariance xs - s*s else s*s - sampleVariance xs) < 1/1000000))) && ok
-  if ok then IO.println "contract: ads-e-p1-v1 OK"; return 0
+      -- sd² vs sample variance (golden sd has 15 significant digits), abs tol 1e-9
+      ok := (← check s!"{sp}.{c} sd" (gsd.any (fun s => (if s * s < sampleVariance xs then sampleVariance xs - s * s else s * s - sampleVariance xs) < 1 / 1000000000))) && ok
+  if ok then IO.println "contract: ads-lean-p1-v1 OK"; return 0
   else return 1
