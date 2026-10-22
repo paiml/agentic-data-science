@@ -5,3 +5,7 @@ d <- na_policy(read_penguins(file.path(root, "datasets", "penguins", "penguins.c
 km <- kmeans_fixed(d, read_centroids(file.path(root, "datasets", "fixtures", "centroids.csv")))
 cat("objective:", km$objective, "\n")
 print(table(km$cluster))
+g <- jsonlite::fromJSON(file.path(root, "datasets", "golden", "p3.json"))
+stopifnot(isTRUE(all.equal(km$objective, g$kmeans$objective, tolerance = 1e-9)))
+stopifnot(identical(as.integer(table(km$cluster)), as.integer(g$kmeans$cluster_sizes)))
+cat("contract: ads-r-p3 kmeans matches golden/p3.json OK\n")
