@@ -39,9 +39,10 @@ kover {
 }
 
 // Example entry points: ./gradlew :ads-kotlin:runIngest --args=<csv>
-listOf("Ingest" to "IngestMain", "Profile" to "ProfileMain").forEach { (name, cls) ->
+listOf("Ingest" to "IngestMain", "Profile" to "ProfileMain", "Regress" to "RegressMain").forEach { (name, cls) ->
     tasks.register<JavaExec>("run$name") {
         classpath = sourceSets["main"].runtimeClasspath
         mainClass = "com.paiml.ads.$cls"
+        javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(17) }
     }
 }

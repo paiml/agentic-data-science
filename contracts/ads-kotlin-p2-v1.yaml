@@ -1,0 +1,44 @@
+# ads-kotlin-p2-v1: Course D (Kotlin), Module 2, Problem P2 (regression and fixed-fold cross-validation)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/31 and /32
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Kotlin fitOls, fitSpecies, regressionMetrics and cvRmse reproduce datasets/golden/p2.json: closed-form OLS of body mass on flipper length, the species model, RMSE, R squared, and pooled 5-fold CV RMSE over datasets/fixtures/folds.csv."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P2.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/P2Test.kt"
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_regression_matches_golden:
+    formula: |
+      beta                 = solve(X'X, X'y)                       X = [1, flipper_length_mm (, species dummies)]
+      cv_rmse              = sqrt(sum_k sum_{i in fold k} (y_i - f_{-k}(x_i))^2 / n)
+      |coef - golden|      <= 1e-8
+      |cv_rmse - golden|   <= 1e-8
+    domain: "342 cleaned penguin rows and the fixed fold file"
+    codomain: "coefficients, RMSE, R squared, CV RMSE"
+    postconditions:
+      - "FIXED_FOLDS: fold ids come from datasets/fixtures/folds.csv, never from an RNG"
+      - "NO_LEAKAGE: each fold is predicted by a model fitted without that fold"
+      - "CAN_FAIL: fitting each fold on all rows changes CV RMSE and fails the golden test"
+
+proof_obligations:
+  - type: invariant
+    property: "Coefficients, metrics and CV RMSE equal the golden JSON within 1e-8"
+    formal: "for all k: |value(k) - golden(k)| <= 1e-8"
+    applies_to: p2_regression_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-P2-001
+    rule: "Out-of-fold predictions only"
+    prediction: "make gate-kotlin passes with Kover LINE = 100, BRANCH >= 95 and P2 reproducing the golden JSON"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Fit each fold on all rows: 4 P2Test tests fail (measured 2026-10-22)"
+    discriminates: "A leaking CV cannot match the golden cv_rmse or stay above in-sample RMSE"
+    if_fails: "Learners report an optimistic CV error"
