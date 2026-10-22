@@ -8,5 +8,5 @@ res <- pipeline_wine("datasets/wine-quality/winequality-red.csv", "datasets/wine
 cat(sprintf("rows %d  train %d  test %d\nrmse %.4f  r2 %.4f\n", res$n_rows, res$n_train, res$n_test, res$rmse, res$r2))
 print(unlist(res$mean_quality_by_color))
 g <- jsonlite::fromJSON("datasets/golden/p4.json")
-stopifnot(res$n_train + res$n_test == res$n_rows, isTRUE(all.equal(res$rmse, g$rmse, tolerance = 1e-9)), isTRUE(all.equal(res$r2, g$r2, tolerance = 1e-9)))
+stopifnot(res$n_train == g$n_train, res$n_test == g$n_test, isTRUE(all.equal(unlist(res$mean_quality_by_color), unlist(g$mean_quality_by_color), tolerance = 1e-9)), isTRUE(all.equal(res$rmse, g$rmse, tolerance = 1e-9)), isTRUE(all.equal(res$r2, g$r2, tolerance = 1e-9)))
 cat("contract: c-m4 pipeline rmse and r2 equal the golden OK\n")'
