@@ -33,10 +33,19 @@ jobs:
           echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
           echo "JULIA_DEPOT_PATH=$RUNNER_TEMP/depot" >> "$GITHUB_ENV"
       - run: make gate-julia
+  lean:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mathlib oleans (download into the workspace, nothing installed on the host)
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - run: make gate-lean
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, julia]
+    needs: [datasets, shacl, julia, lean]
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
       - run: |

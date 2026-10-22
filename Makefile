@@ -1,7 +1,7 @@
 SHELL := bash
 .PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
-gate: gate-datasets gate-shacl gate-r gate-julia gate-pmat
+gate: gate-datasets gate-shacl gate-r gate-julia gate-lean gate-pmat
 
 gate-datasets:
 	@for d in penguins wine-quality; do (cd datasets/$$d && sha256sum -c SHA256SUMS >/dev/null && test -s LICENSE) || { echo "FAIL datasets/$$d"; exit 1; }; done; echo "datasets OK"
@@ -13,7 +13,7 @@ gate-shacl:
 gate-pmat:
 	@scripts/gate-pmat.sh
 
-gate-rust gate-kotlin gate-lean:
+gate-rust gate-kotlin:
 	@echo "$@: not yet wired (G1+)"; exit 1
 
 gate-r:
@@ -21,3 +21,6 @@ gate-r:
 
 gate-julia:
 	@scripts/gate-julia.sh
+
+gate-lean:
+	@scripts/gate-lean.sh

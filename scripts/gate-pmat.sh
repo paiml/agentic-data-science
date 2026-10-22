@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# pmat quality-gate on the languages pmat can analyze (pilot R5: Rust, Kotlin, Lean).
+# pmat quality-gate on the languages pmat can analyze (pilot R5: Rust, Kotlin; Lean has no analyzer, see gate-lean).
 # Julia and R have no pmat analyzer and are gated by their native tools (gate-r, gate-julia).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 ran=0
-for d in rust kotlin lean; do
+for d in rust kotlin; do
   [ -d "$d" ] || continue
   ran=1
   pmat quality-gate -p "$d" -q || { echo "pmat FAIL $d"; exit 1; }
