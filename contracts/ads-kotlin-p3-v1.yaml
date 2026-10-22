@@ -1,0 +1,46 @@
+# ads-kotlin-p3-v1: Course D (Kotlin), Module 3, Problem P3 (decision tree and k-means)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/37 and https://github.com/paiml/agentic-data-science/issues/38
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Kotlin fitTree, predictTree, confusion and kmeansFixed reproduce datasets/golden/p3.json: a Gini tree with rpart defaults on the fixed train/test split (accuracy, confusion matrix) and Lloyd k-means on z-scored features from the fixed centroids (objective, cluster sizes)."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P3.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/KMeans.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/P3Test.kt"
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p3_models_match_golden:
+    formula: |
+      split_gain            = n*G(parent) - n_l*G(left) - n_r*G(right),  G = 1 - sum p_c^2
+      keep split iff        (risk(t) - risk(T_t)) / (leaves(T_t) - 1) >= cp * risk(root),  cp = 0.01 (exact equality with cp: rpart may drop it; not reachable on this data, not tested)
+      kmeans objective      = sum_i |z_i - c_{cluster(i)}|^2 on z-scored features (sample SD, n-1)
+      |objective - golden|  <= 1e-8
+    domain: "342 cleaned penguin rows, the fixed split file and the fixed centroid file"
+    codomain: "accuracy, 3x3 confusion matrix, k-means objective and cluster sizes"
+    postconditions:
+      - "FIXED_INPUTS: split and initial centroids come from committed files, never from an RNG"
+      - "NO_LEAKAGE: the tree is fitted on train rows only and scored on test rows"
+      - "CAN_FAIL: cp = 0 grows an unpruned tree and fails the structure and golden tests"
+
+proof_obligations:
+  - type: invariant
+    property: "Accuracy, confusion, k-means objective and sizes equal the golden JSON"
+    formal: "accuracy and objective within 1e-8, confusion and sizes exactly"
+    applies_to: p3_models_match_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-P3-001
+    rule: "rpart-default pruning and sample-SD z-scoring"
+    prediction: "make gate-kotlin passes with Kover LINE = 100, BRANCH >= 95 and P3 reproducing the golden JSON"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "cp = 0 fails 5 tests, minbucket 1 fails 4, population SD in z-scoring fails 1, maxBy in assignment fails 2, <= at the threshold fails the boundary test (measured 2026-10-22)"
+    discriminates: "A different stopping rule, scaling or tie rule cannot reproduce the golden numbers"
+    if_fails: "Learners compare their tree or clusters with a wrong reference"
