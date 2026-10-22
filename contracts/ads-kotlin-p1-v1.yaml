@@ -34,7 +34,7 @@ proof_obligations:
     applies_to: p1_summary_matches_golden
 
 falsification_tests:
-  - id: FALSIFY-ADS-R-P1-001
+  - id: FALSIFY-ADS-KOTLIN-P1-001
     rule: "Per-species counts, means and SDs match the golden within 1e-9"
     prediction: "make gate-kotlin passes with Kover LINE = 100, BRANCH >= 95 and the golden JSON reproduced by profileJson"
     test: "scripts/gate-kotlin.sh"

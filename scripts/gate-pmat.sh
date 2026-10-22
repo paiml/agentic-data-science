@@ -9,4 +9,4 @@ for d in rust lean; do
   ran=1
   pmat quality-gate -p "$d" -q || { echo "pmat FAIL $d"; exit 1; }
 done
-[ "$ran" = 1 ] && echo "pmat OK" || echo "pmat: no Rust/Kotlin/Lean package yet"
+[ "$ran" = 1 ] && echo "pmat OK" || echo "pmat: no Rust/Lean package yet"

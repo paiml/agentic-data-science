@@ -23,10 +23,10 @@ interface PenguinRow {
     val billDepthMm: Double?
 
     @ColumnName("flipper_length_mm")
-    val flipperLengthMm: Double?
+    val flipperLengthMm: Int?
 
     @ColumnName("body_mass_g")
-    val bodyMassG: Double?
+    val bodyMassG: Int?
 }
 
 data class Penguin(
@@ -48,7 +48,7 @@ data class SpeciesSummary(
 
 /** Read penguins.csv through a typed DataFrame schema; "NA" becomes null. */
 fun readPenguins(path: String): List<Penguin> {
-    val df: DataFrame<PenguinRow> = DataFrame.readCsv(path).cast()
+    val df: DataFrame<PenguinRow> = DataFrame.readCsv(path).cast(verify = true)
     return df.rows().map { r ->
         Penguin(
             r["species"] as String,
@@ -60,8 +60,8 @@ fun readPenguins(path: String): List<Penguin> {
     }
 }
 
-/** Drop a row iff any numeric measurement is null; a missing sex alone keeps the row. */
-fun naPolicy(rows: List<Penguin>): List<Penguin> = rows.filter { p -> p.measures().all { it != null } }
+/** Drop a row iff any numeric measurement is null or NaN. Sex is not read, so a missing sex cannot drop a row. */
+fun naPolicy(rows: List<Penguin>): List<Penguin> = rows.filter { p -> p.measures().all { it != null && !it.isNaN() } }
 
 private fun mean(xs: List<Double>): Double = xs.sum() / xs.size
 

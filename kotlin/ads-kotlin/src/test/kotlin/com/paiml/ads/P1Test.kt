@@ -33,9 +33,8 @@ class P1Test {
     }
 
     @Test
-    fun naPolicyKeepsRowWithOnlySexMissing() {
-        val row = Penguin("Adelie", 1.0, 2.0, 3.0, 4.0)
-        assertEquals(1, naPolicy(listOf(row)).size)
+    fun naPolicyDropsNaNMeasurement() {
+        assertEquals(0, naPolicy(listOf(Penguin("A", Double.NaN, 2.0, 3.0, 4.0))).size)
     }
 
     @Test
@@ -56,6 +55,7 @@ class P1Test {
         val summary = summariseBySpecies(naPolicy(readPenguins(csv)))
         assertEquals(golden.fieldNames().asSequence().toList(), summary.map { it.species })
         for (s in summary) {
+            assertEquals(MEASURES.toSet(), golden[s.species].fieldNames().asSequence().toSet() - "n")
             val g = golden[s.species]
             assertEquals(g["n"].asInt(), s.n)
             for (col in MEASURES) {
@@ -98,12 +98,16 @@ class P1Test {
     @Test
     fun profileJsonRoundTripsToGolden() {
         val json = ObjectMapper().readTree(profileJson(csv))["species"]
-        assertEquals(golden["Gentoo"]["n"].asInt(), json["Gentoo"]["n"].asInt())
-        assertEquals(
-            golden["Gentoo"]["body_mass_g"]["mean"].asDouble(),
-            json["Gentoo"]["body_mass_g"]["mean"].asDouble(),
-            TOL,
-        )
+        assertEquals(golden.fieldNames().asSequence().toList(), json.fieldNames().asSequence().toList())
+        for (sp in golden.fieldNames()) {
+            assertEquals(golden[sp]["n"].asInt(), json[sp]["n"].asInt())
+            for (col in MEASURES) {
+                for (stat in listOf("mean", "sd")) {
+                    val want = golden[sp][col][stat].asDouble()
+                    assertEquals(want, json[sp][col][stat].asDouble(), TOL, "$sp $col $stat")
+                }
+            }
+        }
     }
 
     @Test
