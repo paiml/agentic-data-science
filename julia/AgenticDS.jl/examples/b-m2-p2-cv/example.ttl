@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#b-m2-p2-cv> a ads:Example ;
+  ads:language "julia" ;
+  ads:course "B" ;
+  ads:module "2"^^xsd:integer ;
+  ads:problem "P2" ;
+  ads:dataset ads:penguins ;
+  ads:readme "julia/AgenticDS.jl/examples/b-m2-p2-cv/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#28" ;
+  ads:contract "contracts/ads-julia-p2-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p2.json" ;
+  ads:branchCasesEnumerated true .

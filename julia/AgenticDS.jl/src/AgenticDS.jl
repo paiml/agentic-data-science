@@ -4,9 +4,13 @@ using CSV
 using DataFrames
 using JSON3
 using OrderedCollections: OrderedDict
+using MLJBase
+using MLJLinearModels
 using Statistics: mean, std
 
 export read_penguins, na_policy, summarise_by_species, summary_json, NUMERIC_COLS
+export read_folds, ols_closed_form, regression_metrics, fit_species, predict_species
+export cv_rmse, p2_json
 
 const NUMERIC_COLS = [:bill_length_mm, :bill_depth_mm, :flipper_length_mm, :body_mass_g]
 
@@ -73,5 +77,7 @@ function summary_json(s)
     end
     return JSON3.write(OrderedDict("species" => species))
 end
+
+include("P2.jl")
 
 end # module AgenticDS

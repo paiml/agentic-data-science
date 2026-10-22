@@ -1,0 +1,44 @@
+# ads-julia-p2-v1: Course B (Julia), Module 2, Problem P2 (regression and fixed-fold cross-validation)
+
+# Tickets: https://github.com/paiml/agentic-data-science/issues/27 and /28
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "ols_closed_form, fit_species (MLJ LinearRegressor) and cv_rmse reproduce datasets/golden/p2.json: closed-form OLS of body mass on flipper length, the species model, RMSE, R squared, and pooled 5-fold CV RMSE over datasets/fixtures/folds.csv."
+  references:
+    - "julia/AgenticDS.jl/src/P2.jl"
+    - "julia/AgenticDS.jl/test/p2.jl"
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_regression_matches_golden:
+    formula: |
+      beta                 = X \\ y                       X = [1, flipper_length_mm]
+      cv_rmse              = sqrt(sum_k sum_{i in fold k} (y_i - f_{-k}(x_i))^2 / n)
+      |coef - golden|      <= 1e-8
+      |cv_rmse - golden|   <= 1e-6
+    domain: "342 cleaned penguin rows and the fixed fold file"
+    codomain: "coefficients, RMSE, R squared, CV RMSE"
+    postconditions:
+      - "FIXED_FOLDS: fold ids come from datasets/fixtures/folds.csv, never from an RNG"
+      - "NO_LEAKAGE: each fold is predicted by a model fitted without that fold"
+      - "CAN_FAIL: predicting a fold with its own training rows changes CV RMSE and fails the oracle test"
+
+proof_obligations:
+  - type: invariant
+    property: "CV RMSE equals an independent per-fold normal-equation oracle within 1e-6"
+    formal: "|cv_rmse - oracle| <= 1e-6"
+    applies_to: p2_regression_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P2-001
+    rule: "Out-of-fold predictions only"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Predict each fold with its own training rows: 3 testthat expectations fail (measured 2026-10-22)"
+    discriminates: "A leaking CV cannot match the per-fold normal-equation oracle"
+    if_fails: "Learners report an optimistic CV error"
