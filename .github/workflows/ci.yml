@@ -19,10 +19,22 @@ jobs:
           tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
       - run: make gate-shacl
+  kotlin:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Gradle (pinned, sha256-verified)
+        run: |
+          v=8.14.3; h=bd71102213493060956ec229d946beee57158dbd89d0e62b91bca0fa2c5f3531
+          curl -fsSL -o "$RUNNER_TEMP/gradle.zip" "https://services.gradle.org/distributions/gradle-$v-bin.zip"
+          echo "$h  $RUNNER_TEMP/gradle.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-$v/bin" >> "$GITHUB_PATH"
+      - run: make gate-kotlin
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl]
+    needs: [datasets, shacl, kotlin]
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
       - run: |
