@@ -5,6 +5,7 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 [ -z "${ADS_JULIA_DEPOT:-}" ] || export JULIA_DEPOT_PATH="$ADS_JULIA_DEPOT"
 pkg="$root/julia/AgenticDS.jl"
 gate="$root/julia/gate"
+cd "$root"
 find "$pkg" -name '*.cov' -delete
 julia --project="$gate" -e 'using Pkg; Pkg.instantiate()'
 julia --project="$pkg" -e 'using Pkg; Pkg.instantiate()'
@@ -19,7 +20,7 @@ for f in c
         n === 0 && println("UNCOVERED ", f.filename, ":", i)
     end
 end
-covered == total || exit(1)
+total > 0 && covered == total || (println("coverage FAIL: measured nothing or gaps"); exit(1))
 ' "$pkg"
 julia --project="$gate" -e '
 using JuliaFormatter
@@ -28,4 +29,6 @@ println("format clean: ", ok)
 ok || exit(1)
 ' "$pkg"
 find "$pkg" -name '*.cov' -delete
+for e in "$pkg"/examples/*/run.jl; do julia --project="$pkg" "$e" > /dev/null; done
+echo "examples OK"
 echo "gate-julia OK"

@@ -10,7 +10,9 @@ golden = JSON3.read(read(joinpath("datasets", "golden", "p1.json"), String))
 for row in eachrow(profile)
     g = golden.species[Symbol(row.species)]
     @assert row.n == g.n
-    @assert isapprox(row.body_mass_g_mean, g.body_mass_g.mean; atol = 1e-9)
-    @assert isapprox(row.body_mass_g_sd, g.body_mass_g.sd; atol = 1e-9)
+    for col in NUMERIC_COLS
+        @assert isapprox(row[Symbol(col, "_mean")], g[col].mean; atol = 1e-9)
+        @assert isapprox(row[Symbol(col, "_sd")], g[col].sd; atol = 1e-9)
+    end
 end
 println("contract: ads-julia-p1-v1 OK")

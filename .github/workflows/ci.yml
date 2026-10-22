@@ -20,6 +20,7 @@ jobs:
           echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
       - run: make gate-shacl
   julia:
+    timeout-minutes: 45
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
       - uses: actions/checkout@v4

@@ -24,15 +24,21 @@ const GOLDEN = JSON3.read(read(joinpath(ROOT, "datasets", "golden", "p1.json"), 
         @test eltype(clean.body_mass_g) == Float64
         # a missing sex alone keeps the row (guards the 344 -> 342 count)
         @test count(ismissing, clean.sex) > 0
-        one = DataFrame(;
-            species = ["Adelie", "Adelie"],
-            bill_length_mm = [1.0, missing],
-            bill_depth_mm = [2.0, 2.0],
-            flipper_length_mm = [3.0, 3.0],
-            body_mass_g = [4.0, 4.0],
-            sex = [missing, "male"],
+        keep = DataFrame(;
+            species = ["Adelie"],
+            bill_length_mm = [1.0],
+            bill_depth_mm = [2.0],
+            flipper_length_mm = [3.0],
+            body_mass_g = [4.0],
+            sex = [missing],
         )
-        @test nrow(na_policy(one)) == 1
+        @test nrow(na_policy(keep)) == 1
+        # a missing value in each numeric column on its own drops the row
+        for col in NUMERIC_COLS
+            one = copy(keep)
+            one[!, col] = Union{Missing,Float64}[missing]
+            @test nrow(na_policy(one)) == 0
+        end
     end
 
     @testset "summarise_by_species matches golden p1.json" begin
@@ -52,12 +58,21 @@ const GOLDEN = JSON3.read(read(joinpath(ROOT, "datasets", "golden", "p1.json"), 
         s = summarise_by_species(na_policy(read_penguins(CSV_PATH)))
         out = JSON3.read(summary_json(s))
         @test collect(keys(out.species)) == [:Adelie, :Chinstrap, :Gentoo]
-        @test out.species.Gentoo.n == GOLDEN.species.Gentoo.n
-        @test isapprox(
-            out.species.Gentoo.body_mass_g.sd,
-            GOLDEN.species.Gentoo.body_mass_g.sd;
-            atol = 1e-9,
-        )
+        for sp in keys(GOLDEN.species)
+            @test out.species[sp].n == GOLDEN.species[sp].n
+            for col in NUMERIC_COLS
+                @test isapprox(
+                    out.species[sp][col].mean,
+                    GOLDEN.species[sp][col].mean;
+                    atol = 1e-9,
+                )
+                @test isapprox(
+                    out.species[sp][col].sd,
+                    GOLDEN.species[sp][col].sd;
+                    atol = 1e-9,
+                )
+            end
+        end
     end
 end
 
