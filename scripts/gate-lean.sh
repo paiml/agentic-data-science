@@ -12,6 +12,9 @@ ax=$(lake env lean -DwarningAsError=true scripts/Axioms.lean 2>&1) || { echo "FA
 [ "$(echo "$ax" | grep -c 'depends on axioms')" = "$want" ] || { echo "FAIL axioms: expected $want theorem lines"; echo "$ax"; exit 1; }
 bad=$(echo "$ax" | grep "depends on axioms" | grep -vE "depends on axioms: \[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$")
 [ -z "$bad" ] || { echo "FAIL axioms: $bad"; exit 1; }
-out=$(lake env lean -DwarningAsError=true --run AgenticDSTest/Main.lean ../.. 2>&1) || { echo "FAIL golden parity: $out"; exit 1; }
-echo "$out" | grep -q "contract: ads-lean-p1-v1 OK$" || { echo "FAIL golden parity: $out"; exit 1; }
+for t in AgenticDSTest/P*.lean; do
+  id="ads-lean-p$(basename "$t" .lean | tr -d P)-v1"
+  out=$(lake env lean -DwarningAsError=true --run "$t" ../.. 2>&1) || { echo "FAIL golden parity $t: $out"; exit 1; }
+  echo "$out" | grep -q "contract: $id OK$" || { echo "FAIL golden parity $t: $out"; exit 1; }
+done
 echo "lean OK"

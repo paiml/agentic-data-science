@@ -1,0 +1,46 @@
+# ads-lean-p2-v1: Course E (Lean 4), Module 2, Problem P2 (verified OLS and cross-validation)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/20 and /21
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Closed-form OLS over a field with kernel-checked normal equations, and an exact-rational fit of body_mass_g ~ flipper_length_mm on Palmer Penguins that reproduces datasets/golden/p2.json."
+  references:
+    - "lean/AgenticDS/AgenticDS/Ols.lean"
+    - "lean/AgenticDS/AgenticDS/Regression.lean"
+    - "lean/AgenticDS/AgenticDSTest/P2.lean"
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, numeric parity against a golden file"
+
+equations:
+  p2_lean_ols_and_parity:
+    formula: |
+      sum (y - a - b x)       = 0                      normal equation 1
+      sum (x (y - a - b x))   = 0                      normal equation 2
+      |slope, intercept - golden| <= 1e-8
+      |R2 - golden|               <= 1e-9
+      |RMSE, CV RMSE - golden|    <= 1e-6              checked on squares, |x^2 - m| < 2 x tol
+    domain: "342 complete Penguins rows and the fixed folds.csv assignment"
+    codomain: "exact rationals compared to the R-produced golden"
+    postconditions:
+      - "NORMAL_EQUATIONS: both residual sums are exactly 0 on the real data (rational arithmetic)"
+      - "AXIOMS: ols_normal_equations and ols_residuals_sum_zero_real depend only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: a slope off by 1e-6 or a wrong fold assignment changes the golden comparison"
+
+proof_obligations:
+  - type: invariant
+    property: "The closed-form slope and intercept satisfy both normal equations"
+    formal: "#print axioms ols_normal_equations subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p2_lean_ols_and_parity
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P2-001
+    rule: "Fit and 5-fold CV equal the golden within tolerance"
+    prediction: "make gate-lean prints lean OK"
+    test: "scripts/gate-lean.sh"
+    mutation: "Change olsSlope's denominator sign in Ols.lean: the theorems stop building or the golden comparison fails"
+    discriminates: "A wrong closed form cannot satisfy the normal equations and the golden at once"
+    if_fails: "Learners prove theorems about a fit that disagrees with the R reference"
