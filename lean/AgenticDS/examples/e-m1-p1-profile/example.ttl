@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#e-m1-p1-profile> a ads:Example ;
+  ads:language "lean" ;
+  ads:course "E" ;
+  ads:module "1"^^xsd:integer ;
+  ads:problem "P1" ;
+  ads:dataset ads:penguins ;
+  ads:readme "lean/AgenticDS/examples/e-m1-p1-profile/README.md" ;
+  ads:sorryCount "0"^^xsd:integer ;
+  ads:axiomsClean true ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#16" ;
+  ads:contract "contracts/ads-lean-p1-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p1.json" .
