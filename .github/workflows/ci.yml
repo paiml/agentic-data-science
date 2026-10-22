@@ -19,10 +19,15 @@ jobs:
           tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
       - run: make gate-shacl
+  lean:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-lean
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl]
+    needs: [datasets, shacl, lean]
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
       - run: |
