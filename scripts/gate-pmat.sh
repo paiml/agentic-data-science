@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pmat quality-gate on the languages pmat can analyze (pilot R5: Rust, Kotlin; Lean has no analyzer, measured 10-22, see gate-lean).
+# pmat quality-gate on the languages pmat can analyze (pilot R5: Rust, Kotlin; Lean has no analyzer, see gate-lean).
 # Julia and R have no pmat analyzer and are gated by their native tools (gate-r, gate-julia).
 set -uo pipefail
 cd "$(dirname "$0")/.."
