@@ -10,7 +10,7 @@ end
 """
     ols_closed_form(x, y) -> NamedTuple
 
-Simple OLS by the normal equations, solved with `\\`: `(; intercept, slope)`.
+Simple OLS as the least-squares solution of `[1 x] \\ y` (QR; same coefficients as the normal equations): `(; intercept, slope)`.
 """
 function ols_closed_form(x, y)
     design = [ones(length(x)) x]

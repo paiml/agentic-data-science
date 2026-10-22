@@ -1,4 +1,5 @@
 using AgenticDS
+using CSV
 using Aqua
 using DataFrames
 using JET

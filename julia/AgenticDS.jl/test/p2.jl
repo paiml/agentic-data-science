@@ -7,6 +7,7 @@ const FOLDS_PATH = joinpath(ROOT, "datasets", "fixtures", "folds.csv")
 
     @testset "read_folds" begin
         @test length(folds) == 342
+        @test CSV.read(FOLDS_PATH, DataFrame).row == 1:342
         @test sort(unique(folds)) == 1:5
     end
 
