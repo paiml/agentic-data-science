@@ -11,6 +11,8 @@ using Statistics: mean, std
 export read_penguins, na_policy, summarise_by_species, summary_json, NUMERIC_COLS
 export read_folds, ols_closed_form, regression_metrics, fit_species, predict_species
 export cv_rmse, p2_json
+export read_split, read_centroids, confusion, accuracy, fit_species_clf, predict_species_clf
+export kmeans_fixed, p3_json
 
 const NUMERIC_COLS = [:bill_length_mm, :bill_depth_mm, :flipper_length_mm, :body_mass_g]
 
@@ -79,5 +81,6 @@ function summary_json(s)
 end
 
 include("P2.jl")
+include("P3.jl")
 
 end # module AgenticDS

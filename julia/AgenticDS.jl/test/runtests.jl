@@ -78,6 +78,7 @@ const GOLDEN = JSON3.read(read(joinpath(ROOT, "datasets", "golden", "p1.json"), 
 end
 
 include("p2.jl")
+include("p3.jl")
 
 @testset "Aqua" begin
     Aqua.test_all(AgenticDS)

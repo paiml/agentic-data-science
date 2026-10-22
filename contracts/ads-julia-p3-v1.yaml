@@ -1,0 +1,52 @@
+# ads-julia-p3-v1: Course B (Julia), Module 3, Problem P3 (species decision tree and k-means from fixed centroids)
+
+# Tickets: https://github.com/paiml/agentic-data-science/issues/33 and /34
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "fit_species_clf (hand-written CART with rpart defaults) and kmeans_fixed reproduce datasets/golden/p3.json: the confusion matrix and accuracy of the species tree on datasets/fixtures/split.csv, and the k-means objective and cluster sizes from datasets/fixtures/centroids.csv."
+  references:
+    - "julia/AgenticDS.jl/src/P3.jl"
+    - "julia/AgenticDS.jl/test/p3.jl"
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p3_matches_golden:
+    formula: |
+      tree              = CART(gini, minsplit 20, minbucket 7, cp 0.01), fitted on split == "train"
+      confusion         = golden confusion (exact), |accuracy - golden| <= 1e-12
+      |kmeans_objective - golden| <= 1e-6, cluster sizes equal
+    domain: "342 cleaned penguin rows, the fixed split file and the fixed centroid file"
+    codomain: "confusion matrix, accuracy, k-means objective, cluster sizes"
+    postconditions:
+      - "FIXED_SPLIT: train/test labels come from datasets/fixtures/split.csv, never from an RNG"
+      - "FIXED_INIT: k-means starts from datasets/fixtures/centroids.csv"
+      - "CONFUSION_TOTAL: the confusion matrix sums to the number of test rows"
+      - "CAN_FAIL: dropping the cp prune or the centroid update changes the result and fails the golden tests"
+
+proof_obligations:
+  - type: invariant
+    property: "confusion matrix equals the R golden exactly and the k-means objective is within 1e-6"
+    formal: "confusion == golden and |objective - golden| <= 1e-6"
+    applies_to: p3_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P3-001
+    rule: "Tree keeps only splits that cut at least cp of the root misclassifications"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Remove the cp prune after the recursion: 4 Julia @test expectations fail and 2 error (tree shape and golden parity; measured 2026-10-22; line numbers omitted, they drift with formatting)"
+    discriminates: "An over-grown tree cannot match the golden confusion matrix"
+    if_fails: "Learners get a tree that differs from the R reference"
+  - id: FALSIFY-ADS-JULIA-P3-002
+    rule: "k-means moves each centroid to the mean of its members"
+    prediction: "make gate-julia passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Skip the centroid update: 2 Julia @test expectations fail (k-means golden and p3_json; measured 2026-10-22)"
+    discriminates: "A k-means that never updates cannot reach the golden objective"
+    if_fails: "Learners report a k-means objective that is not a local optimum"
