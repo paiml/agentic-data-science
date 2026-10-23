@@ -40,5 +40,4 @@ echo '--- src/Stump.jl implemented: the cut with the biggest drop in n*gini'
 cat Stump/src/Stump.jl
 echo '--- green'
 julia --project=Stump Stump/test/runtests.jl 2>&1 | grep -E 'Test Summary|best_cut' | sed -E 's/ +[0-9.]+m?[0-9.]*s$//; s/ +Time$//'
-julia --project=Stump Stump/test/runtests.jl >/dev/null 2>&1
 echo "contract: b-m3 a failing best_cut test written first turns green at the midpoint OK"
