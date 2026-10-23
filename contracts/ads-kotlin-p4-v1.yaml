@@ -1,0 +1,49 @@
+# ads-kotlin-p4-v1: Course D (Kotlin), Module 4, Problem P4 (Wine Quality pipeline and benchmark)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/43 and /44
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-23"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Kotlin pipelineWine validates, splits (every fifth row is test), fits a linear quality model on the training rows and scores the held-out rows, reproducing datasets/golden/p4.json; reportTtl equals datasets/golden/p4-artifact.ttl; the DataFrame and plain-collection aggregates agree."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Wine.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/WineFit.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/WineBench.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/P4Test.kt"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_pipeline_matches_golden:
+    formula: |
+      rows                 = 1599 + 4898 = 6497
+      test rows            = {i : i mod 5 = 0, 1-based}             n_test = 1299
+      rmse, r2             = metrics of OLS(quality ~ 11 features + colour, train) on test
+      |rmse - golden|      <= 1e-6
+      aggregateFrame       = aggregateMap                           per colour, tol 1e-12
+    domain: "winequality-red.csv and winequality-white.csv"
+    codomain: "row counts, RMSE, R squared, mean quality per colour, Turtle artifact"
+    postconditions:
+      - "VALIDATE_FIRST: a missing value, a quality outside 0..10 or an unknown colour stops the pipeline"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "CENTRED_SOLVE: columns are centred and scaled before the normal equations; a constant column is refused"
+      - "NO_TIMINGS_IN_GOLDEN: timings are never part of a parity check"
+      - "CAN_FAIL: fitting on all rows fails 2 tests; an off-by-one split fails 5 (measured 2026-10-23)"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE and R squared equal the golden JSON within 1e-6"
+    formal: "|value - golden| <= 1e-6"
+    applies_to: p4_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-P4-001
+    rule: "The model never sees test rows"
+    prediction: "make gate-kotlin passes with Kover LINE = 100, BRANCH >= 95 and P4 reproducing the golden JSON"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Fit on all rows: 2 P4Test tests fail; split on i mod 5 = 0: 5 fail (measured 2026-10-23)"
+    discriminates: "A leaking or shifted split cannot match the golden held-out RMSE"
+    if_fails: "Learners report an optimistic wine-quality error"

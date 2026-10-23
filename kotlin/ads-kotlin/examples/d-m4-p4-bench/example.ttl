@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#d-m4-p4-bench> a ads:Example ;
+  ads:language "kotlin" ;
+  ads:course "D" ;
+  ads:module "4"^^xsd:integer ;
+  ads:problem "P4" ;
+  ads:dataset ads:wine-quality ;
+  ads:readme "kotlin/ads-kotlin/examples/d-m4-p4-bench/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#44" ;
+  ads:contract "contracts/ads-kotlin-p4-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p4.json" ;
+  ads:branchCasesEnumerated true .

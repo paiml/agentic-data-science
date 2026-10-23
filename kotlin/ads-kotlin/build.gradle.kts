@@ -44,6 +44,8 @@ listOf(
     "Profile" to "ProfileMain",
     "Regress" to "RegressMain",
     "Classify" to "ClassifyMain",
+    "Wine" to "WineMain",
+    "Bench" to "BenchMain",
 ).forEach { (name, cls) ->
     tasks.register<JavaExec>("run$name") {
         classpath = sourceSets["main"].runtimeClasspath

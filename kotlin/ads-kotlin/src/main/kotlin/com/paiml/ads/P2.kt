@@ -24,7 +24,7 @@ private val BASE_NAMES = listOf("(Intercept)", "flipper_length_mm")
 private fun names(levels: List<String>): List<String> = BASE_NAMES + levels.map { "species$it" }
 
 /** Solve the normal equations X'X b = X'y by Gauss-Jordan with partial pivoting; refuses a singular design. */
-private fun solveNormal(
+internal fun solveNormal(
     x: List<List<Double>>,
     y: List<Double>,
 ): List<Double> {
