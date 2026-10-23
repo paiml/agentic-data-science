@@ -3,12 +3,13 @@
 # shellcheck source=../lib.sh
 source "$(dirname "$0")/../lib.sh"
 julia --project="$PKG" -e '
-using AgenticDS, JSON3
+using AgenticDS, JSON3, DataFrames
 g = JSON3.read(read("datasets/golden/p4.json", String))
 r = pipeline_wine("datasets/wine-quality/winequality-red.csv", "datasets/wine-quality/winequality-white.csv")
+refusal(q) = try validate_wine(DataFrame(quality = [q], color = ["red"])); "accepted" catch e; e isa ArgumentError ? e.msg : "other error" end
 claims = [
   "ticket: 6497 rows split 5198 and 1299" => (r["n_rows"], r["n_train"], r["n_test"]) == (g.n_rows, g.n_train, g.n_test),
-  "validate first: bad data never reaches the fit" => try validate_wine(AgenticDS.DataFrames.DataFrame(quality = [11], color = ["red"])); false catch e; e isa ArgumentError end,
+  "validate first: quality 11 is refused by name of the rule" => refusal(11) == "quality outside 0..10" && refusal(7) == "accepted",
   "held-out RMSE equals the golden" => isapprox(r["rmse"], g.rmse; atol = 1e-6),
   "held-out R2 equals the golden" => isapprox(r["r2"], g.r2; atol = 1e-6),
 ]
