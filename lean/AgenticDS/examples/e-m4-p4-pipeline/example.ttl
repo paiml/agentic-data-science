@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#e-m4-p4-pipeline> a ads:Example ;
+  ads:language "lean" ;
+  ads:course "E" ;
+  ads:module "4"^^xsd:integer ;
+  ads:problem "P4" ;
+  ads:dataset ads:wine-quality ;
+  ads:readme "lean/AgenticDS/examples/e-m4-p4-pipeline/README.md" ;
+  ads:sorryCount "0"^^xsd:integer ;
+  ads:axiomsClean true ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#46" ;
+  ads:contract "contracts/ads-lean-p4-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p4.json" .

@@ -1,0 +1,48 @@
+# ads-lean-p4-v1: Course E (Lean 4), Module 4, Problem P4 (contracts as types: the wine pipeline)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/45 and /46
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-23"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "ValidRow carries its invariants in the type; clean, the every-fifth-row split and an exact-rational least-squares fit reproduce datasets/golden/p4.json, with the cleaning and split theorems kernel-checked."
+  references:
+    - "lean/AgenticDS/AgenticDS/Pipeline.lean"
+    - "lean/AgenticDS/AgenticDSTest/P4.lean"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, numeric parity against a golden file"
+
+equations:
+  p4_lean_pipeline_matches_golden:
+    formula: |
+      rows = 1599 + 4898 = 6497, n_train = 5198, n_test = 1299     exact
+      |rmse - golden| <= 1e-6   (checked on squares)
+      |r2 - golden|   <= 1e-6
+      |mean quality per colour - golden| <= 1e-9
+    domain: "winequality-red.csv and winequality-white.csv"
+    codomain: "row counts, RMSE, R squared, mean quality per colour"
+    postconditions:
+      - "VALIDATE_FIRST: a missing feature, a quality outside 0..10 or an unknown colour never becomes a ValidRow"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "AXIOMS: clean_length_le, clean_sub, clean_complete, clean_in_range and split_partition depend only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: fitting on all rows moves RMSE and R squared and fails the golden check (measured 2026-10-23)"
+
+proof_obligations:
+  - type: invariant
+    property: "Cleaning keeps only rows that validate, drops none that do, and never grows the list"
+    formal: "#print axioms clean_sub, clean_complete, clean_length_le subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p4_lean_pipeline_matches_golden
+  - type: invariant
+    property: "The train/test split is a partition of the rows"
+    formal: "#print axioms split_partition subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p4_lean_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P4-001
+    rule: "The model never sees test rows"
+    prediction: "make gate-lean prints lean OK"
+    test: "scripts/gate-lean.sh"
+    mutation: "Fit on all rows instead of train rows: rmse and r2 checks fail"
+    discriminates: "A leaking pipeline cannot match the golden held-out metrics"
+    if_fails: "Learners see a pipeline whose reported error is optimistic"

@@ -9,3 +9,8 @@ open AgenticDS
 #print axioms ols_residuals_sum_zero_real
 #print axioms assign_step_optimal
 #print axioms confusion_total
+#print axioms clean_length_le
+#print axioms clean_sub
+#print axioms clean_complete
+#print axioms clean_in_range
+#print axioms split_partition

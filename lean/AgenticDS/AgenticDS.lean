@@ -6,3 +6,4 @@ import AgenticDS.Regression
 import AgenticDS.Kmeans
 import AgenticDS.Confusion
 import AgenticDS.Tree
+import AgenticDS.Pipeline
