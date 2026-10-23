@@ -17,6 +17,7 @@ sp = fit_species(d)
 println("fit_species keys: ", collect(keys(sp)))
 @assert isdefined(mach, :fitresult)
 @assert isapprox(fp.intercept, g.species_model[Symbol("(Intercept)")]; atol = 1e-8)
+@assert length(fp.coefs) == 3 && all(isapprox(v, g.species_model[name]; atol = 1e-8) for (name, v) in fp.coefs)
 @assert all(isapprox(sp[k], g.species_model[Symbol(k)]; atol = 1e-8) for k in keys(sp))
 @assert round(sp["speciesGentoo"]; digits = 3) == 266.81
 println("contract: b-m2 MLJ machine, fit! and fitted_params match the species golden OK")'

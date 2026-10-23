@@ -2,9 +2,7 @@
 # B-M2 video 3: write the failing @testset for closed-form OLS first, then make it green
 # shellcheck source=../lib.sh
 source "$(dirname "$0")/../lib.sh"
-work="/tmp/ads-b-m2-scratch"
-rm -rf -- "${work:?}"
-mkdir -p "$work"
+work="$(mktemp -d)"
 trap 'rm -rf -- "${work:?}"' EXIT
 cd "$work"
 julia -e 'using Pkg; Pkg.generate("Scratch")' 2>&1 | grep -v '^\s*$'

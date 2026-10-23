@@ -13,7 +13,7 @@ mutate() {
   diff "$ADS_ROOT/julia/AgenticDS.jl/src/$file" "$sc/julia/AgenticDS.jl/src/$file" | grep '^[<>]' || true
   log="$sc/test.log"
   julia --project="$sc/julia/AgenticDS.jl" -e 'using Pkg; Pkg.test()' >"$log" 2>&1 || true
-  grep 'Test Failed at' "$log" | sed -E 's/^(.*): Test Failed at .*\/test\/(runtests\.jl:[0-9]+)$/FAIL \1 (\2)/' | head -n 8
+  grep 'Test Failed at' "$log" | sed -E 's/\x1b\[[0-9;]*m//g' | sed -E 's/^(.*): Test Failed at .*\/test\/([a-z0-9_]+\.jl:[0-9]+)$/FAIL \1 (\2)/' | head -n 8
   failed="$(grep -c 'Test Failed at' "$log" || true)"
   errored="$(grep -c 'Error During Test' "$log" || true)"
   echo "failed: $failed  errored: $errored"
