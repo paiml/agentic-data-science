@@ -1,3 +1,7 @@
 target/
 .lake/
 *.log
+kotlin/.gradle/
+kotlin/build/
+kotlin/ads-kotlin/build/
+.kotlin/
