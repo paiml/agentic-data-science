@@ -1,0 +1,44 @@
+# ads-lean-p1-v1: Course E (Lean 4), Module 1, Problem P1 (verified descriptive statistics)
+# Tickets: https://github.com/paiml/agentic-data-science/issues/15 and /16
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-22"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Lean 4 mean and variance over a field, three proved theorems, and an exact-rational profile of Palmer Penguins that reproduces datasets/golden/p1.json."
+  references:
+    - "lean/AgenticDS/AgenticDS/Stats.lean"
+    - "lean/AgenticDS/AgenticDS/Profile.lean"
+    - "lean/AgenticDS/AgenticDSTest/Main.lean"
+    - "datasets/golden/p1.json"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, numeric parity against a golden file"
+
+equations:
+  p1_lean_theorems_and_parity:
+    formula: |
+      mean (replicate n c)      = c                for n != 0
+      0 <= variance xs
+      variance (map (+ a) xs)   = variance xs
+      |profile(csv) - golden|   <= 1e-9            n, mean, sample SD per species and column
+    domain: "datasets/penguins/penguins.csv with SHA256SUMS verified"
+    codomain: "exact rationals compared to the R-produced golden"
+    postconditions:
+      - "NA_POLICY: a row is kept iff all four numeric measurements are present (342 rows)"
+      - "AXIOMS: every public theorem depends only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: dropping the NA policy changes the species counts, so parity fails"
+
+proof_obligations:
+  - type: invariant
+    property: "Theorems mean_const, variance_nonneg, variance_shift are kernel-checked and axiom-clean"
+    formal: "#print axioms T subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p1_lean_theorems_and_parity
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P1-001
+    rule: "Profile equals the golden within 1e-9 and no sorry, native_decide or SATD marker exists"
+    prediction: "make gate-lean prints lean OK"
+    test: "scripts/gate-lean.sh"
+    mutation: "Replace the NA policy in Profile.lean by defaulting NA to 0: gate-lean prints FAIL golden parity"
+    discriminates: "A profile without the NA policy cannot satisfy n = 151, 68, 123"
+    if_fails: "Learners prove theorems about a pipeline that disagrees with the R reference"

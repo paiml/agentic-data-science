@@ -33,10 +33,19 @@ jobs:
       - name: Toolchain present (checked, never installed)
         run: java -version 2>&1 | grep -q "17\." && command -v pmat
       - run: make gate-kotlin
+  lean:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mathlib oleans (download into the workspace, nothing installed on the host)
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - run: make gate-lean
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, kotlin]
+    needs: [datasets, shacl, kotlin, lean]
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
       - run: |
