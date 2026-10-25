@@ -1,0 +1,16 @@
+name = "AgenticDS"
+version = "0.1.0"
+defaultTargets = ["AgenticDS"]
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+warningAsError = true
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "AgenticDS"
+
