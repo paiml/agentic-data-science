@@ -62,3 +62,12 @@ fn can_fail_when_species_are_ignored() {
     assert!((b0 - want["species_model"]["(Intercept)"].as_f64().unwrap()).abs() > 1.0);
     assert!((b1 - want["species_model"]["flipper_length_mm"].as_f64().unwrap()).abs() > 1.0);
 }
+
+#[test]
+fn verdict_is_green_on_a_tty_and_plain_when_piped() {
+    assert_eq!(verdict("contract: x OK", false), "contract: x OK");
+    assert_eq!(
+        verdict("contract: x OK", true),
+        "\x1b[1;32mcontract: x OK\x1b[0m"
+    );
+}

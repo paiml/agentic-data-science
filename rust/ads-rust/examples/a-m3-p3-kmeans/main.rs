@@ -2,6 +2,7 @@
 //!
 //! Provable contract: ads-rust-p3-v1 (objective within 1e-6 of the golden file, cluster sizes exact).
 use ads_rust::p1::{na_policy, read_penguins};
+use ads_rust::p2::verdict;
 use ads_rust::p3::{p3_json, read_centroids, read_split};
 
 fn main() {
@@ -27,5 +28,9 @@ fn main() {
         d <= 1e-6 && got["kmeans"]["cluster_sizes"] == g["kmeans"]["cluster_sizes"],
         "diff {d}"
     );
-    println!("contract: ads-rust-p3-v1 kmeans max |diff| = {d:e} OK");
+    let line = format!("contract: ads-rust-p3-v1 kmeans max |diff| = {d:e} OK");
+    println!(
+        "{}",
+        verdict(&line, std::io::IsTerminal::is_terminal(&std::io::stdout()))
+    );
 }

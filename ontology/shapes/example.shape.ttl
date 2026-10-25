@@ -10,8 +10,14 @@ ads:ExampleShape a sh:NodeShape ;
   sh:property [ sh:path ads:problem ; sh:in ("P1" "P2" "P3" "P4") ; sh:minCount 1 ] ;
   sh:property [ sh:path ads:dataset ; sh:class ads:Dataset ; sh:minCount 1 ] ;
   sh:property [ sh:path ads:readme ; sh:datatype xsd:string ; sh:pattern "README\\.md$" ; sh:minCount 1 ] ;
-  sh:property [ sh:path ads:lineCoverage ; sh:datatype xsd:decimal ; sh:minInclusive 100.0 ] ;
   sh:property [ sh:path ads:lintWarnings ; sh:datatype xsd:integer ; sh:maxInclusive 0 ] ;
+  sh:or (
+    [ sh:property [ sh:path ads:lineCoverage ; sh:datatype xsd:decimal ; sh:minCount 1 ; sh:minInclusive 100.0 ] ;
+      sh:property [ sh:path ads:language ; sh:in ("rust" "julia" "r" "kotlin") ] ]
+    [ sh:property [ sh:path ads:language ; sh:hasValue "lean" ] ;
+      sh:property [ sh:path ads:sorryCount ; sh:datatype xsd:integer ; sh:minCount 1 ; sh:maxInclusive 0 ] ;
+      sh:property [ sh:path ads:axiomsClean ; sh:datatype xsd:boolean ; sh:minCount 1 ; sh:hasValue true ] ]
+  ) ;
   sh:property [ sh:path ads:ticket ; sh:pattern "^#[0-9]+$" ; sh:minCount 1 ] ;
   sh:property [ sh:path ads:contract ; sh:minCount 1 ] ;
   sh:property [ sh:path ads:parityGolden ; sh:minCount 1 ] .

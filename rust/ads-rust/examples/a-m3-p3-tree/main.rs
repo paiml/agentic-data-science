@@ -2,6 +2,7 @@
 //!
 //! Provable contract: ads-rust-p3-v1 (confusion matrix equals the golden file exactly).
 use ads_rust::p1::{na_policy, read_penguins};
+use ads_rust::p2::verdict;
 use ads_rust::p3::{p3_json, read_centroids, read_split};
 
 fn main() {
@@ -21,5 +22,9 @@ fn main() {
     )
     .expect("parse");
     assert_eq!(got["confusion"], g["confusion"]);
-    println!("contract: ads-rust-p3-v1 confusion equals golden OK");
+    let line = "contract: ads-rust-p3-v1 confusion equals golden OK";
+    println!(
+        "{}",
+        verdict(line, std::io::IsTerminal::is_terminal(&std::io::stdout()))
+    );
 }
