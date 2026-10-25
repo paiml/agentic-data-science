@@ -1,17 +1,27 @@
-measure_cols <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+measure_cols <- c(
+  "bill_length_mm", "bill_depth_mm",
+  "flipper_length_mm", "body_mass_g"
+)
 
 #' Read the fixed train/test split (one label per clean row).
 #' @param path Path to split.csv.
 #' @export
 read_split <- function(path) {
-  readr::read_csv(path, col_types = readr::cols(row = "i", set = "c"))$set
+  readr::read_csv(
+    path,
+    col_types = readr::cols(row = "i", set = "c")
+  )$set
 }
 
-#' Read the fixed initial centroids as a matrix (one row per cluster).
+#' Read the fixed initial centroids as a matrix (one row per
+#' cluster).
 #' @param path Path to centroids.csv.
 #' @export
 read_centroids <- function(path) {
-  df <- readr::read_csv(path, col_types = readr::cols(cluster = "i", .default = "d"))
+  df <- readr::read_csv(
+    path,
+    col_types = readr::cols(cluster = "i", .default = "d")
+  )
   as.matrix(df[, measure_cols])
 }
 
@@ -29,15 +39,20 @@ accuracy <- function(truth, pred) {
   mean(truth == pred)
 }
 
-#' Fit a species decision tree (rpart through parsnip, deterministic).
+#' Fit a species decision tree (rpart through parsnip,
+#' deterministic).
 #' @param train Training rows of the cleaned penguins tibble.
 #' @export
 fit_species_clf <- function(train) {
   train$species <- factor(train$species)
   spec <- parsnip::set_mode(
-    parsnip::set_engine(parsnip::decision_tree(), "rpart"), "classification"
+    parsnip::set_engine(parsnip::decision_tree(), "rpart"),
+    "classification"
   )
-  parsnip::fit(spec, species ~ bill_length_mm + bill_depth_mm + flipper_length_mm + body_mass_g,
+  parsnip::fit(
+    spec,
+    species ~ bill_length_mm + bill_depth_mm +
+      flipper_length_mm + body_mass_g,
     data = train
   )
 }
@@ -70,7 +85,9 @@ kmeans_fixed <- function(df, centroids, max_iter = 100L) {
     cluster <- new_cluster
     for (k in seq_len(nrow(cen))) {
       members <- cluster == k
-      if (any(members)) cen[k, ] <- colMeans(z[members, , drop = FALSE])
+      if (any(members)) {
+        cen[k, ] <- colMeans(z[members, , drop = FALSE])
+      }
     }
   }
   objective <- sum((z - cen[cluster, , drop = FALSE])^2)
@@ -89,7 +106,10 @@ kmeans_fixed <- function(df, centroids, max_iter = 100L) {
 p3_json <- function(df, split, centroids) {
   fit <- fit_species_clf(df[split == "train", ])
   pred <- predict_species_clf(fit, df[split == "test", ])
-  truth <- factor(df$species[split == "test"], levels = levels(pred))
+  truth <- factor(
+    df$species[split == "test"],
+    levels = levels(pred)
+  )
   cm <- confusion(truth, pred)
   km <- kmeans_fixed(df, centroids)
   jsonlite::toJSON(
@@ -99,7 +119,9 @@ p3_json <- function(df, split, centroids) {
       classes = levels(pred),
       kmeans = list(
         objective = km$objective,
-        cluster_sizes = as.integer(tabulate(km$cluster, nbins = nrow(centroids)))
+        cluster_sizes = as.integer(
+          tabulate(km$cluster, nbins = nrow(centroids))
+        )
       )
     ),
     auto_unbox = TRUE, digits = NA, pretty = TRUE

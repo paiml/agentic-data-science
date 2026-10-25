@@ -9,13 +9,16 @@ read_wine <- function(red, white) {
   )
 }
 
-#' Stop on a missing value, a quality outside 0..10, or an unknown colour.
+#' Stop on a missing value, a quality outside 0..10, or an unknown
+#' colour.
 #' @param df Wine tibble.
 #' @return `df`, unchanged, when valid.
 #' @export
 validate_wine <- function(df) {
   if (anyNA(df)) stop("wine data has missing values")
-  if (any(df$quality < 0L | df$quality > 10L)) stop("quality outside 0..10")
+  if (any(df$quality < 0L | df$quality > 10L)) {
+    stop("quality outside 0..10")
+  }
   if (!all(df$color %in% c("red", "white"))) stop("unknown color")
   df
 }
@@ -28,7 +31,8 @@ split_wine <- function(df) {
   list(train = df[!is_test, ], test = df[is_test, ])
 }
 
-#' Validate, split, fit a linear quality model, score it on the test rows.
+#' Validate, split, fit a linear quality model, score it on the
+#' test rows.
 #' @param red,white Paths to the two CSV files.
 #' @export
 pipeline_wine <- function(red, white) {
@@ -39,7 +43,9 @@ pipeline_wine <- function(red, white) {
   m <- agenticds::regression_metrics(s$test$quality, pred)
   by_color <- tapply(df$quality, df$color, mean)
   list(
-    n_rows = nrow(df), n_train = nrow(s$train), n_test = nrow(s$test),
+    n_rows = nrow(df),
+    n_train = nrow(s$train),
+    n_test = nrow(s$test),
     rmse = m$rmse, r2 = m$r2,
     mean_quality_by_color = as.list(by_color)
   )
@@ -52,7 +58,11 @@ aggregate_dplyr <- function(df) {
   df |>
     dplyr::group_by(dplyr::across(dplyr::all_of("color"))) |>
     dplyr::summarise(
-      dplyr::across(dplyr::all_of("quality"), mean, .names = "mean_quality"),
+      dplyr::across(
+        dplyr::all_of("quality"),
+        mean,
+        .names = "mean_quality"
+      ),
       n = dplyr::n(), .groups = "drop"
     ) |>
     as.data.frame()
@@ -81,7 +91,10 @@ bench_wine <- function(df, reps = 20L) {
   }
   data.frame(
     engine = c("dplyr", "data.table"),
-    seconds = c(time_one(aggregate_dplyr), time_one(aggregate_data_table))
+    seconds = c(
+      time_one(aggregate_dplyr),
+      time_one(aggregate_data_table)
+    )
   )
 }
 
@@ -91,7 +104,10 @@ bench_wine <- function(df, reps = 20L) {
 #' @export
 write_golden <- function(res, path) {
   writeLines(
-    as.character(jsonlite::toJSON(res, auto_unbox = TRUE, digits = NA, pretty = TRUE)),
+    as.character(jsonlite::toJSON(
+      res,
+      auto_unbox = TRUE, digits = NA, pretty = TRUE
+    )),
     path
   )
 }

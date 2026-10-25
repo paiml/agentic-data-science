@@ -1,12 +1,22 @@
 root_dir <- function() {
-  Sys.getenv("ADS_ROOT", unset = normalizePath(file.path("..", "..", "..", "..")))
+  Sys.getenv(
+    "ADS_ROOT",
+    unset = normalizePath(file.path("..", "..", "..", ".."))
+  )
 }
 clean_df <- function() {
-  path <- file.path(root_dir(), "datasets", "penguins", "penguins.csv")
+  path <- file.path(
+    root_dir(), "datasets", "penguins", "penguins.csv"
+  )
   agenticds::na_policy(agenticds::read_penguins(path))
 }
-fixture <- function(name) file.path(root_dir(), "datasets", "fixtures", name)
-feats <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g")
+fixture <- function(name) {
+  file.path(root_dir(), "datasets", "fixtures", name)
+}
+feats <- c(
+  "bill_length_mm", "bill_depth_mm", "flipper_length_mm",
+  "body_mass_g"
+)
 
 test_that("read_split and read_centroids load the fixtures", {
   s <- read_split(fixture("split.csv"))
@@ -36,19 +46,26 @@ test_that("the species tree classifies the fixed test split", {
   expect_equal(levels(pred), c("Adelie", "Chinstrap", "Gentoo"))
 })
 
-test_that("kmeans_fixed matches stats::kmeans Lloyd from the same centroids", {
+test_that("kmeans_fixed matches stats::kmeans Lloyd", {
   df <- clean_df()
   cen <- read_centroids(fixture("centroids.csv"))
   km <- kmeans_fixed(df, cen)
   z <- scale(as.matrix(df[, feats]))
-  zc <- scale(cen, center = attr(z, "scaled:center"), scale = attr(z, "scaled:scale"))
-  ref <- stats::kmeans(z, centers = zc, algorithm = "Lloyd", iter.max = 100)
+  zc <- scale(
+    cen,
+    center = attr(z, "scaled:center"),
+    scale = attr(z, "scaled:scale")
+  )
+  ref <- stats::kmeans(
+    z,
+    centers = zc, algorithm = "Lloyd", iter.max = 100
+  )
   expect_equal(km$cluster, unname(ref$cluster))
   expect_equal(km$objective, ref$tot.withinss, tolerance = 1e-6)
   expect_equal(dim(km$centers), c(3L, 4L))
 })
 
-test_that("kmeans_fixed keeps the centroid of a cluster that ends up empty", {
+test_that("kmeans_fixed keeps the centroid of an emptied cluster", {
   df <- tibble::tibble(
     bill_length_mm = c(0, 1), bill_depth_mm = c(0, 1),
     flipper_length_mm = c(0, 1), body_mass_g = c(0, 1)
@@ -61,7 +78,9 @@ test_that("kmeans_fixed keeps the centroid of a cluster that ends up empty", {
 })
 
 test_that("p3 summary matches the committed golden", {
-  golden <- jsonlite::fromJSON(file.path(root_dir(), "datasets", "golden", "p3.json"))
+  golden <- jsonlite::fromJSON(
+    file.path(root_dir(), "datasets", "golden", "p3.json")
+  )
   df <- clean_df()
   got <- jsonlite::fromJSON(p3_json(
     df, read_split(fixture("split.csv")),
@@ -69,6 +88,12 @@ test_that("p3 summary matches the committed golden", {
   ))
   expect_equal(got$accuracy, golden$accuracy)
   expect_equal(got$confusion, golden$confusion)
-  expect_equal(got$kmeans$objective, golden$kmeans$objective, tolerance = 1e-6)
-  expect_equal(got$kmeans$cluster_sizes, golden$kmeans$cluster_sizes)
+  expect_equal(
+    got$kmeans$objective, golden$kmeans$objective,
+    tolerance = 1e-6
+  )
+  expect_equal(
+    got$kmeans$cluster_sizes,
+    golden$kmeans$cluster_sizes
+  )
 })

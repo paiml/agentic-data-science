@@ -1,11 +1,22 @@
-# P2 (a): closed-form OLS. Usage: ADS_ROOT=/path/to/repo Rscript run.R
+# P2 (a): closed-form OLS.
+# Usage: ADS_ROOT=/path/to/repo Rscript run.R
 root <- Sys.getenv("ADS_ROOT", unset = ".")
 library(agenticds)
-d <- na_policy(read_penguins(file.path(root, "datasets", "penguins", "penguins.csv")))
+d <- na_policy(read_penguins(
+  file.path(root, "datasets", "penguins", "penguins.csv")
+))
 fit0 <- ols_closed_form(d$flipper_length_mm, d$body_mass_g)
 print(fit0)
-g <- jsonlite::fromJSON(file.path(root, "datasets", "golden", "p2.json"))
+g <- jsonlite::fromJSON(
+  file.path(root, "datasets", "golden", "p2.json")
+)
 fit <- ols_closed_form(d$flipper_length_mm, d$body_mass_g)
-stopifnot(isTRUE(all.equal(unname(fit[["intercept"]]), g$ols$intercept, tolerance = 1e-9)))
-stopifnot(isTRUE(all.equal(unname(fit[["slope"]]), g$ols$slope, tolerance = 1e-9)))
+stopifnot(isTRUE(all.equal(
+  unname(fit[["intercept"]]), g$ols$intercept,
+  tolerance = 1e-9
+)))
+stopifnot(isTRUE(all.equal(
+  unname(fit[["slope"]]), g$ols$slope,
+  tolerance = 1e-9
+)))
 cat("contract: ads-r-p2 ols matches golden/p2.json OK\n")

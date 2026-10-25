@@ -1,12 +1,22 @@
-# P4 (a): Wine Quality pipeline. Usage: ADS_ROOT=/path/to/repo Rscript run.R
+# P4 (a): Wine Quality pipeline.
+# Usage: ADS_ROOT=/path/to/repo Rscript run.R
 root <- Sys.getenv("ADS_ROOT", unset = ".")
 library(agenticds)
-red <- file.path(root, "datasets", "wine-quality", "winequality-red.csv")
-white <- file.path(root, "datasets", "wine-quality", "winequality-white.csv")
+wine_dir <- file.path(root, "datasets", "wine-quality")
+red <- file.path(wine_dir, "winequality-red.csv")
+white <- file.path(wine_dir, "winequality-white.csv")
 res <- pipeline_wine(red, white)
-cat(sprintf("rows %d (train %d, test %d)\n", res$n_rows, res$n_train, res$n_test))
+cat(sprintf(
+  "rows %d (train %d, test %d)\n",
+  res$n_rows, res$n_train, res$n_test
+))
 cat(sprintf("rmse %.6f  r2 %.6f\n", res$rmse, res$r2))
 report_ttl(res, file.path(tempdir(), "wine-report-artifact.ttl"))
-g <- jsonlite::fromJSON(file.path(root, "datasets", "golden", "p4.json"))
-stopifnot(res$n_rows == g$n_rows, isTRUE(all.equal(res$rmse, g$rmse, tolerance = 1e-9)))
+g <- jsonlite::fromJSON(
+  file.path(root, "datasets", "golden", "p4.json")
+)
+stopifnot(
+  res$n_rows == g$n_rows,
+  isTRUE(all.equal(res$rmse, g$rmse, tolerance = 1e-9))
+)
 cat("contract: ads-r-p4 pipeline matches golden/p4.json OK\n")

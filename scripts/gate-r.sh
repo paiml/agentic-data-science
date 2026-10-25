@@ -4,8 +4,10 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 export ADS_ROOT="$root"
 [ -z "${ADS_RLIB:-}" ] || export R_LIBS="$ADS_RLIB"
+[ "${CI:-}" != true ] || [ -n "${ADS_RLIB:-}" ] || { echo "gate-r: ADS_RLIB unset in CI"; exit 1; }
 cd "$root/r/agenticds"
 Rscript -e '
+if (identical(Sys.getenv("CI"), "true")) stopifnot(setequal(normalizePath(.libPaths()), normalizePath(c(Sys.getenv("ADS_RLIB"), .Library))))
 cov <- covr::package_coverage(".")
 p <- covr::percent_coverage(cov)
 cat("covr:", p, "\n")

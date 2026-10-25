@@ -1,11 +1,24 @@
-# P3 (b): k-means from fixed centroids. Usage: ADS_ROOT=/path/to/repo Rscript run.R
+# P3 (b): k-means from fixed centroids.
+# Usage: ADS_ROOT=/path/to/repo Rscript run.R
 root <- Sys.getenv("ADS_ROOT", unset = ".")
 library(agenticds)
-d <- na_policy(read_penguins(file.path(root, "datasets", "penguins", "penguins.csv")))
-km <- kmeans_fixed(d, read_centroids(file.path(root, "datasets", "fixtures", "centroids.csv")))
+d <- na_policy(read_penguins(
+  file.path(root, "datasets", "penguins", "penguins.csv")
+))
+km <- kmeans_fixed(d, read_centroids(
+  file.path(root, "datasets", "fixtures", "centroids.csv")
+))
 cat("objective:", km$objective, "\n")
 print(table(km$cluster))
-g <- jsonlite::fromJSON(file.path(root, "datasets", "golden", "p3.json"))
-stopifnot(isTRUE(all.equal(km$objective, g$kmeans$objective, tolerance = 1e-9)))
-stopifnot(identical(as.integer(table(km$cluster)), as.integer(g$kmeans$cluster_sizes)))
+g <- jsonlite::fromJSON(
+  file.path(root, "datasets", "golden", "p3.json")
+)
+stopifnot(isTRUE(all.equal(
+  km$objective, g$kmeans$objective,
+  tolerance = 1e-9
+)))
+stopifnot(identical(
+  as.integer(table(km$cluster)),
+  as.integer(g$kmeans$cluster_sizes)
+))
 cat("contract: ads-r-p3 kmeans matches golden/p3.json OK\n")

@@ -1,10 +1,18 @@
 root_dir <- function() {
-  Sys.getenv("ADS_ROOT", unset = normalizePath(file.path("..", "..", "..", "..")))
+  Sys.getenv(
+    "ADS_ROOT",
+    unset = normalizePath(file.path("..", "..", "..", ".."))
+  )
 }
 wine_path <- function(color) {
-  file.path(root_dir(), "datasets", "wine-quality", paste0("winequality-", color, ".csv"))
+  file.path(
+    root_dir(), "datasets", "wine-quality",
+    paste0("winequality-", color, ".csv")
+  )
 }
-wine_df <- function() agenticds::read_wine(wine_path("red"), wine_path("white"))
+wine_df <- function() {
+  agenticds::read_wine(wine_path("red"), wine_path("white"))
+}
 
 test_that("read_wine binds both colours with typed columns", {
   df <- wine_df()
@@ -14,7 +22,7 @@ test_that("read_wine binds both colours with typed columns", {
   expect_true(is.integer(df$quality))
 })
 
-test_that("validate_wine accepts the data and rejects each defect", {
+test_that("validate_wine accepts the data and rejects defects", {
   df <- wine_df()
   expect_identical(validate_wine(df), df)
   na_df <- df
@@ -36,17 +44,20 @@ test_that("split_wine sends every fifth row to test", {
   expect_equal(s$test$alcohol[1], df$alcohol[5])
 })
 
-test_that("pipeline_wine scores a linear quality model on the held-out rows", {
+test_that("pipeline_wine scores a linear model on held-out rows", {
   res <- pipeline_wine(wine_path("red"), wine_path("white"))
   s <- split_wine(wine_df())
   fit <- stats::lm(quality ~ ., data = s$train)
   pred <- stats::predict(fit, newdata = s$test)
-  expect_equal(res$rmse, sqrt(mean((s$test$quality - pred)^2)), tolerance = 1e-6)
+  expect_equal(
+    res$rmse, sqrt(mean((s$test$quality - pred)^2)),
+    tolerance = 1e-6
+  )
   expect_equal(res$n_rows, 6497L)
   expect_equal(names(res$mean_quality_by_color), c("red", "white"))
 })
 
-test_that("dplyr and data.table aggregates agree and bench_wine times both", {
+test_that("dplyr and data.table agree and bench_wine times both", {
   df <- wine_df()
   a <- aggregate_dplyr(df)
   b <- aggregate_data_table(df)
@@ -72,7 +83,9 @@ test_that("write_golden and report_ttl write the artifacts", {
 })
 
 test_that("p4 summary matches the committed golden", {
-  golden <- jsonlite::fromJSON(file.path(root_dir(), "datasets", "golden", "p4.json"))
+  golden <- jsonlite::fromJSON(
+    file.path(root_dir(), "datasets", "golden", "p4.json")
+  )
   res <- pipeline_wine(wine_path("red"), wine_path("white"))
   tmp <- withr::local_tempdir()
   write_golden(res, file.path(tmp, "p4.json"))
