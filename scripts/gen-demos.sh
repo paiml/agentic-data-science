@@ -22,7 +22,7 @@ w() { # idx name title command
 w 01 example-one "run $e1" "$EX $e1"
 w 02 example-two "run $e2" "$EX $e2"
 w 03 unit-tests "the $t tests, golden parity and mutants" "cargo test --locked --manifest-path rust/ads-rust/Cargo.toml --test $t"
-w 04 golden-json "the committed golden file" "head -28 <(jq . datasets/golden/$t.json)"
+w 04 golden-json "the committed golden file" "out=\$(jq . datasets/golden/$t.json); head -28 <<<\"\$out\""
 w 05 contract-yaml "the provable contract for $t" "head -28 contracts/ads-rust-$t-v1.yaml"
 w 06 fixture "the fixture the run reads" "$fx"
 w 07 shacl "make gate-shacl" "make gate-shacl"
