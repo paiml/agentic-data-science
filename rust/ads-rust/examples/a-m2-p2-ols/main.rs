@@ -20,5 +20,13 @@ fn main() {
         .abs()
         .max((b1 - g["ols"]["slope"].as_f64().expect("b1")).abs());
     assert!(d <= 1e-8, "diff {d}");
-    println!("contract: ads-rust-p2-v1 ols max |diff| = {d:e} OK");
+    let green = if std::io::IsTerminal::is_terminal(&std::io::stdout()) {
+        ("\x1b[1;32m", "\x1b[0m")
+    } else {
+        ("", "")
+    };
+    println!(
+        "{}contract: ads-rust-p2-v1 ols max |diff| = {d:e} OK{}",
+        green.0, green.1
+    );
 }
