@@ -24,6 +24,46 @@ Specialization: https://www.coursera.org/specialization/agentic-data-science (li
 - `ontology/`: vocabulary and SHACL shapes that every example's `example.ttl` must satisfy.
 - Language packages (`r/`, `julia/`, `kotlin/`, `rust/`, `lean/`) are added as each course's examples land.
 
+## Set up your machine
+
+Continuous integration runs these same steps on a stock GitHub-hosted machine (Ubuntu 24.04), and a weekly check repeats the learner steps on the latest Ubuntu and macOS. Run them from the repository root.
+
+### Ubuntu and macOS (all courses)
+
+Lean 4 (Course E): install elan once, then fetch the Mathlib oleans and build; `lean-toolchain` pins the Lean version.
+
+```bash
+curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+cd lean/AgenticDS
+lake exe cache get
+lake build
+```
+
+Julia 1.12 (Course B): install Julia from https://julialang.org/downloads/, then:
+
+```bash
+julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
+julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
+for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
+```
+
+R 4.5 (Course C): install R from https://cran.r-project.org, then the packages named in `r/agenticds/DESCRIPTION`, then:
+
+```bash
+R CMD INSTALL r/agenticds
+for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
+```
+
+### Ubuntu only
+
+The CI R job installs these system libraries first; do the same on your own Ubuntu machine:
+
+```bash
+sudo apt-get install -y libblas3 liblapack3 gfortran
+```
+
+Quality tools (styler, lintr, covr, JuliaFormatter, Coverage.jl, Apache Jena) are not needed to run the examples; they run in separate pinned CI jobs (`make gate`).
+
 ## Run the gates
 
 ```bash

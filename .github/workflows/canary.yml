@@ -1,0 +1,61 @@
+name: canary
+on:
+  schedule: [{ cron: "17 5 * * 1" }]
+  workflow_dispatch: {}
+jobs:
+  julia:
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, macos-latest] }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with: { version: "1.12" }
+      - name: Install the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
+      - name: Test the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
+      - name: Run the examples
+        run: for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
+  r:
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, macos-latest] }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y libblas3 liblapack3 gfortran
+      - uses: r-lib/actions/setup-r@v2
+        with: { r-version: release, use-public-rspm: true }
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with: { working-directory: r/agenticds }
+      - name: Install the package
+        run: R CMD INSTALL r/agenticds
+      - name: Test the package
+        run: Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", package = "agenticds", load_package = "installed")'
+        env: { ADS_ROOT: "${{ github.workspace }}" }
+      - name: Run the examples
+        run: for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
+  lean:
+    strategy:
+      fail-fast: false
+      matrix: { os: [ubuntu-latest, macos-latest] }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Mathlib oleans
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - name: Build
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake build
