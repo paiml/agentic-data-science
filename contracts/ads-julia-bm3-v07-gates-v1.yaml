@@ -1,0 +1,53 @@
+# ads-julia-bm3-v07-gates-v1: Course B (Julia), Module 3, scene v07-gates (native Pkg.test gate)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v07_gates.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v07 (shell scene): the recorder types the native gates at a shell prompt, each followed by a separate echo 'exit=$?' (run1..runN in the manifest, equal to GATES in the shown file): a native julia --project=julia/gate -e JuliaFormatter check on julia/BM3 and the full Pkg.test. Golden parity and scene-file limits are tests in that suite; julia/BM3/gate/v07.jl runs the commands after it"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v07_gates.jl"
+    - "julia/BM3/scenes/v07-gates.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "julia/BM3/gate/v07.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_07_scene_matches_golden:
+    formula: |
+      gate = julia --project=julia/BM3 -e Pkg.test(), exit 0; the suite holds tree golden, k-means golden, scene limits
+      scene limits                     = lines <= 25, columns <= 56, no backslash
+      tree 83/85, k-means objective 378.2936
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "GATE_GREEN: the tree and k-means equal the golden and every scene file keeps its limits, so the suite exits 0 and prints Testing BM3 tests passed"
+      - "LIMITS_READ_FROM_MANIFESTS: the limit check reads every scene manifest and its shown file"
+      - "CAN_FAIL: a shown file with too many lines, a long line or a backslash makes the limit check false"
+
+proof_obligations:
+  - type: invariant
+    property: "The native gates are green and their final frame shows the evidence"
+    formal: "the final 16 rows hold Test Summary, the ready string Testing BM3 tests passed and exit=0"
+    applies_to: bm3_07_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V07-001
+    rule: "The native Pkg.test gate is green on the committed scenes"
+    prediction: "the final frame shows Test Summary, Testing BM3 tests passed and exit=0"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()' && julia julia/BM3/gate/v07.jl"
+    mutation: "Add a 26 line scene file to a scratch scenes folder: limits_ok returns false (testset: can fail)"
+    discriminates: "A scene file over its 25 line budget cannot pass the gate"
+    if_fails: "The scenes could outgrow the frame without anything failing"
+  - id: FALSIFY-ADS-JULIA-BM3-V07-002
+    rule: "A long line or a backslash fails the limit check"
+    prediction: "limits_ok is false for a 57 column line and for a line with a backslash"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Write a 57 column line and a backslash line in scratch scene files: both return false"
+    discriminates: "A shown file the frame checker would misread cannot pass"
+    if_fails: "The recording would show a clipped or misread file"

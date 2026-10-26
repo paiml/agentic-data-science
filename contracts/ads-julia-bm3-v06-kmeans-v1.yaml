@@ -1,0 +1,53 @@
+# ads-julia-bm3-v06-kmeans-v1: Course B (Julia), Module 3, scene v06-kmeans (k-means)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v06_kmeans.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v06: Lloyd k-means on z-scored features from the fixed start centres"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v06_kmeans.jl"
+    - "julia/BM3/scenes/v06-kmeans.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_06_scene_matches_golden:
+    formula: |
+      k-means (k = 3, z-scored, fixed start centres) objective after 1 pass = 394.3003
+      converged objective              = 378.2936 within 1e-6 relative
+      cluster sizes                    = [133, 123, 86]
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "OBJECTIVE_GOLDEN: the converged within-cluster sum of squares equals the golden 378.293614632478"
+      - "SIZES_GOLDEN: the cluster sizes are 133, 123 and 86"
+      - "MONOTONE: one pass of Lloyd never has a lower objective than the converged run"
+      - "CAN_FAIL: a run without the centroid update stays at the start centres, so the objective and the sizes differ from golden"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_06_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V06-001
+    rule: "Lloyd converges to the golden objective and sizes"
+    prediction: "BM3.V06.main() prints golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Keep the start centres (drop the centroid update): the objective and sizes differ from golden and the verdict prints false (testset: can fail)"
+    discriminates: "A loop that never moves the centres cannot print green"
+    if_fails: "The clustering shown would not be the golden clustering"
+  - id: FALSIFY-ADS-JULIA-BM3-V06-002
+    rule: "One pass has an objective at least the converged one"
+    prediction: "lloyd with iters = 1 returns 394.3003 which is at least 378.2936"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Return the converged centres after one pass: the first number equals the last"
+    discriminates: "A run that skips the first pass would show one number twice"
+    if_fails: "The narration about progress would not hold"

@@ -1,0 +1,53 @@
+# ads-julia-bm3-v09-examples-v1: Course B (Julia), Module 3, scene v09-examples (examples)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v09_examples.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v09: the tree and k-means examples print the golden numbers"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v09_examples.jl"
+    - "julia/BM3/scenes/v09-examples.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_09_scene_matches_golden:
+    formula: |
+      classes                          = Adelie, Chinstrap, Gentoo
+      confusion                        = [37 0 0; 0 16 1; 0 1 30]
+      accuracy                         = 0.9764705882352941 (83/85)
+      k-means objective, sizes         = 378.2936, [133, 123, 86]
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "TREE_EXAMPLE: the printed confusion matrix equals the golden matrix and the accuracy is 83/85"
+      - "KMEANS_EXAMPLE: the printed objective equals the golden 378.2936 and the sizes are 133, 123 and 86"
+      - "CAN_FAIL: a skewed matrix or other sizes make the example return false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_09_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V09-001
+    rule: "The tree example prints the golden confusion matrix"
+    prediction: "tree_part prints the matrix and returns true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Move one prediction: the matrix differs and hits changes (testset: can fail)"
+    discriminates: "A different matrix cannot return true"
+    if_fails: "The example would print numbers that the contract does not hold"
+  - id: FALSIFY-ADS-JULIA-BM3-V09-002
+    rule: "The k-means example prints the golden objective and sizes"
+    prediction: "kmeans_part prints 378.2936 and returns true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Compare against sizes [133, 123, 85]: the example would return false"
+    discriminates: "A different cluster split cannot return true"
+    if_fails: "The example would drift from the golden file"

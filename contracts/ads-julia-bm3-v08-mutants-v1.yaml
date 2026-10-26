@@ -1,0 +1,51 @@
+# ads-julia-bm3-v08-mutants-v1: Course B (Julia), Module 3, scene v08-mutants (mutants)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v08_mutants.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v08: two mutants applied in a sandbox module are caught by the golden checks"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v08_mutants.jl"
+    - "julia/BM3/scenes/v08-mutants.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_08_scene_matches_golden:
+    formula: |
+      mutant 1                         = k-means without its centroid update (mean replaced by the old centre)
+      mutant 2                         = best_cut with gain >= best (later tie wins, cut 3.5 instead of 1.5)
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "KMEANS_MUTANT_CAUGHT: with no centroid update the objective differs from the golden 378.2936"
+      - "TIE_MUTANT_CAUGHT: with the later tie winning the toy tie returns the cut 3.5 and not 1.5"
+      - "CAN_FAIL: a replacement that matches nothing raises an error and a harmless replacement survives"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_08_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V08-001
+    rule: "Both mutants are caught"
+    prediction: "BM3.V08.main() prints caught: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace gain > b by itself: the tie check returns false, the mutant survives (testset: can fail)"
+    discriminates: "A change that does not alter behaviour is reported as SURVIVED"
+    if_fails: "A suite that cannot tell broken code from working code would print green"
+  - id: FALSIFY-ADS-JULIA-BM3-V08-002
+    rule: "A mutation that matches nothing is an error"
+    prediction: "mut raises when the text to replace is absent"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Ask for a text that is not in the source: the call raises"
+    discriminates: "A mutant that changes nothing cannot be counted as caught"
+    if_fails: "Zero changes would be reported as a kill"

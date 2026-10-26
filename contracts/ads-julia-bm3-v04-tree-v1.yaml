@@ -1,0 +1,52 @@
+# ads-julia-bm3-v04-tree-v1: Course B (Julia), Module 3, scene v04-tree (grow a tree)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v04_tree.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v04: grow the classification tree with rpart settings and score it on the 85 test rows"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v04_tree.jl"
+    - "julia/BM3/scenes/v04-tree.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_04_scene_matches_golden:
+    formula: |
+      tree splits                      = flipper_length_mm < 207.5, then bill_length_mm < 43.35 (left of 207.5 only)
+      settings                         = minsplit 20, minbucket 7, cp 0.01
+      test accuracy                    = 83/85 = 0.976470588235294 within 1e-12
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "TREE_SHAPE: grow returns the two-split tree flipper_length_mm 207.5 and bill_length_mm 43.35"
+      - "ACCURACY_GOLDEN: the tree scores 83 of the 85 test rows, 0.976470588235294 within 1e-12"
+      - "CAN_FAIL: a larger cp prunes the lower split and a shifted cut changes the outline, so the verdict prints false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_04_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V04-001
+    rule: "The grown tree has the two golden splits"
+    prediction: "BM3.V04.main() prints the tree and golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Scale root_err up by 1e6 (the same as a huge cp): every split is pruned to one leaf and the outline check fails (testset: can fail)"
+    discriminates: "A tree with a different outline cannot print a green verdict"
+    if_fails: "The printed tree would not be the tree the golden accuracy was measured on"
+  - id: FALSIFY-ADS-JULIA-BM3-V04-002
+    rule: "The tree scores the golden test accuracy"
+    prediction: "score returns 83 of 85"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Predict with a stump of the flipper split only: 82 of 85 or fewer, report returns false"
+    discriminates: "An accuracy that differs from 83/85 by more than 1e-12 cannot print green"
+    if_fails: "The accuracy line would not match the golden file"
