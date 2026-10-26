@@ -1,0 +1,51 @@
+# ads-julia-bm1-v05-green-v1: Course B (Julia), Module 1, scene v05 (green test suites)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v05_green.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The real AgenticDS Pkg.test runs in a subprocess and its three suites (AgenticDS P1, Aqua, JET) each report pass equal to total."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v05_green.jl"
+    - "julia/BM1/scenes/v05-green.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  suites_all_green:
+    formula: |
+      suites = [AgenticDS P1, Aqua, JET]
+      pass(suite) = total(suite) for every suite
+      verdict line ends in OK
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V05.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "THREE_SUITES: exactly three Test Summary rows are parsed"
+      - "ALL_PASS: pass equals total in every row"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "Every parsed suite is fully green"
+    formal: "pass_s = total_s for all s in suites"
+    applies_to: suites_all_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V05-001
+    rule: "The suites are green"
+    prediction: "Pkg.test passes and the scene prints three rows with pass equal to total"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Parse a log in which Aqua reports 3 of 4: the can-fail test sees pass below total"
+    discriminates: "A failing suite cannot satisfy pass = total"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V05-002
+    rule: "Unrelated lines are ignored"
+    prediction: "test_rows skips lines that do not start with a suite name"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Match every line: the length assertion on the parsed rows fails"
+    discriminates: "A parser that matches everything cannot return exactly two rows"
+    if_fails: "A red run would look like a green one on camera"

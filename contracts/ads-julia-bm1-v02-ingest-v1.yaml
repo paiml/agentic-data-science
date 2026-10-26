@@ -1,0 +1,52 @@
+# ads-julia-bm1-v02-ingest-v1: Course B (Julia), Module 1, scene v02 (typed ingest)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v02_ingest.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "read_penguins gives typed columns (Float64 with missing, String, Int64) and na_policy turns 344 rows into 342 while sex keeps 9 missing values."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v02_ingest.jl"
+    - "julia/BM1/scenes/v02-ingest.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  ingest_types_and_na_policy:
+    formula: |
+      rows(raw)            = 344
+      rows(na_policy(raw)) = 342  (drop NA on the four numeric columns only)
+      missing sex in clean = 9
+      dropmissing(raw)     = 333 rows (every column: too many)
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V02.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "TYPES: body_mass_g is Union{Missing, Float64} and year is Int64"
+      - "SEX_KEPT: sex stays missing in 9 clean rows, only numeric NA is dropped"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "The NA policy drops only the numeric columns"
+    formal: "nrow(na_policy(raw)) = 342 and count(ismissing, clean.sex) = 9"
+    applies_to: ingest_types_and_na_policy
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V02-001
+    rule: "NA policy keeps 342 rows"
+    prediction: "Pkg.test passes with 342 rows and 9 missing sex values"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace the numeric-column drop with dropmissing(raw): 333 rows, the scene test fails"
+    discriminates: "Dropping on every column cannot give 342 rows"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V02-002
+    rule: "Types are reported"
+    prediction: "the output lists body_mass_g as Union{Missing, Float64}"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Read the table with every column as String: the type lines no longer match"
+    discriminates: "A string-typed table cannot print the numeric types"
+    if_fails: "A red run would look like a green one on camera"

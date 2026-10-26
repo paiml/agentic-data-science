@@ -1,0 +1,52 @@
+# ads-julia-bm1-v01-ticket-v1: Course B (Julia), Module 1, scene v01 (ticket oracle)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v01_ticket.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "checksum, row counts and golden species counts agree: SHA256SUMS matches, 344 raw rows become 342, and the golden n values 151, 68 and 123 sum to 342."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v01_ticket.jl"
+    - "julia/BM1/scenes/v01-ticket.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  ticket_oracle_matches_data:
+    formula: |
+      sha256(penguins.csv)  = the line in SHA256SUMS
+      raw rows - clean rows = 2   (344 -> 342)
+      sum_species golden.n  = 342
+      count(species == s)   = golden.n for each species s
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V01.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "CHECKSUM: the copied CSV matches SHA256SUMS"
+      - "GOLDEN_N: species counts of the clean table equal the golden n values and sum to 342"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "The clean table has exactly the golden species counts"
+    formal: "|{r : species_r = s}| = golden.species[s].n for every s"
+    applies_to: ticket_oracle_matches_data
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V01-001
+    rule: "Row counts match the ticket"
+    prediction: "Pkg.test passes with 344 raw rows, 342 clean rows and the golden n values"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Drop the first clean row: golden_n returns false because one species count falls short"
+    discriminates: "A table with a missing row cannot reproduce all three species counts"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V01-002
+    rule: "A red verdict is distinguishable"
+    prediction: "the verdict test sees FAILED for verdict(false) and OK for verdict(true)"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Make verdict ignore its ok argument: the FAILED assertion fails"
+    discriminates: "A verdict that always prints OK cannot satisfy both assertions"
+    if_fails: "A red run would look like a green one on camera"

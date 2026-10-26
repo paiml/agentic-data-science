@@ -112,10 +112,6 @@ function! TickOff() abort
 endfunction
 nnoremap <silent> <F2> <Cmd>call Tick(1)<CR>
 nnoremap <silent> <F3> <Cmd>call Tick(3)<CR>
-nnoremap <silent> <F4> <Cmd>call Tick(4)<CR>
-nnoremap <silent> <F5> <Cmd>call Tick(7)<CR>
-nnoremap <silent> <F6> <Cmd>call Tick(11)<CR>
-nnoremap <silent> <F7> <Cmd>call Tick(20)<CR>
-nnoremap <silent> <F8> <Cmd>call Tick(23)<CR>
-nnoremap <silent> <F9> <Cmd>call Tick(24)<CR>
+nnoremap <silent> <F4> <Cmd>call Tick(7)<CR>
+nnoremap <silent> <F5> <Cmd>call Tick(9)<CR>
 nnoremap <silent> <F10> <Cmd>call TickOff()<CR>

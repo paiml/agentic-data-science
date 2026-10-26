@@ -1,0 +1,12 @@
+file = src/v07_gates.jl
+ticks = 1-1,2-10,11-12,13-13,14-16,17-17
+repl_rows = 16
+shell = 1
+startup = cd "$(git rev-parse --show-toplevel)"
+run1 = make gate-shacl
+run2 = julia --project=julia/gate -e 'using JuliaFormatter; ok = format(ARGS[1]; overwrite = false); println("format clean: ", ok); exit(ok ? 0 : 1)' julia/BM1
+run3 = julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'
+ready = Testing BM1 tests passed
+plot = none
+est_run_s = 300
+note = shell scene: the recorder types run1..runN at a shell prompt in the repo root, each followed by a separate echo "exit=$?" typed by the recorder; no Julia wrapper, no filter. julia/BM1/gate/v07.jl (run by scripts/gate-julia.sh after the package Pkg.test) executes the same lines and asserts the last 16 rows.

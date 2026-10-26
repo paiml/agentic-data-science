@@ -1,0 +1,9 @@
+file = src/v09_parse.jl
+ticks = 1-1,2-4,5-9,10-20
+repl_rows = 10
+startup = using BM1
+run = BM1.V09.main()
+ready = contract: b-m1 bad number becomes missing, then dropped OK
+plot = none
+est_run_s = 4
+note = reshaped: tryparse on a bad.csv fixture, so no CSV warning is printed

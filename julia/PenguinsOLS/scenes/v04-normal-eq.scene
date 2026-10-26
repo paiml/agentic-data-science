@@ -1,0 +1,8 @@
+file = src/fit.jl
+ticks = 1-2,3-6,7-8,9-16
+repl_rows = 7
+startup = using PenguinsOLS; cd(pkgdir(PenguinsOLS))
+run = main()
+ready = golden: true
+plot = plot.png
+est_run_s = 15

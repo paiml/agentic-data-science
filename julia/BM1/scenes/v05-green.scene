@@ -1,0 +1,9 @@
+file = src/v05_green.jl
+ticks = 1-2,3-6,7-17,18-24
+repl_rows = 7
+startup = using BM1
+run = BM1.V05.main()
+ready = contract: b-m1 tests, Aqua and JET green OK
+plot = none
+est_run_s = 55
+note = runs the real AgenticDS Pkg.test in a subprocess; honest run, under the 90 s limit

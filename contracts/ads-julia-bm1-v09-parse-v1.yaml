@@ -1,0 +1,51 @@
+# ads-julia-bm1-v09-parse-v1: Course B (Julia), Module 1, scene v09 (parse failures)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v09_parse.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "A malformed number in a CSV fixture is turned into missing by tryparse (no warning is printed) and dropmissing then leaves one row."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v09_parse.jl"
+    - "julia/BM1/scenes/v09-parse.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bad_number_becomes_missing:
+    formula: |
+      num(heavy) = missing
+      num(3800)  = 3800.0
+      rows(dropmissing(table)) = 1  (of 2)
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V09.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "BAD_TO_MISSING: the unparsable value becomes missing, with no warning"
+      - "DROPPED: dropmissing removes that row and keeps the valid one"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "A malformed value never becomes a number"
+    formal: "ismissing(num(x)) for x not a number and num(x) = parse(Float64, x) otherwise"
+    applies_to: bad_number_becomes_missing
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V09-001
+    rule: "Bad numbers become missing"
+    prediction: "Pkg.test passes with num(heavy) missing and num(3800) equal to 3800.0"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace tryparse with parse: num(heavy) throws and the output test fails"
+    discriminates: "A throwing parser cannot return missing"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V09-002
+    rule: "The valid row survives"
+    prediction: "the table keeps 3800.0"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Return missing for every input: the 3800.0 assertion fails"
+    discriminates: "A constant missing cannot return 3800.0"
+    if_fails: "A red run would look like a green one on camera"

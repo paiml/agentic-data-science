@@ -1,0 +1,9 @@
+file = src/v08_mutants.jl
+ticks = 1-2,3-4,5-12,13-17
+repl_rows = 12
+startup = using BM1
+run = BM1.V08.main()
+ready = contract: b-m1 NA policy and sd mutants are caught OK
+plot = none
+est_run_s = 8
+note = reshaped: two representative mutants instead of the full mutation run

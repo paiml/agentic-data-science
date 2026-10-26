@@ -1,0 +1,8 @@
+file = src/v01_ticket.jl
+ticks = 1-2,3-7,8-12,13-18,19-25
+repl_rows = 7
+startup = using BM1
+run = BM1.V01.main()
+ready = contract: b-m1 ticket oracle matches data (344 -> 342) OK
+plot = none
+est_run_s = 5

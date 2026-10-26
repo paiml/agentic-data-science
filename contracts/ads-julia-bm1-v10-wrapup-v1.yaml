@@ -1,0 +1,50 @@
+# ads-julia-bm1-v10-wrapup-v1: Course B (Julia), Module 1, scene v10 (wrap-up)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v10_wrapup.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The two Module 1 example programs print their contract lines (contract: ads-julia-p1-v1 OK) when run in the AgenticDS project."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v10_wrapup.jl"
+    - "julia/BM1/scenes/v10-wrapup.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  wrapup_contract_lines:
+    formula: |
+      contracts(examples/b-m1-p1/run.jl)         = [contract: ads-julia-p1-v1 OK]
+      contracts(examples/b-m1-p1-profile/run.jl) = [contract: ads-julia-p1-v1 OK]
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V10.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "TWO_LINES: two contract lines are collected, one per example"
+      - "BOTH_OK: both lines equal contract: ads-julia-p1-v1 OK"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "Each example reports its own contract"
+    formal: "lines = fill(contract: ads-julia-p1-v1 OK, 2)"
+    applies_to: wrapup_contract_lines
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V10-001
+    rule: "Examples print OK"
+    prediction: "Pkg.test passes with two OK lines before the wrap-up verdict"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Run a script that prints no contract line: contracts returns an empty list"
+    discriminates: "A silent program cannot satisfy the two line equality"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V10-002
+    rule: "A failing example shows"
+    prediction: "a contract: ... FAILED line differs from the expected OK line"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Filter on any line instead of the contract: prefix: the silent script test fails"
+    discriminates: "A loose filter cannot return an empty list for a script that prints text"
+    if_fails: "A red run would look like a green one on camera"

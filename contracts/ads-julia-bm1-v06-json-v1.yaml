@@ -1,0 +1,51 @@
+# ads-julia-bm1-v06-json-v1: Course B (Julia), Module 1, scene v06 (JSON golden)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v06_json.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The per-species table (n, mean and sd of four columns) equals datasets/golden/p1.json within 1e-9 and prints rounded values."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v06_json.jl"
+    - "julia/BM1/scenes/v06-json.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  table_equals_golden:
+    formula: |
+      n(species)              = golden.n
+      mean, sd (4 columns)    = golden within 1e-9
+      printed values          = round(x, 2)
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V06.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "TABLE_EQUALS_GOLDEN: every mean and sd matches within 1e-9"
+      - "ROUNDED_PRINT: values print with two digits, Gentoo flipper mean 217.19"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "The profile table equals the golden JSON"
+    formal: "|got_i - want_i| <= 1e-9 for the eight statistics of each species"
+    applies_to: table_equals_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V06-001
+    rule: "Table equals the golden"
+    prediction: "Pkg.test passes and the Gentoo line prints 217.19"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Add 0.01 to every statistic: the perturbed comparison fails the 1e-9 test"
+    discriminates: "A shifted table cannot match the golden within 1e-9"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V06-002
+    rule: "Rounding is two digits"
+    prediction: "r2(1.2345) = 1.23"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Round to three digits: the r2 assertion and the Gentoo line fail"
+    discriminates: "Three digit rounding cannot print 217.19 in the same cells"
+    if_fails: "A red run would look like a green one on camera"
