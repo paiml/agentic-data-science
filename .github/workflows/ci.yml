@@ -64,7 +64,10 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
       - uses: r-lib/actions/setup-r@v2
-        with: { r-version: "4.5.1", use-public-rspm: true }
+        with: { r-version: "4.5.1", use-public-rspm: false }
+      - name: Pin CRAN to the 2026-10-20 snapshot
+        run: |
+          echo "options(repos = c(CRAN = \"https://packagemanager.posit.co/cran/__linux__/noble/2026-10-20\"))" | sudo tee -a "$(R RHOME)/etc/Rprofile.site"
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           working-directory: r/agenticds
@@ -105,17 +108,15 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Install elan
-        run: |
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Install elan (pinned, sha256-verified)
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v4
         with:
           path: |
             ~/.elan/toolchains
             ~/.cache/mathlib
           key: lean-${{ runner.os }}-${{ hashFiles('lean/AgenticDS/lean-toolchain', 'lean/AgenticDS/lake-manifest.json') }}
-      - name: Mathlib oleans (download into the workspace, nothing installed on the host)
+      - name: Mathlib oleans (download into the workspace)
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get
       - run: make gate-lean

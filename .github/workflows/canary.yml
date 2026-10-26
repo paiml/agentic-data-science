@@ -49,10 +49,8 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Install elan
-        run: |
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Install elan (pinned, sha256-verified)
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
       - name: Mathlib oleans
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get

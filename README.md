@@ -26,21 +26,23 @@ Specialization: https://www.coursera.org/specialization/agentic-data-science (li
 
 ## Set up your machine
 
-Continuous integration runs these same steps on a stock GitHub-hosted machine (Ubuntu 24.04), and a weekly check repeats the learner steps on the latest Ubuntu and macOS. Run them from the repository root.
+Continuous integration runs these commands on a stock GitHub-hosted Ubuntu 24.04 machine, and a weekly check repeats them on the latest Ubuntu and macOS. The tool installs differ only where CI uses a setup action to fetch the same tool (Julia, R and the R package dependencies). Run every command from the repository root.
 
-### Ubuntu and macOS (all courses)
-
-Lean 4 (Course E): install elan once, then fetch the Mathlib oleans and build; `lean-toolchain` pins the Lean version.
+### Ubuntu
 
 ```bash
-curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
-export PATH="$HOME/.elan/bin:$PATH"
-cd lean/AgenticDS
-lake exe cache get
-lake build
+sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
 ```
 
-Julia 1.12 (Course B): install Julia from https://julialang.org/downloads/, then:
+Lean 4 (Course E): `scripts/install-elan.sh` installs a pinned, checksum-verified elan; `lean-toolchain` pins the Lean version.
+
+```bash
+scripts/install-elan.sh
+export PATH="$HOME/.elan/bin:$PATH"
+(cd lean/AgenticDS && lake exe cache get && lake build)
+```
+
+Julia 1.12.1 (Course B): install it from https://julialang.org/downloads/, then:
 
 ```bash
 julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
@@ -48,7 +50,7 @@ julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
 for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
 ```
 
-R 4.5 (Course C): install R from https://cran.r-project.org, then the packages named in `r/agenticds/DESCRIPTION`, then:
+R 4.5.1 (Course C): install it from https://cran.r-project.org, install the packages named in `r/agenticds/DESCRIPTION` (including Suggests), then:
 
 ```bash
 R CMD INSTALL r/agenticds
@@ -56,13 +58,9 @@ ADS_ROOT="$PWD" Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", pac
 for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
 ```
 
-### Ubuntu only
+### macOS
 
-The CI R job installs these system libraries first; do the same on your own Ubuntu machine:
-
-```bash
-sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
-```
+Use the same Lean, Julia and R commands as under Ubuntu; skip the `apt-get` line. Install Xcode command line tools (`xcode-select --install`) first so R packages can compile.
 
 Quality tools (styler, lintr, covr, JuliaFormatter, Coverage.jl, Apache Jena) are not needed to run the examples; they run in separate pinned CI jobs (`make gate-r`, `gate-julia`, `gate-shacl`).
 
