@@ -21,3 +21,4 @@ ok = ok_ne && ok_qr
 msg = ok ? "normal equations and backslash match the golden" : "MISMATCH"
 printstyled("VERDICT: ", msg, "\n"; color = ok ? :green : :red, bold = true)
 @assert ok
+println("contract: ads-b-m2-v04-normal-eq (normal equations == backslash == golden) OK")
