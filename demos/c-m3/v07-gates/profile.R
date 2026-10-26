@@ -1,0 +1,11 @@
+.First <- function() {
+  options(cli.num_colors = 256L, width = 80, digits = 8,
+          readr.show_progress = FALSE)
+  suppressMessages({
+    library(parsnip); library(prettycode); prettycode::prettycode()
+    pkgload::load_all("r/agenticds", quiet = TRUE)})
+  Sys.setenv(ADS_ROOT = getwd())
+  evalq({
+  }, globalenv())
+  cat(cli::col_grey(paste0("# ", R.version.string, " + prettycode")), "\n")
+}

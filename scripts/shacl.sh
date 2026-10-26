@@ -4,6 +4,8 @@
 set -euo pipefail
 # Jena 5 needs Java 17+; a stale JAVA_HOME (e.g. JDK 11) breaks it.
 [ -d /usr/lib/jvm/java-17-openjdk-amd64 ] && export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+# Demo convention (demos/c-m4/v06-report.sh): a validator installed under $HOME/.local/bin is found on a hermetic PATH.
+export PATH="${HOME:-/nonexistent}/.local/bin:$PATH"
 command -v shacl >/dev/null || { echo "FAIL: Jena 'shacl' not on PATH (not_measured)"; exit 1; }
 for s in ontology/shapes/*.shape.ttl; do shacl parse --out=text "$s" >/dev/null; done
 files=$(git ls-files '*/example.ttl')

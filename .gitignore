@@ -1,3 +1,7 @@
 target/
 .lake/
 *.log
+.pmat-metrics/
+kotlin/.gradle/
+kotlin/build/
+kotlin/**/build/
