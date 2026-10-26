@@ -1,0 +1,38 @@
+# ads-kotlin-m4-v02-p4-bench-v1: Course D (Kotlin), Module 4, scene m4-02 (P4 bench)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "m4v02 aggregates mean quality and row count per colour with a DataFrame groupBy and with plain collections, checks that they agree, and only then times them; the scene prints agreement and engine count, never wall-clock numbers."
+  references:
+    - "kotlin/ads-kotlin/scenes/m4v02.scene"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4.kt"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m4_v02_bench_engines_agree_then_timed:
+    formula: |
+      |mean_dataframe - mean_plain| <= 1e-12 per colour; counts equal (red 1599, white 4898); timed engines = 2
+    domain: "datasets/wine-quality (red 1599 + white 4898 rows, SHA256SUMS verified)"
+    codomain: "per-colour row counts, agree flag, engine count, PASS verdict"
+    postconditions:
+      - "AGREE_BEFORE_TIMING: agreement is printed before the timing line, and the engines are timed only when they agree (an empty timing map is not live)"
+      - "CAN_FAIL: a shifted mean or count makes enginesAgree false (enginesAgreeAndDisagree)"
+
+proof_obligations:
+  - type: invariant
+    property: "Two engines return the same aggregate before any timing is reported"
+    formal: "enginesAgree(a, b) is true, the timing map is non-empty and every median time > 0"
+    applies_to: m4_v02_bench_engines_agree_then_timed
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M4-V02-001
+    rule: "Two engines return the same aggregate before any timing is reported"
+    prediction: "./gradlew -q m4v02 exits 0"
+    test: "./gradlew -q m4v02"
+    mutation: "a shifted mean or count makes enginesAgree false (enginesAgreeAndDisagree)"
+    discriminates: "A wrong aggregate cannot pass the agreement check"
+    if_fails: "Learners trust a speed number for a wrong answer"
