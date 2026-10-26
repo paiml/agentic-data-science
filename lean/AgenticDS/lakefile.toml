@@ -1,6 +1,6 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo"]
+defaultTargets = ["AgenticDS", "ols-demo", "example-m1"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -21,3 +21,7 @@ name = "AgenticDS"
 [[lean_exe]]
 name = "ols-demo"
 root = "AgenticDS.OlsMain"
+
+[[lean_exe]]
+name = "example-m1"
+root = "AgenticDS.ExampleM1Main"

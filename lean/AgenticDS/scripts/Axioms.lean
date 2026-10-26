@@ -1,5 +1,5 @@
 import AgenticDS
-import AgenticDS.OlsScene
+import AgenticDS.OlsExample
 
 open AgenticDS
 
