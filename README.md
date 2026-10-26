@@ -51,3 +51,5 @@ Lean has no official formatter, so the Lean gate is the linter set only. styler 
 ## Hero image
 
 `scripts/hero.sh` draws `assets/hero.svg` from `datasets/penguins/penguins.csv` (one dot per row); `rmedia svg2png` renders `assets/hero.png`.
+
+The course videos are produced with rmedia.
