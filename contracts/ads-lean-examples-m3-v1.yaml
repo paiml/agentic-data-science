@@ -1,0 +1,75 @@
+# ads-lean-examples-m3-v1: Course E (Lean 4), Module 3 examples (k-means, confusion matrix, CART tree)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples for module 3: the k-means objective with ties to the lowest index, the assignment-step theorem assign_step_optimal, the Species type with confusion_total, the decide ban, the CART impurity dev with strict-gain bestSplit, prune with cp and fitTree, and the P3 golden values (confusion 37,0,0 / 0,16,1 / 0,1,30 = 85 rows, accuracy 83/85, cluster sizes 133, 123, 86)."
+  references:
+    - "lean/AgenticDS/AgenticDS/Kmeans.lean"
+    - "lean/AgenticDS/AgenticDS/Confusion.lean"
+    - "lean/AgenticDS/AgenticDS/Tree.lean"
+    - "lean/AgenticDS/AgenticDS/Examples/M3.lean"
+    - "lean/AgenticDS/AgenticDSTest/ExamplesM3.lean"
+    - "lean/AgenticDS/scripts/AxiomsM3.lean"
+    - "datasets/golden/p3.json"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, exact numeric postconditions"
+
+equations:
+  m3_lean_examples:
+    formula: |
+      objective(ps) <= sum_p d(p, f p)           for every assignment f into the centroids
+      nearestIdx keeps the lowest index on ties  (strict <)
+      sum_a sum_p confusion(ps, a, p) = length ps
+      dev(rows) = n - (sum_c count_c^2) / n      dev(pure node) = 0
+      golden confusion = [[37,0,0],[0,16,1],[0,1,30]], sum 85, accuracy 83/85
+    domain: "ten example files M3V01..M3V10, registered as v01..v10"
+    codomain: "printed output and kernel-checked theorems"
+    postconditions:
+      - "REGISTRY: examplesM3 lists exactly the example files, and each example runs"
+      - "AXIOMS: every module 3 theorem depends only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: changing one golden row changes the matrix the test compares"
+
+proof_obligations:
+  - type: invariant
+    property: "Theorems minCost_le, assign_step_optimal, confusion_total, dev_nil and dev_pure are kernel-checked and axiom-clean"
+    formal: "#print axioms T subset {propext, Classical.choice, Quot.sound}"
+    applies_to: m3_lean_examples
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M3-001
+    rule: "Ties go to the lowest centroid index and the objective values match the stated values"
+    prediction: "nearestIdx [9, 9, 9409] = 0, nearestIdx [9, 4, 4] = 1, objective 2, minCost 4"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM3.lean"
+    mutation: "Change the strict < in nearestIdx to <=: the tie case returns index 1 and the #guard fails"
+    discriminates: "A nearest-centroid search that lets an equal cost replace the earlier centroid"
+    if_fails: "Cluster labels would differ from R on equidistant points"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M3-002
+    rule: "dev and bestSplit reproduce the stated impurity and strict-gain split"
+    prediction: "dev is 3 for a 3 and 3 node, 0 for a pure or empty node, bestSplit 1 gives (0, 40), bestSplit 4 gives none"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM3.lean"
+    mutation: "Drop the minbucket test from bestSplit: bestSplit 4 returns a split instead of none"
+    discriminates: "A split search that ignores the minimum bucket"
+    if_fails: "Trees would grow splits that rpart refuses"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M3-003
+    rule: "prune collapses the outlier subtree at cp 2 and fitTree keeps the tree at the root risk over 100"
+    prediction: "grown 4 leaves 0 errors, prune cp 2 gives 2 leaves 1 error, fitTree 4 leaves"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM3.lean"
+    mutation: "Change the collapse test saving < cp * (leaves - 1) to saving > cp * (leaves - 1): the leaf counts flip"
+    discriminates: "A pruning rule that keeps the wrong subtrees"
+    if_fails: "The pruned tree would not match R's cost-complexity result"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M3-004
+    rule: "The golden file holds the stated matrix, cluster sizes and accuracy, and a mutated copy is caught"
+    prediction: "confusion 37,0,0 / 0,16,1 / 0,1,30 sums to 85, sizes 133, 123, 86, accuracy 83/85, mutated first row 36,1,0 differs"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM3.lean"
+    mutation: "Edit datasets/golden/p3.json first row to 36, 1, 0: the v08 confusion check prints FAIL and the run exits nonzero"
+    discriminates: "A parity check that cannot fail on a changed expected value"
+    if_fails: "The golden parity story would prove nothing"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M3-005
+    rule: "No example or library source contains a refused word; the gate scans for them"
+    prediction: "scripts/gate-lean.sh finds no refused word and continues"
+    test: "scripts/gate-lean.sh (marker scan)"
+    mutation: "Plant one refused word in a example file: the scan prints the hit, FAIL, and exits 1"
+    discriminates: "A scan that reports a pass because it reads nothing"
+    if_fails: "The gate's ban would be unenforced"
