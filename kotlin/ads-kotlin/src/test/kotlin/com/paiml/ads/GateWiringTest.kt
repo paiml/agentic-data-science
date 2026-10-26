@@ -10,6 +10,7 @@ internal val PINNED =
     listOf(
         "verifyShaclP1",
         "verifyShaclP1Profile",
+        "verifyShaclP3",
         "verifyShaclP4",
     )
 

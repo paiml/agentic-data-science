@@ -100,7 +100,14 @@ listOf(
 
 // Example entry points: ./gradlew -q m1v01. They run from the
 // repo root so the dataset paths resolve.
-listOf("m1v01", "m1v02", "m2v01").forEach { id ->
+listOf(
+    "m1v01",
+    "m1v02",
+    "m2v01",
+    "m3v01",
+    "m4v01",
+    "m4v02",
+).forEach { id ->
     tasks.register<JavaExec>(id) {
         val cap = id.replaceFirstChar { it.uppercase() }
         classpath = sourceSets["main"].runtimeClasspath

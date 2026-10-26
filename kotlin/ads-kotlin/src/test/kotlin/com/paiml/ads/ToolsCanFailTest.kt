@@ -154,6 +154,10 @@ class ToolsCanFailTest {
                     "d-m1-p1/example.ttl",
                 ),
                 Pair({ r -> asDir(r, SHAPE) }, "example.shape.ttl"),
+                Pair(
+                    { r -> asDir(r, "$EX/d-m3-p3/example.ttl") },
+                    "d-m3-p3/example.ttl",
+                ),
             )
         for ((breakIt, named) in cases) {
             val copy = ShaclRepoCopy()

@@ -18,6 +18,7 @@ val checks: List<List<String>> =
             "example",
             "example.ttl",
         ),
+        listOf("P3", "$ex/d-m3-p3", "example", "example.ttl"),
         listOf(
             "P4",
             "datasets/golden",
