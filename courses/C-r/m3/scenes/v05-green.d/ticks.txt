@@ -1,0 +1,8 @@
+r <- testthat::test_dir
+r <- as.data.frame
+pass <- sum
+fail <- sum
+err <- sum
+cat("passed"
+ok <- fail
+h$verdict("contract

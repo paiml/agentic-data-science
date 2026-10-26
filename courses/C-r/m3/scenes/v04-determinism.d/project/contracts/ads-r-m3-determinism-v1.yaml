@@ -1,0 +1,42 @@
+# ads-r-m3-determinism-v1: Course C (R), Module 3, scene v04-determinism (same inputs, same answer)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/determinism.R runs the tree and the k-means twice from the fixed split and centroid fixtures and checks the results are identical, then sets seed 1, runs kmeans_fixed and checks .Random.seed did not move."
+  references:
+    - "R/determinism.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-determinism.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  determinism_holds:
+    formula: |
+      run() = list(pred, km) from fixtures only
+      identical(run(), run())
+      seed0 = .Random.seed ; kmeans_fixed(d, cen) ; identical(seed0, .Random.seed)
+    domain: "penguins.csv, split.csv, centroids.csv"
+    codomain: "TRUE verdict"
+    postconditions:
+      - "REPEAT: two runs return identical predictions and k-means results"
+      - "SEED: kmeans_fixed leaves .Random.seed unchanged"
+      - "VERDICT: the scene prints contract: c-m3 deterministic: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "no random draw anywhere in the pipeline"
+    formal: "identical(run(), run()) and identical(seed0, .Random.seed)"
+    applies_to: determinism_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-DETERMINISM-001
+    rule: "Split and starting centroids come from fixtures, so repeated runs and the RNG state agree"
+    prediction: "the test expects both checks TRUE and shows runif does move the seed"
+    test: "tests/testthat/test-determinism.R"
+    mutation: "Insert stats::runif(1) into kmeans_fixed: the RNG state moves and the seed check fails"
+    discriminates: "A hidden random draw would break reproducibility and the seed check"
+    if_fails: "The pipeline could change between runs while the golden check still passed once"

@@ -1,0 +1,15 @@
+g <- jsonlite::fromJSON
+d <- h$load_clean
+s <- h$read_split
+tr <- d[
+te <- d[
+fit <- h$fit_species_clf
+pred <- h$predict_species_clf
+truth <- factor
+cm <- table
+print(cm)
+acc <- mean
+err <- sum
+cat("accuracy"
+ok <- abs(acc
+h$verdict("contract

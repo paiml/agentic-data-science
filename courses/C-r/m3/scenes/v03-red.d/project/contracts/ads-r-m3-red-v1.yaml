@@ -1,0 +1,43 @@
+# ads-r-m3-red-v1: Course C (R), Module 3, scene v03-red (oracle must be able to fail)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/red.R plants a bug (broken = mean(truth != pred), the test upside down) and checks that the golden accuracy 0.9765 and broken 0.0235 are reported unequal by all.equal (mean relative difference 40.5, printed in red); the bug caught."
+  references:
+    - "R/red.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-red.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  red_oracle_fails:
+    formula: |
+      golden = 0.9765   broken = mean(truth != pred) = 0.0235
+      all.equal(broken, golden) = "Mean relative difference: 40.5"
+      verdict = not isTRUE(all.equal(broken, golden))
+    domain: "golden accuracy and the test-row predictions of the fixed tree"
+    codomain: "red mismatch report, TRUE verdict (the bug was caught)"
+    postconditions:
+      - "GOLDEN: 0.9765"
+      - "BROKEN: 0.0235"
+      - "DIFF: Mean relative difference 40.5 printed in red"
+      - "VERDICT: the scene prints contract: c-m3 bug caught: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "an oracle must fail on a planted bug"
+    formal: "not isTRUE(all.equal(broken, golden))"
+    applies_to: red_oracle_fails
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-RED-001
+    rule: "A planted inverted comparison is reported as different from the golden accuracy"
+    prediction: "the test expects the red 40.5 difference and the TRUE verdict"
+    test: "tests/testthat/test-red.R"
+    mutation: "Replace truth != pred with truth == pred: broken equals golden, all.equal is TRUE, the red line and the caught verdict disappear"
+    discriminates: "An oracle that cannot fail proves nothing"
+    if_fails: "A green check could pass for any value of accuracy"

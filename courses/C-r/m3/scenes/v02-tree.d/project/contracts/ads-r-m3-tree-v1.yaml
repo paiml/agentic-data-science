@@ -1,0 +1,42 @@
+# ads-r-m3-tree-v1: Course C (R), Module 3, scene v02-tree (penguins species decision tree)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/tree.R fits a parsnip decision_tree (rpart engine) on the fixed training split, predicts the 85 test rows and reproduces the p3 golden confusion matrix: Adelie 37, one Chinstrap called Gentoo, one Gentoo called Chinstrap, accuracy 0.9765."
+  references:
+    - "R/tree.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-tree.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  tree_matches_golden:
+    formula: |
+      cm = table(truth, pred) on the 85 test rows
+      |accuracy - 0.976470588235294| < 0.005
+      cm == golden$confusion  (all 9 cells)
+    domain: "penguins.csv after drop_na on four measurements, split.csv (342 labels, 85 test)"
+    codomain: "confusion matrix, accuracy, TRUE verdict"
+    postconditions:
+      - "CONFUSION: [[37,0,0],[0,16,1],[0,1,30]] equals the golden cells"
+      - "ACCURACY: 0.9765 within 0.005, two errors in 85"
+      - "VERDICT: the scene prints contract: c-m3 tree matches golden: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the deterministic tree reproduces the golden confusion exactly"
+    formal: "all(cm == golden$confusion) and |acc - golden$accuracy| < 0.005"
+    applies_to: tree_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-TREE-001
+    rule: "A tree trained on the fixed train rows scores the fixed test rows the same every run"
+    prediction: "the test expects accuracy 0.9765, two errors and the three golden matrix rows"
+    test: "tests/testthat/test-tree.R"
+    mutation: "Train on every row instead of d[s == 'train', ]: the test rows leak into training, errors drop to 0 and the golden cells no longer match"
+    discriminates: "Only the fixed split reproduces the golden confusion matrix"
+    if_fails: "The tree would be scored on data it saw, a green verdict on leakage"

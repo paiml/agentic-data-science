@@ -1,0 +1,42 @@
+# ads-r-m3-locale-v1: Course C (R), Module 3, scene v09-locale (locale test)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/locale.R switches LC_COLLATE between C and en_US.UTF-8: sorting a, B, b, A gives A B a b in C and a A b B in en_US, while the tree accuracy 0.97647059 is identical in both locales."
+  references:
+    - "R/locale.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-locale.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  locale_stable:
+    formula: |
+      sorted(C) != sorted(en_US)   (A B a b vs a A b B)
+      |acc(C) - acc(en_US)| < 1e-12   (0.97647059)
+    domain: "four letters, penguins.csv, split.csv"
+    codomain: "sort orders and accuracy per locale, TRUE verdict"
+    postconditions:
+      - "SORT: C gives A B a b and en_US gives a A b B"
+      - "ACCURACY: 0.97647059 in both locales"
+      - "RESTORE: the original collation is restored on exit"
+      - "VERDICT: the scene prints contract: c-m3 locale ok: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "model output does not depend on the collation locale"
+    formal: "sorted(C) != sorted(en_US) and |acc(C) - acc(en_US)| < 1e-12"
+    applies_to: locale_stable
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-LOCALE-001
+    rule: "The fixed split makes accuracy locale-independent although string sort order is not"
+    prediction: "the test expects both sort orders, accuracy 0.97647059 twice and the restored collation"
+    test: "tests/testthat/test-locale.R"
+    mutation: "Select the training rows by sorting the species strings: the split moves with the locale and the two accuracies differ"
+    discriminates: "A locale-dependent split would silently change the model"
+    if_fails: "Results could differ between a C and a en_US machine"

@@ -1,0 +1,43 @@
+# ads-r-m3-ticket-v1: Course C (R), Module 3, scene v01-ticket (the golden file p3 vs the data)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ticket.R reads the p3 golden file and the cleaned penguins and checks that the golden confusion matrix gives accuracy 83/85 = 0.9765, that the k-means cluster sizes 133, 123, 86 sum to the 342 clean rows."
+  references:
+    - "R/ticket.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ticket.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json accuracy, confusion, kmeans cluster_sizes)"
+    - "CLASSIFICATION (kind: pattern, not kernel): equality against a golden file, no kani harness"
+
+equations:
+  ticket_golden_consistent:
+    formula: |
+      accuracy      = trace(confusion) / sum(confusion) = 83 / 85
+      |accuracy - golden$accuracy| < 0.005
+      sum(cluster_sizes) = nrow(drop_na(penguins)) = 342
+    domain: "p3.json and penguins.csv after drop_na on the four measurement columns"
+    codomain: "TRUE when accuracy and cluster sizes agree with the data"
+    postconditions:
+      - "ACCURACY: the golden confusion matrix gives 83 of 85, 0.9765 within 0.005"
+      - "SIZES: cluster sizes 133, 123, 86 sum to 342"
+      - "ROWS: drop_na on the four measurements leaves 342 rows (D14)"
+      - "VERDICT: the scene prints contract: c-m3 ticket matches golden: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "golden cluster sizes sum to the clean row count"
+    formal: "sum(golden$kmeans$cluster_sizes) = nrow(clean) = 342"
+    applies_to: ticket_golden_consistent
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-TICKET-001
+    rule: "The ticket compares the golden numbers with the data, not with themselves"
+    prediction: "the test expects 83 of 85, sizes 133 123 86 and 342 rows"
+    test: "tests/testthat/test-ticket.R"
+    mutation: "Replace nrow(d) in the verdict with sum(g$kmeans$cluster_sizes): the 342-row expectation and the printed rows line no longer track the data"
+    discriminates: "A check against the golden file alone cannot detect a drifted data file"
+    if_fails: "The ticket would show a green verdict without comparing against the data"

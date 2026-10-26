@@ -1,0 +1,10 @@
+g <- jsonlite::fromJSON
+d <- h$load_clean
+hit <- sum(diag
+all <- sum(
+acc <- hit
+cat("accuracy"
+cat("cluster sizes
+cat("rows"
+ok <- abs(acc
+h$verdict("contract

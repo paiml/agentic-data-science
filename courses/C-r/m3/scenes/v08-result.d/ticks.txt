@@ -1,0 +1,10 @@
+d <- h$load_clean
+cen <- h$read_centroids
+g <- jsonlite
+km <- h$kmeans_fixed
+sizes <- tabulate
+cat("sizes"
+cat("objective"
+cat("golden"
+ok <- identical
+h$verdict("contract

@@ -1,0 +1,42 @@
+# ads-r-m3-result-v1: Course C (R), Module 3, scene v08-result (k-means result vs golden)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/result.R runs kmeans_fixed from the fixed starting centroids on the 342 clean penguins and checks the cluster sizes 133, 123, 86 and the objective 378.29 against the p3 golden file within 1e-9."
+  references:
+    - "R/result.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-result.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  kmeans_matches_golden:
+    formula: |
+      km = kmeans_fixed(d, centroids.csv)
+      sizes = tabulate(km$cluster) = (133, 123, 86)
+      |km$objective - golden$kmeans$objective| < 1e-9
+    domain: "penguins.csv after drop_na, centroids.csv, p3.json"
+    codomain: "cluster sizes, objective, TRUE verdict"
+    postconditions:
+      - "SIZES: 133, 123, 86 equal the golden sizes"
+      - "OBJECTIVE: 378.29 within 1e-9 of the golden objective"
+      - "VERDICT: the scene prints contract: c-m3 kmeans matches golden: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "k-means reproduces the golden clustering to one in a billion"
+    formal: "identical(sizes, golden sizes) and |obj - golden obj| < 1e-9"
+    applies_to: kmeans_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-RESULT-001
+    rule: "Lloyd from the fixed centroids on z-scored features gives the golden sizes and objective"
+    prediction: "the test expects sizes 133 123 86, objective 378.29 and the 1e-9 bound"
+    test: "tests/testthat/test-result.R"
+    mutation: "Skip the z-scoring in kmeans_fixed: sizes and objective drift away from the golden numbers and the verdict turns FALSE"
+    discriminates: "Different features scaling gives a different clustering"
+    if_fails: "The k-means result on screen would not be the golden clustering"

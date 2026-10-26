@@ -1,0 +1,42 @@
+# ads-r-m3-mutation-v1: Course C (R), Module 3, scene v06-mutation (are the checks strong enough)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/mutation.R deparses kmeans_fixed, builds two mutants (the square removed from the distance, the centroid scale doubled), evaluates them and checks each mutant's objective differs from the golden 378.29 by more than 1e-6, so both mutants die."
+  references:
+    - "R/mutation.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-mutation.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  mutants_die:
+    formula: |
+      src = deparse(kmeans_fixed)
+      m1 = src with ")^2)" -> "))" ; m2 = src with "scale = spread" -> "scale = 2 * spread"
+      dies(m) = |m(d, cen)$objective - golden$kmeans$objective| > 1e-6
+    domain: "kmeans_fixed source, penguins.csv, centroids.csv, p3.json"
+    codomain: "named logical killed (no_square, double_scale), TRUE verdict"
+    postconditions:
+      - "M1: removing the square from the distance changes the objective"
+      - "M2: doubling the centroid scale changes the objective"
+      - "VERDICT: the scene prints contract: c-m3 both mutants die: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "every planted mutant of the k-means is detected by the golden objective"
+    formal: "all(killed) with killed[m] = |obj(m) - golden| > 1e-6"
+    applies_to: mutants_die
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-MUTATION-001
+    rule: "Both mutants of kmeans_fixed produce an objective that differs from the golden objective"
+    prediction: "the test checks both mutations apply and that an identity mutant is not killed"
+    test: "tests/testthat/test-mutation.R"
+    mutation: "Change the first mutation pattern so sub() matches nothing: the mutant equals the original and is not killed, the verdict turns FALSE"
+    discriminates: "An unchanged mutant must survive, so the check is not trivially TRUE"
+    if_fails: "A weak golden check would let a broken k-means pass"

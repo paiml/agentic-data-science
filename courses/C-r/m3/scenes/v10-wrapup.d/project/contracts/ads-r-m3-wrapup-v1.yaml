@@ -1,0 +1,42 @@
+# ads-r-m3-wrapup-v1: Course C (R), Module 3, scene v10-wrapup (what the gate proved)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/wrapup.R fits the tree, scores the 85 test rows and runs k-means from the fixed centroids, then checks both p3 contracts: tree accuracy equals the golden accuracy (within 0.005) and the k-means objective equals the golden objective (within 1e-6); the verdict is TRUE only when both hold."
+  references:
+    - "R/wrapup.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-wrapup.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  wrapup_contracts:
+    formula: |
+      checks = c(tree = |acc - golden$accuracy| < 0.005,
+                kmeans = |objective - golden$kmeans$objective| < 1e-6)
+      ok = all(checks)
+    domain: "penguins.csv, split.csv, centroids.csv, p3.json"
+    codomain: "named logical checks (tree, kmeans), TRUE verdict"
+    postconditions:
+      - "TREE: accuracy 0.9765 equals the golden accuracy within 0.005"
+      - "KMEANS: objective 378.29 equals the golden objective within 1e-6"
+      - "VERDICT: the scene prints contract: c-m3 wrap-up all OK: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "both module 3 contracts hold at once"
+    formal: "all(checks)"
+    applies_to: wrapup_contracts
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-WRAPUP-001
+    rule: "Module 3 is green only when both the tree and the k-means match golden p3"
+    prediction: "the test expects both checks TRUE and recomputes accuracy and objective"
+    test: "tests/testthat/test-wrapup.R"
+    mutation: "Change the tolerance on the tree check to 0 and the accuracy to a different split: the tree check turns FALSE and so does the verdict"
+    discriminates: "Each contract must fail independently"
+    if_fails: "Module 3 could end green with one contract silently broken"

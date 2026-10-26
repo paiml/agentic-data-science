@@ -1,0 +1,7 @@
+files <- list.files
+checks <- c(
+tests = h$tests_pass
+parse = h$parses_ok
+exports = h$exports_match
+print(checks)
+h$verdict("contract

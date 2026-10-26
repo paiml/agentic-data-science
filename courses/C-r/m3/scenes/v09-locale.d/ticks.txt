@@ -1,0 +1,11 @@
+d <- h$load_clean
+s <- h$read_split
+old <- Sys.getlocale
+on.exit(Sys.setlocale
+srt <- function
+acc <- function
+loc <- c(
+for (l in loc)
+differ <-
+same <-
+h$verdict("contract

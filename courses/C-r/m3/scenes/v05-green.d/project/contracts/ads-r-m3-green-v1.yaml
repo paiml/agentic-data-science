@@ -1,0 +1,42 @@
+# ads-r-m3-green-v1: Course C (R), Module 3, scene v05-green (the p3 tests on the real tree)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/green.R runs the p3 test file (tests/p3/test-p3.R: fixtures, confusion, tree, k-means against stats::kmeans, golden parity) with a silent testthat reporter and requires 18 passed, no failures, no errors."
+  references:
+    - "R/green.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-green.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p3_tests_green:
+    formula: |
+      r = test_dir("tests/p3", reporter = "silent")
+      passed = 18, failed = 0, errors = 0
+      ok = failed == 0 and errors == 0 and passed > 0
+    domain: "the helpers (tree, k-means, fixtures) and tests/p3/test-p3.R"
+    codomain: "pass/fail counts, TRUE verdict"
+    postconditions:
+      - "PASSED: 18 expectations pass"
+      - "FAILED: none failed, no errors"
+      - "VERDICT: the scene prints contract: c-m3 p3 tests green: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the p3 test file passes with at least one passing test"
+    formal: "failed == 0 && errors == 0 && passed > 0"
+    applies_to: p3_tests_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-GREEN-001
+    rule: "The p3 tests are green on the real tree and the counts add up to 18"
+    prediction: "the test expects passed 18 failed 0 errors 0 and shows a failing file counts as failed"
+    test: "tests/testthat/test-green.R"
+    mutation: "Change the expected 85 test rows to 84 in tests/p3/test-p3.R: failed becomes 1 and the verdict turns FALSE"
+    discriminates: "A green verdict requires zero failures and at least one pass, so an empty test dir cannot pass"
+    if_fails: "An empty or failing test directory could print a green verdict"

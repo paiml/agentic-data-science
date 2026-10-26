@@ -1,0 +1,4 @@
+cluster,bill_length_mm,bill_depth_mm,flipper_length_mm,body_mass_g
+1,39.1,18.7,181,3750
+2,46.1,13.2,211,4500
+3,46.5,17.9,192,3500

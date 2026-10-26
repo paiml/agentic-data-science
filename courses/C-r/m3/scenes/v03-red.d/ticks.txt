@@ -1,0 +1,13 @@
+d <- h$load_clean
+s <- h$read_split
+tr <- d[
+te <- d[
+fit <- h$fit_species_clf
+pred <- h$predict_species_clf
+truth <- factor
+g <- jsonlite
+b <- mean
+cat("golden"
+r <- all.equal
+cat(cli::col_red
+h$verdict("contract

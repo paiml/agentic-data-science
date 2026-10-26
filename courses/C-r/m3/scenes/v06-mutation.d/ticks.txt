@@ -1,0 +1,10 @@
+d <- h$load_clean
+cen <- h$read_centroids
+g <- jsonlite
+src <- h$fn_source
+m1 <- h$mutant
+m2 <- h$mutant
+dies <- function
+dead <- c(
+print(dead)
+h$verdict("contract

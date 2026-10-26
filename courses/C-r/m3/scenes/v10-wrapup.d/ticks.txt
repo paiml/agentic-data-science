@@ -1,0 +1,11 @@
+d <- h$load_clean
+s <- h$read_split
+cen <- h$read_centroids
+g <- jsonlite
+fit <- h$fit_species_clf
+pred <- h$predict_species_clf
+acc <- mean
+km <- h$kmeans_fixed
+checks <- c(
+print(checks)
+h$verdict("contract

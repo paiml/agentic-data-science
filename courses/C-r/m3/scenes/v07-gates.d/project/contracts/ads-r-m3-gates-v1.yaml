@@ -1,0 +1,44 @@
+# ads-r-m3-gates-v1: Course C (R), Module 3, scene v07-gates (the gate run locally)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/gates.R runs the local gate: the testthat directory passes (no failures, no errors, at least one pass), every R file under R/ parses, and the roxygen export tags equal the NAMESPACE exports; the verdict requires all three."
+  references:
+    - "R/gates.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-gates.R"
+    - "ads-r-p3-v1 (datasets/golden/p3.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  local_gate_green:
+    formula: |
+      tests = tests_pass("tests/checks")
+      parse = parses_ok(R/*.R)
+      exports = exports_match(R/*.R, NAMESPACE)
+      ok = all(tests, parse, exports)
+    domain: "R/*.R, NAMESPACE, tests/checks"
+    codomain: "named logical (tests, parse, exports), TRUE verdict"
+    postconditions:
+      - "TESTS: tests/checks has no failure, no error and at least one pass"
+      - "PARSE: every R file parses"
+      - "EXPORTS: @export tags equal NAMESPACE export() lines"
+      - "VERDICT: the scene prints contract: c-m3 gates green: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "all three local gate checks hold at once"
+    formal: "all(tests, parse, exports)"
+    applies_to: local_gate_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M3-GATES-001
+    rule: "The local gate fails when any one of tests, parse or exports fails"
+    prediction: "the test drives each check to FALSE on a bad fixture and expects TRUE on the project"
+    test: "tests/testthat/test-gates.R"
+    mutation: "Add a tagged @export function without adding it to NAMESPACE: exports_match is FALSE and the verdict turns FALSE"
+    discriminates: "A single missing export must turn the whole gate red"
+    if_fails: "A stale NAMESPACE would ship unnoticed"
