@@ -4,7 +4,7 @@
 # Rust: the crate dir is passed (dead-code needs Cargo.toml) and the coverage check is left to
 # cargo llvm-cov (gate-rust.sh, lines=100): pmat's coverage check only reads a report it did not make.
 set -uo pipefail
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/.." || exit 1
 ran=0
 if [ -d rust ]; then
   ran=1

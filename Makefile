@@ -1,4 +1,6 @@
 SHELL := bash
+.SUFFIXES:
+.DELETE_ON_ERROR:
 .PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
 gate: gate-datasets gate-shacl gate-r gate-julia gate-rust gate-lean gate-pmat
