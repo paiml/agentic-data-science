@@ -22,7 +22,7 @@ equations:
       k-means cluster sizes sum to 342 and the objective equals the golden within 1e-6
       best_cut on the toy data = 6.5 in both label orders
     domain: "julia/BM3/data, verbatim copies of the repository penguins, split and centroid fixtures and the P3 golden"
-    codomain: "ten registered examples whose main() prints their stated values"
+    codomain: "ten registered example files; nine have a main() that prints their stated values and v07 holds the gate commands as data"
     postconditions:
       - "FIXTURES: the data copies equal the repository files byte for byte and the checksum matches"
       - "GOLDEN: tree accuracy, confusion matrix and k-means objective agree with p3.json"
@@ -32,7 +32,7 @@ equations:
 proof_obligations:
   - type: invariant
     property: "Tree and k-means results equal the P3 golden"
-    formal: "score(fit_tree()) = (83, 85) and lloyd(z, c).objective = golden.objective"
+    formal: "score(fit_tree()) = (83, 85) and |lloyd(z, c).objective - golden.objective| <= 1e-6"
     applies_to: m3_example_facts
 
 falsification_tests:
