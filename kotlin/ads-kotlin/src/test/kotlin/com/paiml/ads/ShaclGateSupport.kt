@@ -101,6 +101,7 @@ internal class ShaclRepoCopy {
             "verifyShaclP1" -> rel.endsWith("examples/d-m1-p1")
             "verifyShaclP1Profile" ->
                 rel.endsWith("examples/d-m1-p1-profile")
+            "verifyShaclP3" -> rel.endsWith("examples/d-m3-p3")
             "verifyShaclP4" -> rel == "datasets/golden"
             else -> false
         }

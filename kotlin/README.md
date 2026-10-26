@@ -10,11 +10,11 @@ Run the examples from this directory with:
 ./gradlew -q run
 ```
 
-Module examples (run from `kotlin/`): `./gradlew -q m1v01` (ingest), `m1v02` (profile), `m2v01` (OLS check against the golden).
+Module examples (run from `kotlin/`): `./gradlew -q m1v01` (ingest), `m1v02` (profile), `m2v01` (OLS check against the golden), `m3v01` (species tree and k-means), `m4v01` (wine pipeline), `m4v02` (two engines, agreement before timing).
 
 ## What lives here
 
-A Gradle project with a typed loader, the NA policy, the per-species profile, the OLS fit and their gate.
+A Gradle project with a typed loader, the NA policy, the per-species profile, the OLS fit, a species tree with k-means, the wine pipeline and their gate.
 
 ## Back to the project
 
