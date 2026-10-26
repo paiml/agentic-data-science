@@ -131,10 +131,18 @@ jobs:
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get
       - run: make gate-lean
+  rust:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cargo-llvm-cov (pinned, locked)
+        run: cargo install --locked --version 0.8.5 cargo-llvm-cov
+      - run: make gate-rust
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, r, r-quality, julia, julia-quality, lean]
+    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean]
     runs-on: ubuntu-24.04
     steps:
       - run: |
