@@ -19,6 +19,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
       - run: make gate-shacl
+      - run: make gate-shacl-negative
   julia:
     timeout-minutes: 45
     runs-on: [self-hosted, clean-room, X64, intel]
