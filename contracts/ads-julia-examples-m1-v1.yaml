@@ -1,0 +1,52 @@
+# ads-julia-examples-m1-v1: Course B (Julia), Module 1 examples (v01..v10)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples for Course B module 1: checksum and row counts, typed ingest and the NA policy, a failing test written first, the per-species profile with the sample SD, the AgenticDS test suites, golden parity with p1.json, the gate commands, two mutants, a tolerant number parse and the recap."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/BM1.jl"
+    - "julia/BM1/test/runtests.jl"
+    - "scripts/gate-julia.sh"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m1_example_facts:
+    formula: |
+      rows(read_penguins(csv)) = 344,  rows(na_policy(df)) = 342
+      golden n for Adelie, Chinstrap, Gentoo = 151, 68, 123 and they sum to 342
+      sd by species uses n-1 (Gentoo body mass 504.116), the population sd 502.063 differs
+      |table - golden/p1.json| <= 1e-9
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "ten registered examples whose main() prints their stated values and ends on a contract line"
+    postconditions:
+      - "REGISTRY: the module registers v01 .. v10 and each has a testset"
+      - "GOLDEN: the per-species table agrees with p1.json within 1e-9"
+      - "MUTANTS: a population SD and a drop-all-columns NA policy each fail golden checks"
+      - "CAN_FAIL: an example that breaks a stated value fails its testset"
+
+proof_obligations:
+  - type: invariant
+    property: "Every example ends on a contract line that reads OK only when its checks pass"
+    formal: "last(output(main)) matches ^contract: .* OK$ iff every check of the example holds"
+    applies_to: m1_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-EXAMPLES-M1-001
+    rule: "Example values match the stated ones"
+    prediction: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()' passes with a testset per example"
+    test: "julia/BM1/test/runtests.jl"
+    mutation: "Replace the n-1 denominator by n in the Gentoo body mass SD: 504.116 becomes 502.063 and the profile testset fails"
+    discriminates: "An example with a wrong number cannot pass its testset"
+    if_fails: "An example prints a value the course text does not state"
+  - id: FALSIFY-ADS-JULIA-EXAMPLES-M1-002
+    rule: "A silent or failing example has no OK contract line"
+    prediction: "contracts of a script that prints no contract line is empty"
+    test: "julia/BM1/test/runtests.jl"
+    mutation: "Run a script that prints only text: no contract line is collected"
+    discriminates: "A loose filter cannot report a silent program as a pass"
+    if_fails: "A red run would look like a green one"
