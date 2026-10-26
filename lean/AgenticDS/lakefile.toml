@@ -1,6 +1,7 @@
 name = "AgenticDS"
 version = "0.1.0"
 defaultTargets = ["AgenticDS", "ols-demo", "example-m1"]
+allowNonModules = true
 
 [leanOptions]
 pp.unicode.fun = true
