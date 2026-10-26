@@ -1,0 +1,17 @@
+name = "PenguinsOLS"
+uuid = "5b0e8f0a-9c3d-4f6e-8a41-2d7c6b1e9f30"
+version = "0.1.0"
+authors = ["Noah Gift <noah.gift@gmail.com>"]
+
+[deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+
+[compat]
+CSV = "1.1.0"
+CairoMakie = "0.15.16"
+DataFrames = "1.8.2"
+GLM = "1.9.5"
+julia = "1.12"

@@ -1,0 +1,51 @@
+# ads-julia-bm2-v06-mlj-v1: Course B (Julia), Module 2 scene v06 (the MLJ machine)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v06_mlj.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "make_machine, show_params and matches_golden (names matched through named_params and same_params) fit MLJLinearModels.LinearRegressor through an MLJ machine on the species design and match the P2 species golden coefficients."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v06_mlj.jl"
+    - "julia/BM2/scenes/v06-mlj.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v06_mlj_machine:
+    formula: |
+      isdefined(machine, :fitresult) before fit!   = false
+      intercept                                    = -4031.47689069363   within 1e-6
+      flipper, Chinstrap, Gentoo                   = 40.7054, -206.5101, 266.8096 within 1e-6
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "UNFITTED: a new machine has no fitresult before fit!"
+      - "GOLDEN_COEFS: fitted_params matches the species golden within 1e-6"
+      - "PARAM_ORDER: intercept, then flipper_length_mm, speciesChinstrap, speciesGentoo"
+
+proof_obligations:
+  - type: invariant
+    property: "The MLJ fit equals the closed-form species OLS"
+    formal: "|coef_mlj - coef_golden| <= 1e-6 for all four coefficients"
+    applies_to: b2_v06_mlj_machine
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V06-001
+    rule: "Fitted parameters equal the golden species model"
+    prediction: "the golden test passes for the intercept and the three slopes"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Fit on the flipper-only table: only two coefficients remain and the golden test fails"
+    discriminates: "A table without the dummies cannot give four coefficients"
+    if_fails: "The scene would show a model other than the species one"
+  - id: FALSIFY-ADS-JULIA-BM2-V06-002
+    rule: "A machine is unfitted before fit!"
+    prediction: "isdefined(mach, :fitresult) is false"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Call fit! before the check: the check reads true and the unfitted test fails"
+    discriminates: "A fitted machine has a fitresult"
+    if_fails: "The scene would not show the machine before and after fit!"

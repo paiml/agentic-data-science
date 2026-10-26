@@ -1,0 +1,51 @@
+# ads-julia-bm2-v01-ticket-v1: Course B (Julia), Module 2 scene v01 (the ticket and its oracle)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v01_ticket.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "fit_flipper, say and beats print the golden OLS fit, r2 and cross-validated RMSE of P2 and check that the species model beats the flipper-only model out of fold."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v01_ticket.jl"
+    - "julia/BM2/scenes/v01-ticket.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v01_ticket_oracle:
+    formula: |
+      slope(fit_flipper(load()))        = 49.6855664061006   within 1e-8
+      cv_rmse.species < cv_rmse.ols     (376.638 < 394.313)
+      r2 printed to 4 digits            = 0.759 (flipper), 0.7826 (species)
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "GOLDEN_SLOPE: the backslash fit of the 342 clean rows reproduces the golden slope within 1e-8"
+      - "SPECIES_BEATS_FLIPPER: the golden out-of-fold RMSE of the species model is below the flipper-only one"
+      - "VERDICT: the scene ends on the line species beats flipper: true"
+
+proof_obligations:
+  - type: invariant
+    property: "The species model beats the flipper-only model out of fold"
+    formal: "golden.cv_rmse.species < golden.cv_rmse.ols"
+    applies_to: b2_v01_ticket_oracle
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V01-001
+    rule: "Species beats flipper in the golden"
+    prediction: "beats(golden()) is true and the verdict prints true"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Swap the two cv_rmse fields in beats: the verdict prints false and the beats test fails"
+    discriminates: "A reversed comparison cannot hold for the golden numbers"
+    if_fails: "The ticket would claim a model ranking the oracle contradicts"
+  - id: FALSIFY-ADS-JULIA-BM2-V01-002
+    rule: "The fit reproduces the golden slope"
+    prediction: "the slope test passes within 1e-8"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Fit with a design that has no ones column: the slope moves off 49.6855 and the golden test fails"
+    discriminates: "A fit without an intercept cannot give the golden slope"
+    if_fails: "The scene would print a fit that is not the oracle"

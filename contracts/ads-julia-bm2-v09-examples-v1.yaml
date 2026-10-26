@@ -1,0 +1,51 @@
+# ads-julia-bm2-v09-examples-v1: Course B (Julia), Module 2 scene v09 (the two P2 examples)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v09_examples.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "ols_example and cv_example print the P2 closed-form fit and the species coefficients with the two cv_rmse values, each ending on the contract line ads-julia-p2-ols-demo-v1 OK."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v09_examples.jl"
+    - "julia/BM2/scenes/v09-examples.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v09_examples_output:
+    formula: |
+      ols_example prints (intercept = -5780.8313, slope = 49.6855)
+      cv_example prints coefs = [-4031.4768, 40.7054, -206.5101, 266.8096]
+      cv_rmse (ols) 394.3129, cv_rmse (species) 376.6382  (trimmed to 4 decimals)
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "TRIMMED_NOT_ROUNDED: numbers are cut to four decimals, as the example scripts print them"
+      - "CONTRACT_LINES: each example ends on contract: ads-julia-p2-ols-demo-v1 OK"
+      - "VERDICT: the scene ends on examples: true"
+
+proof_obligations:
+  - type: invariant
+    property: "Examples print golden numbers"
+    formal: "trim4 of the fitted values equals the printed numbers"
+    applies_to: b2_v09_examples_output
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V09-001
+    rule: "The example output matches the narration"
+    prediction: "the output test finds every printed number"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Round instead of trim: the intercept prints -5780.8314 and the output test fails"
+    discriminates: "Rounding and trimming differ on the last digit"
+    if_fails: "The video would show numbers the narration does not say"
+  - id: FALSIFY-ADS-JULIA-BM2-V09-002
+    rule: "A failing example prints FAIL"
+    prediction: "contract(false) prints FAIL and returns false"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Pass false to contract: the line reads FAIL, so a test that expects OK fails"
+    discriminates: "The contract line must follow the check"
+    if_fails: "The examples would claim OK on a wrong fit"

@@ -1,0 +1,50 @@
+# ads-julia-bm2-v03-red-first-v1: Course B (Julia), Module 2 scene v03 (a failing test written first)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v03_red_first.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "check, ols, green and main (with red from helpers) reproduce red then green: the test of ols fails with an UndefVarError before ols exists in the scratch module, and passes two of two checks after it is defined."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v03_red_first.jl"
+    - "julia/BM2/scenes/v03-red-first.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v03_red_then_green:
+    formula: |
+      check(scratch without ols)   throws UndefVarError(:ols)
+      check(scratch with ols)      = 2   (intercept = 1, slope = 2)
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "RED_FIRST: before ols exists the test raises UndefVarError"
+      - "GREEN: after ols is defined both checks pass (2 of 2)"
+      - "VERDICT: the scene ends on the line red, then green: true"
+
+proof_obligations:
+  - type: invariant
+    property: "A green after a red proves the test can fail"
+    formal: "red(scratch) isa UndefVarError and check(scratch with ols) == 2"
+    applies_to: b2_v03_red_then_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V03-001
+    rule: "The test is red before the implementation"
+    prediction: "red(Module) returns an UndefVarError"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Define ols in the scratch module before the red step: red returns a number and the red test fails"
+    discriminates: "A test that cannot fail would also pass without ols"
+    if_fails: "The scene would show a green with no red before it"
+  - id: FALSIFY-ADS-JULIA-BM2-V03-002
+    rule: "The implementation turns the test green"
+    prediction: "check returns 2 with ols defined"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Return b[1] as the slope in ols: check returns 1 and the green test fails"
+    discriminates: "Swapped coefficients break the slope check"
+    if_fails: "The scene would claim green on a wrong ols"
