@@ -3,12 +3,12 @@ on: { pull_request: {}, merge_group: {}, push: { branches: [main] } }
 concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
 jobs:
   datasets:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: make gate-datasets
   shacl:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Apache Jena (pinned, sha512-verified)
@@ -21,7 +21,7 @@ jobs:
       - run: make gate-shacl
   julia:
     timeout-minutes: 45
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
@@ -35,7 +35,7 @@ jobs:
       - run: make gate-julia
   r:
     timeout-minutes: 45
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
@@ -50,10 +50,24 @@ jobs:
         run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
       - run: make gate-r
   lean:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - name: Install elan (pinned, sha256-verified)
+        run: |
+          h=42b94d4244e8353142c456ec0e4ca6528fd898a6c604d4059f494e706e431f63
+          curl -fsSL -o "$RUNNER_TEMP/elan.tgz" "https://github.com/leanprover/elan/releases/download/v4.2.4/elan-x86_64-unknown-linux-gnu.tar.gz"
+          echo "$h  $RUNNER_TEMP/elan.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/elan.tgz" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/elan-init" -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan/toolchains
+            ~/.cache/mathlib
+          key: lean-${{ runner.os }}-${{ hashFiles('lean/AgenticDS/lean-toolchain', 'lean/AgenticDS/lake-manifest.json') }}
       - name: Mathlib oleans (download into the workspace, nothing installed on the host)
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get
@@ -62,7 +76,7 @@ jobs:
     name: gate
     if: always()
     needs: [datasets, shacl, r, julia, lean]
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-latest
     steps:
       - run: |
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}; then exit 1; fi

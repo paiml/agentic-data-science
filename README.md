@@ -1,3 +1,5 @@
+[![CI](https://github.com/paiml/agentic-data-science/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/paiml/agentic-data-science/actions/workflows/ci.yml)
+
 # Agentic Data Science: code examples
 
 ![Agentic Data Science](assets/hero.png)
