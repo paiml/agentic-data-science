@@ -1,0 +1,43 @@
+# ads-rust-p2-v1: Course A (Rust), Module 2, Problem P2 (OLS of body mass on flipper length with aprender)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Rust function fit_line fits body mass on flipper length for the 342 complete penguins with aprender LinearRegression; the line matches datasets/golden/p2.json within an absolute tolerance of 1e-2."
+  references:
+    - "rust/ads-rust/src/p2.rs"
+    - "rust/ads-rust/tests/p2.rs"
+    - "datasets/golden/p2.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_ols_matches_golden:
+    formula: |
+      rows(na_policy(df))                         = 342
+      (b1, b0) = aprender LinearRegression(x = flipper_length_mm centred, y = body_mass_g centred); b0 = mean(y) - b1 * mean(x) in f64
+      |b0 - golden.ols.intercept|                 <= 1e-2
+      |b1 - golden.ols.slope|                     <= 1e-2
+    domain: "datasets/penguins/penguins.csv with SHA256SUMS verified, NA policy applied"
+    codomain: "intercept (grams) and slope (grams per millimetre)"
+    postconditions:
+      - "ROWS: 342 rows are used"
+      - "FIT: intercept = -5780.83 and slope = 49.69 to two decimals"
+      - "CENTRED: aprender fits in f32, so both columns are centred and the intercept is recovered in f64"
+      - "CAN_FAIL: a fit on the raw (uncentred) f32 columns drifts by about 0.08 in the intercept and fails the tolerance"
+
+proof_obligations:
+  - type: invariant
+    property: "The fitted line equals the golden line within 1e-2"
+    formal: "|b0 - g0| <= 1e-2 and |b1 - g1| <= 1e-2"
+    applies_to: p2_ols_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-P2-001
+    rule: "The aprender fit matches the golden OLS line within 1e-2"
+    prediction: "make gate-rust passes with llvm-cov lines = 100 and the example prints the measured max |beta - golden| below the tolerance"
+    test: "scripts/gate-rust.sh"
+    mutation: "Swap x and y in fit_line: the slope becomes about 0.0153 and the golden comparison fails"
+    discriminates: "A regression of mass on flipper length cannot give slope 49.69 with x and y swapped"
+    if_fails: "Learners compare their own language against a wrong reference"

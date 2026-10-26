@@ -20,8 +20,9 @@ pub fn read_penguins(path: &str) -> PolarsResult<DataFrame> {
         .with_has_header(true)
         .with_schema_overwrite(Some(Arc::new(schema)))
         .with_parse_options(
-            CsvParseOptions::default()
-                .with_null_values(Some(NullValues::AllColumnsSingle("NA".into()))),
+            CsvParseOptions::default().with_null_values(Some(
+                NullValues::AllColumnsSingle("NA".into()),
+            )),
         );
     opts.try_into_reader_with_file_path(Some(path.into()))?
         .finish()
@@ -70,18 +71,31 @@ pub fn summary_by_species(df: DataFrame) -> PolarsResult<Value> {
 pub fn max_abs_diff(a: &Value, b: &Value) -> f64 {
     match (a, b) {
         (Value::Number(x), Value::Number(y)) => {
-            (x.as_f64().unwrap_or(f64::NAN) - y.as_f64().unwrap_or(f64::NAN)).abs()
+            (x.as_f64().unwrap_or(f64::NAN)
+                - y.as_f64().unwrap_or(f64::NAN))
+            .abs()
         }
-        (Value::Object(x), Value::Object(y)) if x.len() == y.len() => x
-            .iter()
-            .map(|(k, v)| y.get(k).map_or(f64::INFINITY, |w| max_abs_diff(v, w)))
-            .fold(0.0, f64::max),
+        (Value::Object(x), Value::Object(y))
+            if x.len() == y.len() =>
+        {
+            x.iter()
+                .map(|(k, v)| {
+                    y.get(k).map_or(f64::INFINITY, |w| {
+                        max_abs_diff(v, w)
+                    })
+                })
+                .fold(0.0, f64::max)
+        }
         _ => f64::INFINITY,
     }
 }
 
 /// Cell `i` of column `name` as f64 (one shared error path for every aggregate lookup).
-fn f64_at(g: &DataFrame, name: &str, i: usize) -> PolarsResult<f64> {
+fn f64_at(
+    g: &DataFrame,
+    name: &str,
+    i: usize,
+) -> PolarsResult<f64> {
     Ok(g.column(name)?
         .cast(&DataType::Float64)?
         .f64()?

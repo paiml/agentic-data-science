@@ -11,4 +11,5 @@ cargo llvm-cov --all-targets --locked --fail-under-lines 100 --fail-under-functi
 meas=$(cargo llvm-cov report --json --summary-only | jq '.data[0].totals.lines.percent')
 jq -e --argjson m "$meas" ".coverage == \$m" "$root/.pmat-metrics/coverage.json" >/dev/null || { echo "FAIL: .pmat-metrics/coverage.json != measured $meas"; exit 1; }
 for e in a-m1-p1 a-m1-p1-profile; do ADS_ROOT="$root" cargo run -q --locked --example "$e" | tail -n 1 | grep -q '^contract: .* OK$' || { echo "FAIL example $e"; exit 1; }; done
+ADS_ROOT="$root" cargo run -q --locked --bin a-m2-ols | tail -n 1 | grep -Eq "^max \|beta - golden\| = [0-9.]+e-[0-9]+ \(atol 1e-2\)\$" || { echo "FAIL a-m2-ols"; exit 1; }
 echo "rust gate OK"
