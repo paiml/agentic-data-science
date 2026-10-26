@@ -1,20 +1,19 @@
 import Mathlib
+import AgenticDS.Stats
 /-! Axioms behind the theorems. -/
-open Lean
+open Lean Elab Term
 
--- What a theorem rests on: its axioms, from the kernel.
-def m1v07_axioms (n : Name) : IO (List Name) := do
-  initSearchPath (← findSysroot)
-  let i : Import := { module := `AgenticDS.Stats }
-  let env ← importModules #[i] {}
-  let (r, _) ← (collectAxioms n : CoreM _).toIO
-    { fileName := "", fileMap := default } { env }
-  pure r.toList
+-- The axioms a theorem rests on, read from the kernel when this
+-- file elaborates, so running the example imports nothing.
+elab "axiomsOf% " n:ident : term => do
+  let c ← realizeGlobalConstNoOverloadWithInfo n
+  let ax ← collectAxioms c
+  return toExpr (ax.toList.map toString)
 
-def m1v07_names : List Name :=
-  [`AgenticDS.mean_const, `AgenticDS.variance_shift]
+def m1v07_axioms : List (String × List String) :=
+  [("AgenticDS.mean_const", axiomsOf% AgenticDS.mean_const),
+   ("AgenticDS.variance_shift", axiomsOf% AgenticDS.variance_shift)]
 
 def m1v07 : IO Unit := do
-  for n in m1v07_names do
-    let a ← m1v07_axioms n
+  for (n, a) in m1v07_axioms do
     IO.println s!"{n} depends on axioms: {a}"

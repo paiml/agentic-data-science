@@ -13,7 +13,13 @@ open AgenticDS
 -- Lines each example must print.
 def m1Want : List (String × List String) := [
   ("v01", ["mean     = 5", "variance = 4"]),
-  ("v03", ["leanprover/lean4:v4.35.0"])]
+  ("v03", ["leanprover/lean4:v4.35.0"]),
+  ("v07", ["AgenticDS.variance_shift depends on axioms: [",
+    "AgenticDS.mean_const depends on axioms: ["])]
+
+-- Text no example may print.
+def m1Ban : List (String × List String) := [
+  ("v07", ["sorryAx", "axioms: []"])]
 
 def main (_ : List String) : IO UInt32 := do
   let mut ok := true
@@ -32,16 +38,15 @@ def main (_ : List String) : IO UInt32 := do
   if (← m1v03_pin) != "leanprover/lean4:v4.35.0\n" then
     IO.eprintln "FAIL toolchain pin"
     ok := false
-  let ax ← m1v07_axioms `AgenticDS.variance_shift
-  if ax.contains `sorryAx || ax.length == 0 then
-    IO.eprintln s!"FAIL axioms {ax}"
-    ok := false
   for (id, act) in examplesM1 do
     try
       let (out, _) ← IO.FS.withIsolatedStreams act
       for w in (m1Want.lookup id).getD [] do
         unless (out.splitOn w).length > 1 do
           IO.eprintln s!"FAIL {id} lacks {w}"; ok := false
+      for w in (m1Ban.lookup id).getD [] do
+        if (out.splitOn w).length > 1 then
+          IO.eprintln s!"FAIL {id} prints {w}"; ok := false
     catch e => IO.eprintln s!"FAIL {id}: {e}"; ok := false
   if ok then IO.println "contract: ads-lean-examples-m1-v1 OK"
   pure (if ok then 0 else 1)
