@@ -1,0 +1,10 @@
+stopifnot(h$check_sums("data"))
+d <- h$na_policy
+s <- h$summarise_by_species(d)
+print(as.data.frame
+x <- d$body_mass_g
+hand <- sqrt
+pop <- sqrt
+cat("Gentoo sd
+ok <- identical
+verdict(

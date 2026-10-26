@@ -1,0 +1,7 @@
+stopifnot(h$check_sums("data"))
+noop <- function
+grn <- h$p1_suite()
+red <- h$p1_suite(policy = noop)
+print(names(red)
+ok <- all(grn)
+verdict(

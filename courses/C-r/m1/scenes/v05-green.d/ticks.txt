@@ -1,0 +1,5 @@
+stopifnot(h$check_sums("data"))
+res <- h$p1_suite()
+cat("passed:"
+print(names(res))
+verdict(

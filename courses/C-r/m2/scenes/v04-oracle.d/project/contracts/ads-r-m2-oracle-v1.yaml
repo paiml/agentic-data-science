@@ -1,0 +1,43 @@
+# ads-r-m2-oracle-v1: Course C (R), Module 2, scene v04-oracle (penguins OLS via parsnip)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/oracle.R fits body mass on flipper length with parsnip linear_reg() after drop_na on the two model columns and reproduces the p2 golden OLS: 342 rows, intercept -5780.83, slope 49.69, plus the ggplot2 scatter with fitted line."
+  references:
+    - "R/oracle.R"
+    - "tests/testthat/test-oracle.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json ols block)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  oracle_matches_golden:
+    formula: |
+      beta       = solve(X'X, X'y)                  X = [1, flipper_length_mm]
+      |b0 - (-5780.83)| <= 1e-3 * 5780.83
+      |b1 - 49.69|      <= 1e-3 * 49.69
+      |parsnip - beta|  <= 1e-8
+    domain: "penguins.csv after drop_na(flipper_length_mm, body_mass_g)"
+    codomain: "intercept, slope, row count, plot.png"
+    postconditions:
+      - "ROWS_342: drop_na only on flipper_length_mm and body_mass_g leaves 342 rows (D14)"
+      - "INTERCEPT: -5780.83 within relative tolerance 1e-3"
+      - "SLOPE: 49.69 within relative tolerance 1e-3"
+      - "PLOT: plot.png (ggplot2 scatter plus geom_smooth lm line) is written and larger than 10 kB"
+
+proof_obligations:
+  - type: invariant
+    property: "parsnip coefficients equal the normal-equation oracle within 1e-8"
+    formal: "|parsnip - solve(X'X, X'y)| <= 1e-8"
+    applies_to: oracle_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-ORACLE-001
+    rule: "Row count is 342 only when NA is dropped on the model columns"
+    prediction: "Rscript tests/testthat.R passes with 8 expectations in 6 test blocks"
+    test: "tests/testthat/test-oracle.R"
+    mutation: "Replace tidyr::drop_na(d, tidyr::all_of(model_cols)) in R/oracle.R with na.omit(d): row count and the golden coefficients drift, expectations fail"
+    discriminates: "A whole-table na.omit() cannot reproduce 342 rows and the golden fit"
+    if_fails: "The scene would show wrong numbers on screen"

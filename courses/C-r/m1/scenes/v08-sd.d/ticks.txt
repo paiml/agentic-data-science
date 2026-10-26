@@ -1,0 +1,7 @@
+stopifnot(h$check_sums("data"))
+pop <- 
+g <- h$p1_suite()
+r <- h$p1_suite(sd_fn = pop)
+print(names(r)
+ok <- all(g)
+verdict(

@@ -1,0 +1,10 @@
+path <- tempfile
+rows <- c(
+raw <- readr::read_csv
+good <- grepl
+bad <- !good
+print(tibble::tibble(
+raw$body_mass_g[!good]
+kept <- raw[
+ok <- sum(bad)
+verdict(

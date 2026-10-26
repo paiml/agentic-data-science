@@ -1,0 +1,39 @@
+# ads-r-m1-green-v1: Course C (R), Module 1, scene v05-green
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/green.R: the six p1 checks pass on the real policy and the real sample sd."
+  references:
+    - "R/green.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-green.R"
+    - "ads-r-p1-v1 (datasets/golden/p1.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): equality against a golden file, no kani harness"
+
+equations:
+  green_matches_golden:
+    formula: |
+      sha256(penguins.csv) = SHA256SUMS
+      scene numbers are computed from the data and agree with p1.json
+    domain: "penguins.csv (344 rows) after the NA policy (342 rows)"
+    codomain: "TRUE when the scene verdict holds"
+    postconditions:
+      - "SUMS: sha256sum -c SHA256SUMS passes on the shipped data"
+      - "VERDICT: the scene prints contract: c-m1 p1 tests green: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the scene verdict is computed, not printed unconditionally"
+    formal: "verdict(msg, ok) prints ok, ok = f(data, golden)"
+    applies_to: green_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M1-GREEN-001
+    rule: "A changed data byte is detected before any number is trusted"
+    prediction: "check_sums() returns FALSE on a copy with one appended byte"
+    test: "tests/testthat/test-helpers.R"
+    mutation: "Remove the stopifnot(check_sums()) line: tampered data would be analysed silently, the checksum expectation fails"
+    discriminates: "Computed numbers alone cannot tell tampered data from the shipped file"
+    if_fails: "The scene would show a green verdict on unverified data"

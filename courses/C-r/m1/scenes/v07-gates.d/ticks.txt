@@ -1,0 +1,10 @@
+stopifnot(h$check_sums("data"))
+files <- list.files
+src <- unlist
+wide <- sum
+tabs <- sum
+scene <- length
+cat("files"
+res <- h$p1_suite()
+ok <- wide
+verdict(

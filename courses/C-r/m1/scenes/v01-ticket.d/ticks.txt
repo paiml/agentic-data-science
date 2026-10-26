@@ -1,0 +1,8 @@
+stopifnot(h$check_sums("data"))
+golden <- jsonlite::fromJSON
+raw <- h$read_penguins
+clean <- h$na_policy(raw)
+want <- vapply
+have <- h$count_species
+ok <- all(want == have)
+h$verdict("contract

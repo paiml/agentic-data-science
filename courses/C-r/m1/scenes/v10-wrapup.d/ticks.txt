@@ -1,0 +1,10 @@
+stopifnot(h$check_sums("data"))
+raw <- h$read_penguins
+clean <- h$na_policy(raw)
+cat("ingest"
+doc <- jsonlite
+gold <- jsonlite
+gap <- max
+res <- h$p1_suite()
+ok <- nrow(clean)
+verdict(

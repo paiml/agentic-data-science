@@ -1,0 +1,7 @@
+stopifnot(h$check_sums("data"))
+raw <- h$read_penguins
+miss <- colSums
+clean <- h$na_policy(raw)
+sex_na <-
+ok <- nrow(clean)
+verdict(

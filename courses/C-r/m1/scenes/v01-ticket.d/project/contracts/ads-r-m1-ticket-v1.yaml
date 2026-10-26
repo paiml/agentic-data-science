@@ -1,0 +1,43 @@
+# ads-r-m1-ticket-v1: Course C (R), Module 1, scene v01-ticket (the oracle matches the data)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ticket.R verifies the penguins SHA256SUMS, reads the CSV, applies the NA policy and checks the per-species counts against the p1 golden: 344 rows -> 342 clean rows, Adelie 151, Chinstrap 68, Gentoo 123."
+  references:
+    - "R/ticket.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ticket.R"
+    - "ads-r-p1-v1 (datasets/golden/p1.json species n)"
+    - "CLASSIFICATION (kind: pattern, not kernel): equality against a golden file, no kani harness"
+
+equations:
+  ticket_oracle_matches_data:
+    formula: |
+      sha256(penguins.csv) = SHA256SUMS
+      n_species(clean)     = golden$species[s]$n      s in {Adelie, Chinstrap, Gentoo}
+      sum(n_species)       = nrow(clean) = 342
+    domain: "penguins.csv (344 rows) after the NA policy"
+    codomain: "TRUE when checksums, counts and the 342 total agree"
+    postconditions:
+      - "SUMS: sha256sum -c SHA256SUMS passes on the shipped data and fails on a changed byte"
+      - "ROWS: 344 raw rows, 342 clean rows (D14)"
+      - "COUNTS: Adelie 151, Chinstrap 68, Gentoo 123 equal the golden n"
+      - "VERDICT: the scene prints contract: c-m1 oracle matches: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "golden species counts sum to the clean row count"
+    formal: "sum(golden n) = nrow(na_policy(read_penguins(csv))) = 342"
+    applies_to: ticket_oracle_matches_data
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M1-TICKET-001
+    rule: "A changed data byte is detected before any number is trusted"
+    prediction: "check_sums() returns FALSE on a copy with one appended byte"
+    test: "tests/testthat/test-ticket.R"
+    mutation: "Remove the stopifnot(check_sums()) line: a tampered CSV would be analysed silently, the checksum expectation fails"
+    discriminates: "Counts alone cannot tell tampered data from the shipped file"
+    if_fails: "The ticket would show a green verdict on unverified data"

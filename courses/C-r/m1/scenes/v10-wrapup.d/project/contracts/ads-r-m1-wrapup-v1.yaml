@@ -1,0 +1,39 @@
+# ads-r-m1-wrapup-v1: Course C (R), Module 1, scene v10-wrapup
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/wrapup.R: wrap-up of both P1 contracts: ingest 344 -> 342 and the profile equal to the golden."
+  references:
+    - "R/wrapup.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-wrapup.R"
+    - "ads-r-p1-v1 (datasets/golden/p1.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): equality against a golden file, no kani harness"
+
+equations:
+  wrapup_matches_golden:
+    formula: |
+      sha256(penguins.csv) = SHA256SUMS
+      scene numbers are computed from the data and agree with p1.json
+    domain: "penguins.csv (344 rows) after the NA policy (342 rows)"
+    codomain: "TRUE when the scene verdict holds"
+    postconditions:
+      - "SUMS: sha256sum -c SHA256SUMS passes on the shipped data"
+      - "VERDICT: the scene prints contract: c-m1 wrap-up, both P1 contracts: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the scene verdict is computed, not printed unconditionally"
+    formal: "verdict(msg, ok) prints ok, ok = f(data, golden)"
+    applies_to: wrapup_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M1-WRAPUP-001
+    rule: "A changed data byte is detected before any number is trusted"
+    prediction: "check_sums() returns FALSE on a copy with one appended byte"
+    test: "tests/testthat/test-helpers.R"
+    mutation: "Remove the stopifnot(check_sums()) line: tampered data would be analysed silently, the checksum expectation fails"
+    discriminates: "Computed numbers alone cannot tell tampered data from the shipped file"
+    if_fails: "The scene would show a green verdict on unverified data"

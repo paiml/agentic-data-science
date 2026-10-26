@@ -1,0 +1,9 @@
+stopifnot(h$check_sums("data"))
+d <- h$na_policy
+js <- h$summary_json
+print(js)
+doc <- jsonlite
+gold <- jsonlite
+gap <- max
+cat("largest gap
+verdict(
