@@ -1,0 +1,11 @@
+# P2 (b): fixed-fold CV against the golden file.
+h <- new.env()
+sys.source("R/helpers.R", envir = h)
+d <- h$load_clean("data/penguins.csv")
+f <- h$read_folds("data/folds.csv")
+g <- jsonlite::fromJSON("data/p2.json")
+cv <- h$cv_rmse(d, f)
+cat("cv_rmse (ols):", cv, "\n")
+ok <- all.equal(cv, g$cv_rmse$ols, tolerance = 1e-9)
+stopifnot(isTRUE(ok))
+cat("contract: ads-r-p2 cv matches golden/p2.json OK\n")

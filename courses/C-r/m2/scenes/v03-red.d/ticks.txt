@@ -1,0 +1,9 @@
+d <- h$load_clean(
+b <- h$ols_closed_form(
+g <- jsonlite::fromJSON("data/p2.json")
+broken <- b[["slope"]] + 1
+r <- all.equal(
+cat("golden slope:"
+cat("broken slope:"
+cat(cli::col_red(r)
+h$verdict(

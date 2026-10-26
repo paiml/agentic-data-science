@@ -1,0 +1,41 @@
+# ads-r-m2-ticket-v1: Course C (R), Module 2, scene v01-ticket
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ticket.R reads the p2 golden file and checks it carries the four oracle entries (ols, species_model, metrics, cv_rmse); the ticket oracle is OLS intercept -5780.83, slope 49.69."
+  references:
+    - "R/ticket.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ticket.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  ticket_oracle_present:
+    formula: |
+      names(golden) = {ols, species_model, metrics, cv_rmse}
+      golden$ols = (-5780.83, 49.69) to 2 decimals
+    domain: "datasets/golden/p2.json copied to data/p2.json"
+    codomain: "TRUE when all four entries are present"
+    postconditions:
+      - "ENTRIES: the golden file names ols, species_model, metrics and cv_rmse"
+      - "OLS: intercept -5780.83 and slope 49.69 within relative tolerance 1e-3"
+      - "VERDICT: the scene prints all four oracle entries present: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the golden oracle has exactly the four ticket entries"
+    formal: "names(fromJSON(p2.json)) = {ols, species_model, metrics, cv_rmse}"
+    applies_to: ticket_oracle_present
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-TICKET-001
+    rule: "A missing oracle entry turns the verdict FALSE"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-ticket.R"
+    mutation: "Delete the cv_rmse key from data/p2.json: the named-entries expectation fails and the verdict prints FALSE"
+    discriminates: "A scene that only prints the file cannot tell a complete oracle from a truncated one"
+    if_fails: "The ticket would claim an oracle that lacks a required number"

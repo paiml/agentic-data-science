@@ -1,0 +1,6 @@
+ex <- c(
+out <- unlist(lapply(ex
+hits <- out[startsWith(
+writeLines(hits)
+ok <- length(hits) == 2
+h$verdict(

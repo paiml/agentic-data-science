@@ -1,0 +1,38 @@
+library(testthat)
+root <- normalizePath(testthat::test_path("..", ".."))
+old <- setwd(root)
+source("R/helpers.R")
+source("R/ticket.R")
+scene <- readLines("R/ticket.R")
+scene_lines <- length(scene)
+setwd(old)
+work <- tempfile("scene")
+dir.create(work)
+file.copy(dir(root, full.names = TRUE), work, recursive = TRUE)
+old <- setwd(work)
+out <- utils::capture.output(ok <- run_scene())
+txt <- paste(out, collapse = " ")
+g <- jsonlite::fromJSON("data/p2.json")
+
+test_that("the scene file fits the screen, 25 lines or fewer", {
+  expect_lte(scene_lines, 25L)
+  expect_lte(max(nchar(scene)), 59L)
+})
+test_that("the golden file carries the four oracle entries", {
+  expect_named(g, c("ols", "species_model", "metrics", "cv_rmse"))
+})
+test_that("the golden OLS is the p2 ticket numbers", {
+  expect_equal(g$ols$intercept, -5780.83, tolerance = 1e-3)
+  expect_equal(g$ols$slope, 49.69, tolerance = 1e-3)
+})
+test_that("the scene reports TRUE and shows the rounded OLS", {
+  expect_true(ok)
+  expect_match(txt, "-5780.83 +49.69")
+  expect_match(txt, "all four oracle entries present: TRUE")
+})
+test_that("verdict returns and prints a failure as FALSE", {
+  res <- utils::capture.output(r <- verdict("x", FALSE))
+  expect_false(r)
+  expect_match(res, "x: FALSE")
+})
+setwd(old)

@@ -1,0 +1,8 @@
+res <- as.data.frame(testthat::test_dir(
+cat(
+d <- h$load_clean(
+fit <- h$fit_line(d)
+m <- h$regression_metrics(
+cat(sprintf(
+ok <- sum(res$failed) == 0
+h$verdict(

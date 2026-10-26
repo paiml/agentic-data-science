@@ -1,0 +1,12 @@
+d <- h$load_clean(
+f <- h$read_folds(
+ids <- h$make_ids(
+cl <- h$locale_run(
+us <- h$locale_run(
+cat("CV by row, C
+cat("CV by row, US
+cat("CV by id,  C
+cat("CV by id,  US
+moved <- !identical(
+ok <- moved
+h$verdict(

@@ -1,0 +1,42 @@
+# ads-r-m2-red-v1: Course C (R), Module 2, scene v03-red
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/red.R plants a bug (slope + 1) and shows the golden comparison failing: golden slope 49.69 against broken slope 50.69, so the oracle is proven able to fail."
+  references:
+    - "R/red.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-red.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  oracle_catches_planted_bug:
+    formula: |
+      broken = slope + 1
+      all.equal(golden$ols$slope, broken, tolerance = 1e-9) is not TRUE
+      all.equal(golden$ols$slope, slope, tolerance = 1e-9) is TRUE
+    domain: "penguins.csv after drop_na(flipper_length_mm, body_mass_g)"
+    codomain: "golden slope, broken slope, comparison message, TRUE/FALSE verdict"
+    postconditions:
+      - "GOLDEN: golden slope prints 49.69"
+      - "BROKEN: the planted bug prints slope 50.69"
+      - "CAUGHT: all.equal reports Mean relative difference and the verdict is TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "the oracle fails on a planted bug and passes on the true slope"
+    formal: "all.equal(golden, slope + 1, 1e-9) != TRUE and all.equal(golden, slope, 1e-9) = TRUE"
+    applies_to: oracle_catches_planted_bug
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-RED-001
+    rule: "An oracle that cannot fail is not an oracle"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-red.R"
+    mutation: "Raise the all.equal tolerance to 1: the planted bug is no longer caught and the caught-bug expectation fails"
+    discriminates: "A loose tolerance accepts the broken slope and hides a useless oracle"
+    if_fails: "The lesson would teach an oracle that passes on wrong code"

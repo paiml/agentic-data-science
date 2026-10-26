@@ -1,0 +1,41 @@
+# ads-r-m2-locale-v1: Course C (R), Module 2, scene v09-locale
+
+metadata:
+  version: "1.1.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/locale.R runs 5-fold CV under the C and en_US collations twice: folds keyed on the row index give 394.31296 in both, folds keyed on the sorted position of 342 ids give 394.9178 under C and 394.25148 under en_US. A locale that is not installed stops the run with its name."
+  references:
+    - "R/locale.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-locale.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  locale_moves_id_folds_not_row_folds:
+    formula: |
+      cv_rmse(row-index folds | C) = cv_rmse(row-index folds | en_US) = golden
+      cv_rmse(sorted-id folds | C) != cv_rmse(sorted-id folds | en_US)
+    domain: "342 generated ids, penguins.csv after drop_na, the fixed folds.csv"
+    codomain: "four CV values, TRUE/FALSE verdict"
+    postconditions:
+      - "ROW: 394.31296 under both locales, equal to the golden within 1e-8"
+      - "ID: the two sorted-id CV values differ, so the check can fail"
+      - "LOCALE: a missing locale is an error naming it, never a silent C"
+
+proof_obligations:
+  - type: invariant
+    property: "row-index folds make CV independent of the collation locale; folds keyed on sorted ids do not"
+    formal: "cv_row(C) = cv_row(en_US) and cv_id(C) != cv_id(en_US)"
+    applies_to: locale_moves_id_folds_not_row_folds
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-LOCALE-001
+    rule: "Sort order depends on the locale, so folds keyed on it do too; row-index folds do not"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-locale.R"
+    mutation: "Key the fixed folds on the sorted ids (use fold_by_id(ids) for the row result): the row CV under the two locales differs and the golden expectation fails. Make fold_by_id use the row index: the id CV no longer differs and the scene and id expectations fail"
+    discriminates: "Folds keyed on sorted ids change with the locale; row-index folds do not"
+    if_fails: "CV numbers would depend on the machine locale"

@@ -1,0 +1,11 @@
+# P2 (a): closed-form OLS against the golden file.
+h <- new.env()
+sys.source("R/helpers.R", envir = h)
+d <- h$load_clean("data/penguins.csv")
+g <- jsonlite::fromJSON("data/p2.json")
+b <- h$ols_closed_form(d$flipper_length_mm, d$body_mass_g)
+print(b)
+want <- c(g$ols$intercept, g$ols$slope)
+ok <- all.equal(unname(b), want, tolerance = 1e-9)
+stopifnot(isTRUE(ok))
+cat("contract: ads-r-p2 ols matches golden/p2.json OK\n")

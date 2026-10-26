@@ -1,0 +1,45 @@
+# ads-r-m2-folds-v1: Course C (R), Module 2, scene v06-folds
+
+metadata:
+  version: "1.1.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/folds.R reads the fixed fold file (342 rows, folds of 69/69/68/68/68) and runs 5-fold CV twice on the fixed folds (identical line RMSE 394.3) and on two seeded random splits (different RMSE, 393.8 and 397.1); the golden file also pins species 376.6."
+  references:
+    - "R/folds.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-folds.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  folds_make_cv_repeatable:
+    formula: |
+      folds = data/folds.csv$fold, rows 1..342
+      cv_rmse(fixed, build 1) = cv_rmse(fixed, build 2), the second from a fresh read of folds.csv
+      cv_rmse(random, seed 1) != cv_rmse(random, seed 2)
+      cv_rmse(random, seed 1, build 1) = cv_rmse(random, seed 1, build 2); seeds 1, 2 differ
+      line 394.3 and species 376.6 (golden cv_rmse, tolerance 1e-8)
+    domain: "penguins.csv after drop_na and the fixed folds.csv"
+    codomain: "fold table, two CV RMSE pairs, TRUE/FALSE verdict"
+    postconditions:
+      - "FOLDS: five folds of sizes 69, 69, 68, 68, 68 and the first ten rows are 1..5 twice"
+      - "REPEAT: two separate fold builds (fresh read of folds.csv) give identical CV RMSE, and seed 1 built twice gives the same RMSE"
+      - "CONTRAST: two seeds give different splits and different CV RMSE; a random_folds that ignores its seed makes seed 1 differ from seed 1 (test: the repeat check fails when the seed is ignored), so the repeat check is able to fail"
+      - "GOLDEN: line 394.3 and species 376.6 equal golden cv_rmse within 1e-8"
+
+proof_obligations:
+  - type: invariant
+    property: "fixed folds give the golden CV RMSE on every run"
+    formal: "cv_rmse(d, folds) = golden within 1e-8, repeated runs identical"
+    applies_to: folds_make_cv_repeatable
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-FOLDS-001
+    rule: "CV is repeatable only with fixed folds"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-folds.R"
+    mutation: "Three edits, each ends red. (0) Replace set.seed(seed) by invisible(seed): the repeat test builds seed 1 twice and the two builds differ (killed in test-folds.R by the mutated helpers). (1) In random_folds drop sample() so every seed gives the same split: the seeds-differ expectation and the scene expectations fail. (2) Replace set.seed(seed) by set.seed(1): the scene expects different random RMSEs and fails. Shuffling data/folds.csv keeps sizes 69/69/68/68/68, so only the head and golden expectations catch it"
+    discriminates: "Random splits give a different CV RMSE per seed, fixed folds give the same one on every run"
+    if_fails: "The lesson would show CV numbers nobody can reproduce"

@@ -1,0 +1,42 @@
+# ads-r-m2-ols-v1: Course C (R), Module 2, scene v02-ols
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ols.R fits the closed-form OLS line on the 342 clean penguins, prints slope 49.69 g/mm and R squared 0.759, and checks R squared against the p2 golden to 1e-8."
+  references:
+    - "R/ols.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ols.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  ols_r2_matches_golden:
+    formula: |
+      beta = solve(X'X, X'y)         X = [1, flipper_length_mm]
+      R2   = 1 - SSE / SST
+      |R2 - golden$metrics$ols$r2| <= 1e-8
+    domain: "penguins.csv after drop_na(flipper_length_mm, body_mass_g)"
+    codomain: "slope, R squared, TRUE/FALSE verdict"
+    postconditions:
+      - "ROWS: 342 rows after drop_na on the two model columns (D14)"
+      - "SLOPE: 49.69 g/mm, equal to lm() within 1e-8"
+      - "R2: 0.759 and equal to the golden metrics.ols.r2 within 1e-8"
+
+proof_obligations:
+  - type: invariant
+    property: "the closed-form fit equals lm() and the golden R squared"
+    formal: "|solve(X'X, X'y) - coef(lm)| <= 1e-8"
+    applies_to: ols_r2_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-OLS-001
+    rule: "The R squared verdict is TRUE only for the correct fit"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-ols.R"
+    mutation: "Change crossprod(design, y) to crossprod(design, y + 1) in ols_closed_form(): the lm parity and golden expectations fail"
+    discriminates: "A printed R squared alone cannot show the fit equals the golden file"
+    if_fails: "The lesson would show a wrong fit as green"

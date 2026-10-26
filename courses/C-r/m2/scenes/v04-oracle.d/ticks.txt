@@ -1,0 +1,8 @@
+d <- h$load_clean(
+m <- linear_reg()
+b <- coef(
+cat(sprintf(
+p <- ggplot(
+h$save_png(
+ok <- nrow(d)
+h$verdict(

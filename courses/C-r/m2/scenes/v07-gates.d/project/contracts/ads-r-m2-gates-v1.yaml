@@ -1,0 +1,45 @@
+# ads-r-m2-gates-v1: Course C (R), Module 2, scene v07-gates
+
+metadata:
+  version: "1.2.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/gates.sh runs four gates on the real merged course code, each as the tool's own command with live output and its own exit line: make gate-shacl (Jena prints sh:conforms true per file), covr line coverage 100 percent, lintr 0 lints, styler with dry = fail. No line is printed by the script itself except the exit= echoes."
+  references:
+    - "R/gates.sh"
+    - "tests/testthat/test-gates.R"
+    - "scripts/gate-r.sh"
+    - "scripts/shacl.sh"
+    - "CLASSIFICATION (kind: pattern, not kernel): gate results over the real r/agenticds package and ontology, no kani harness"
+
+equations:
+  four_gates_all_green:
+    formula: |
+      make gate-shacl            : sh:conforms true, then exit=0
+      covr coverage(r/agenticds) = 100, then exit=0
+      lintr lints(r/agenticds)   = 0, then exit=0
+      styler files to change     = 0, then exit=0
+    domain: "r/agenticds (package, tests) and ontology/{ads.ttl,shapes/*.shape.ttl} with every example.ttl"
+    codomain: "each tool's own output and its own exit status"
+    postconditions:
+      - "SHACL: the wired gate task scripts/shacl.sh exits non-zero unless Jena prints sh:conforms true; the raw Jena CLI exits 0 on a finding, so the scene never shows it"
+      - "COVERAGE: covr prints its own percentage and the command exits 1 below 100"
+      - "LINT: lintr prints No lints found and the command exits 1 on any lint"
+      - "STYLE: styler with dry = fail errors on a file it would change, the command exits 1"
+      - "NO_VERDICT: the script prints no pass line of its own and captures nothing; each exit= is the status of the command above it"
+
+proof_obligations:
+  - type: invariant
+    property: "each command exits 0 iff its own gate is green"
+    formal: "exit_shacl = 0 iff conforms = true; exit_covr = 0 iff pct = 100; exit_lint = 0 iff lints = 0; exit_style = 0 iff restyled = 0"
+    applies_to: four_gates_all_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-GATES-001
+    rule: "Any single red gate gives a non-zero exit line for that tool only"
+    prediction: "Rscript tests/testthat.R passes with every expectation green; the CI r job installs Jena and runs it with no skip"
+    test: "tests/testthat/test-gates.R"
+    mutation: "Copy the repo and damage one thing per test, then run the scene file: append an untested function to r/agenticds/R/p1.R (covr exit=1), append a comma lint (lintr exit=1), append an unstyled assignment (styler exit=1), add a shape that needs ads:license (make gate-shacl exits non-zero and prints FAIL); the happy path expects exit=0 four times"
+    discriminates: "Three green gates with one red must not read as all green"
+    if_fails: "A merge would be armed on a gate that did not run"

@@ -1,0 +1,12 @@
+d <- h$load_clean(
+f <- h$read_folds(
+print(table(f))
+a <- h$cv_rmse(d, f)
+b <- h$cv_rmse(
+r1 <- h$cv_rmse(
+r2 <- h$cv_rmse(
+again <- h$cv_rmse(
+cat(sprintf(
+cat(sprintf(
+ok <- identical(a, b)
+h$verdict(

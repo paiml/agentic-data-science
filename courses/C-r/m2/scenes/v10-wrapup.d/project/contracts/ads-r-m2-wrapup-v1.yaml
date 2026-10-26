@@ -1,0 +1,41 @@
+# ads-r-m2-wrapup-v1: Course C (R), Module 2, scene v10-wrapup
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/wrapup.R runs both P2 examples (c-m2-p2-ols and c-m2-p2-cv) and requires each to print its own contract line ending in OK."
+  references:
+    - "R/wrapup.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-wrapup.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  both_p2_contracts_ok:
+    formula: |
+      lines starting with "contract:" from the two example runs = 2
+      every such line ends with OK
+    domain: "examples/c-m2-p2-ols/run.R and examples/c-m2-p2-cv/run.R"
+    codomain: "two contract lines, TRUE/FALSE verdict"
+    postconditions:
+      - "OLS: contract: ads-r-p2 ols matches golden/p2.json OK"
+      - "CV: contract: ads-r-p2 cv matches golden/p2.json OK"
+      - "VERDICT: two contracts, both OK: TRUE"
+
+proof_obligations:
+  - type: invariant
+    property: "both P2 examples verify their numbers against the golden file"
+    formal: "count(contract lines) = 2 and all end with OK"
+    applies_to: both_p2_contracts_ok
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-WRAPUP-001
+    rule: "A failing example stops its contract line from printing"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-wrapup.R"
+    mutation: "Change golden cv_rmse.ols in data/p2.json by 1: the cv example errors at stopifnot, run_scene() raises, and the wrong-golden test expects exactly that"
+    discriminates: "Counting exit codes alone would miss an example that prints no contract"
+    if_fails: "The wrap-up would show green without both contracts"

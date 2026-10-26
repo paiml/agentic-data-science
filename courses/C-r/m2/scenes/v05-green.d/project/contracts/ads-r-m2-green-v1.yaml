@@ -1,0 +1,41 @@
+# ads-r-m2-green-v1: Course C (R), Module 2, scene v05-green
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/green.R runs the P2 test suite on the real tree (all green) and shows slope 49.69 and RMSE 393.1, the numbers the ticket asked for."
+  references:
+    - "R/green.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-green.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_tests_green:
+    formula: |
+      failed = 0 and errors = 0 over tests/p2
+      RMSE = sqrt(SSE / n) = 393.1236 (golden metrics.ols.rmse), tolerance 0.001
+    domain: "tests/p2/test-p2.R and penguins.csv after drop_na"
+    codomain: "passed/failed/error counts, slope, RMSE, TRUE/FALSE verdict"
+    postconditions:
+      - "GREEN: the P2 suite reports failed 0 errors 0"
+      - "SLOPE: 49.69"
+      - "RMSE: 393.1 within 0.001 of the golden 393.1236"
+
+proof_obligations:
+  - type: invariant
+    property: "the P2 suite is green and the RMSE matches the golden file"
+    formal: "failed = 0 and errors = 0 and |rmse - 393.1236| < 0.001"
+    applies_to: p2_tests_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-GREEN-001
+    rule: "A red P2 test or a drifted RMSE turns the verdict FALSE"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-green.R"
+    mutation: "Add 1 to the slope inside ols_closed_form(): a P2 test fails and the verdict is FALSE"
+    discriminates: "Counting tests alone would pass a suite that never checks the golden numbers"
+    if_fails: "The ticket would close on numbers that do not match the oracle"

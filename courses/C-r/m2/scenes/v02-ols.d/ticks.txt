@@ -1,0 +1,9 @@
+d <- h$load_clean(
+fit <- h$fit_line(d)
+m <- h$regression_metrics(
+g <- jsonlite::fromJSON("data/p2.json")
+cat(sprintf("slope
+cat(sprintf("R squared
+want <- g$metrics
+ok <- isTRUE(all.equal(
+h$verdict(

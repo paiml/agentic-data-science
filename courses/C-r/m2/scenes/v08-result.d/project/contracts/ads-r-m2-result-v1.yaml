@@ -1,0 +1,42 @@
+# ads-r-m2-result-v1: Course C (R), Module 2, scene v08-result
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/result.R prints in-sample RMSE 393.1, cross-validated line 394.3 and cross-validated species 376.6, and checks that CV is above in-sample and the species term wins by 17.7 g."
+  references:
+    - "R/result.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-result.R"
+    - "ads-r-p2-v1 (datasets/golden/p2.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  cv_above_insample_species_wins:
+    formula: |
+      rmse_cv(line) > rmse_in(line)
+      rmse_cv(species) < rmse_cv(line)
+      gain = rmse_cv(line) - rmse_cv(species) = 17.7 g
+    domain: "penguins.csv after drop_na and the fixed folds.csv"
+    codomain: "three RMSE values, the species gain, TRUE/FALSE verdict"
+    postconditions:
+      - "INSAMPLE: 393.1 equal to golden metrics.ols.rmse within 1e-8"
+      - "CV: line 394.3 and species 376.6 equal golden cv_rmse within 1e-8"
+      - "ORDER: CV line above in-sample and CV species below CV line"
+
+proof_obligations:
+  - type: invariant
+    property: "cross-validated error is above in-sample and species improves it"
+    formal: "cv_line > in_line and cv_species < cv_line"
+    applies_to: cv_above_insample_species_wins
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M2-RESULT-001
+    rule: "The result verdict is TRUE only when both orderings hold"
+    prediction: "Rscript tests/testthat.R passes with every expectation green"
+    test: "tests/testthat/test-result.R"
+    mutation: "Swap the species flag in the cvs line to FALSE: cvs equals cvl and the species-wins expectation fails"
+    discriminates: "Printing the numbers alone does not assert their ordering"
+    if_fails: "The lesson would claim a species gain that is not there"

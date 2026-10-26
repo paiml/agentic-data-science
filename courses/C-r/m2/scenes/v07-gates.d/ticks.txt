@@ -1,0 +1,10 @@
+export ADS_ROOT="$PWD"
+make gate-shacl
+echo "exit=$?"
+cd r/agenticds
+Rscript -e 'cv
+echo "exit=$?"
+Rscript -e 'lints
+echo "exit=$?"
+Rscript -e 'styler
+echo "exit=$?"

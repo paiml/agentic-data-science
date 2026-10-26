@@ -1,0 +1,6 @@
+g <- jsonlite::fromJSON("data/p2.json")
+print(names(g))
+print(round(unlist(g$ols), 2))
+want <- c(
+ok <- all(want %in% names(g))
+h$verdict(
