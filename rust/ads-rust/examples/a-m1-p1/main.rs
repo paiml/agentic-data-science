@@ -1,6 +1,6 @@
-//! A-M1-P1: ingest Palmer Penguins, apply the NA policy, print the per-species counts.
+//! A-M1-P1: ingest Palmer Penguins, apply the NA policy, print the row counts before and after.
 //!
-//! Provable contract: ads-rust-p1-v1 (344 rows loaded, 342 kept, counts 151/68/123).
+//! Provable contract: ads-rust-p1-v1 (344 rows loaded, 342 kept).
 use ads_rust::p1::{na_policy, read_penguins};
 
 fn main() {
