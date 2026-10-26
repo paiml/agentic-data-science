@@ -1,0 +1,47 @@
+# ads-kotlin-m1-v08-kover-v1: Course D (Kotlin), Module 1, scene m1-08 (Kover)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m1v08 runs the tool's own command (./gradlew --console=plain koverLog koverLogBranch koverVerify) and shows its native output, then exit=0."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P1.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsFailOnFindingsTest.kt"
+    - "kotlin/ads-kotlin/scenes/CONTRACT.md"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/MeasuredRealOutputTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneContractTest.kt"
+    - "kotlin/ads-kotlin/scenes/m1v08.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m1-v08-kover-v1:
+    formula: |
+      run: ./gradlew --console=plain koverLog koverLogBranch koverVerify
+      native pass line: BUILD SUCCESSFUL
+      measured: the `measured` regex of the scene (CONTRACT.md N7) matches the real koverLog line "line coverage 100% (koverVerify bound: 100%)" and the koverLogBranch line "branch coverage <95..100>% (koverVerify bound: 95%)"
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: koverVerify exits non-zero when a bound is missed (ToolsFailOnFindingsTest.koverVerifyFailsWhenTheCodeIsNotCovered runs it live on uncovered code; BuildWiringTest asserts the line bound is the constant 100 and the branch bound the constant 95, each feeding both the log line and the verify rule)"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m1-v08-kover-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M1-V08-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain koverLog koverLogBranch koverVerify exits 0 on the scene commit"
+    test: "./gradlew --console=plain koverLog koverLogBranch koverVerify"
+    mutation: "ToolsFailOnFindingsTest.koverVerifyFailsWhenTheCodeIsNotCovered: uncovered code violates the line bound and fails koverVerify"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

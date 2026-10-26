@@ -1,0 +1,43 @@
+# ads-kotlin-m2-v07-detekt-v1: Course D (Kotlin), Module 2, scene m2-07 (detekt analysis)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m2v07 runs the tool's own command (./gradlew --console=plain detekt) and shows its native output, then exit=0."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Golden.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsFailOnFindingsTest.kt"
+    - "kotlin/ads-kotlin/scenes/m2v07.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m2-v07-detekt-v1:
+    formula: |
+      run: ./gradlew --console=plain detekt
+      native pass line: BUILD SUCCESSFUL
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: the tool exits non-zero on a finding (ToolsFailOnFindingsTest.detektFailsOnAnUnusedMemberAndPassesWhenItIsFixed runs detekt live on a planted violation)"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m2-v07-detekt-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M2-V07-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain detekt exits 0 on the scene commit"
+    test: "./gradlew --console=plain detekt"
+    mutation: "ToolsFailOnFindingsTest.detektFailsOnAnUnusedMemberAndPassesWhenItIsFixed: an unused private member fails detekt and the fixed file passes"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

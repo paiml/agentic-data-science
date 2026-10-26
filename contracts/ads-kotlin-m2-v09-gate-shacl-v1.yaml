@@ -1,0 +1,44 @@
+# ads-kotlin-m2-v09-gate-shacl-v1: Course D (Kotlin), Module 2, scene m2-09 (SHACL gate)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m2v09 runs the wired gate task (./gradlew --console=plain verifyShaclP1Profile), which echoes Jena native sh:conforms line, then a separate exit=0."
+  references:
+    - "kotlin/ads-kotlin/examples/d-m1-p1-profile/example.ttl"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/shacl.gradle.kts"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsCanFailTest.kt"
+    - "kotlin/ads-kotlin/scenes/m2v09.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m2-v09-gate-shacl-v1:
+    formula: |
+      run: ./gradlew --console=plain verifyShaclP1Profile
+      native pass line: sh:conforms  true (echoed by the task from Jena report), then BUILD SUCCESSFUL
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: Jena shacl exits 0 on a finding (measured, 5.2.0), so its report (sh:conforms false) is the verdict and the verifyShaclP1Profile gate task (CI runs it: scripts/gate-kotlin.sh verifyShaclAll via make gate-kotlin, ci.yml line 64) fails the build on it and echoes the Jena line (ToolsCanFailTest.everyVerifyTaskPassesGoodAndFailsBroken runs real Jena on a good and a broken file and hard-fails when shacl is missing; CI installs it)"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m2-v09-gate-shacl-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M2-V09-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain verifyShaclP1Profile exits 0 on the scene commit"
+    test: "./gradlew --console=plain verifyShaclP1Profile"
+    mutation: "ToolsCanFailTest.everyVerifyTaskPassesGoodAndFailsBroken: a broken example reports sh:conforms false and the verify task fails the build"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

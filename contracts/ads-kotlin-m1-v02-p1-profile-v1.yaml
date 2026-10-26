@@ -1,0 +1,43 @@
+# ads-kotlin-m1-v02-p1-profile-v1: Course D (Kotlin), Module 1, scene m1-02 (P1 profile)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m1v02 profiles each species (n, mean, sample SD of four measures) and compares every number with datasets/golden/p1.json, printing the largest gap and a VERDICT PASS line."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m1v02/M1v02.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P1Scene.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P1.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/M1ScenesTest.kt"
+    - "datasets/golden/p1.json"
+    - "kotlin/ads-kotlin/scenes/m1v02.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m1_v02_p1-profile:
+    formula: |
+      gap = max over species, measure, stat of |computed - golden|
+      verdict(PASS) iff gap <= 1e-6 and the key sets are equal
+    domain: "datasets/penguins/penguins.csv and datasets/golden/p1.json"
+    codomain: "max gap, one verdict line"
+    postconditions:
+      - "GOLDEN_PARITY: all 27 golden numbers are compared, not a sample"
+      - "KEYS_EQUAL: a missing species makes the gap infinite (goldenGapIsInfiniteWhenASpeciesIsMissing)"
+      - "CAN_FAIL: a mean shifted by 1, a missing NA policy or a missing species makes the gap exceed 1e-6 (goldenGapCatchesAShiftedMean, goldenGapCatchesTheMissingNaPolicy, goldenGapIsInfiniteWhenASpeciesIsMissing)"
+
+proof_obligations:
+  - type: invariant
+    property: "The profile equals the R golden within 1e-6"
+    formal: "withinTol(goldenGap(profile, golden)) iff max |computed - golden| <= 1e-6"
+    applies_to: m1_v02_p1-profile
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M1-V02-001
+    rule: "The profile equals the R golden within 1e-6"
+    prediction: "make gate-kotlin passes with M1ScenesTest.profileSceneMatchesTheGolden green"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "a mean shifted by 1, a missing NA policy or a missing species makes the gap exceed 1e-6 (goldenGapCatchesAShiftedMean, goldenGapCatchesTheMissingNaPolicy, goldenGapIsInfiniteWhenASpeciesIsMissing)"
+    discriminates: "A profile computed without the NA policy cannot match n = 151, 68, 123"
+    if_fails: "Learners compare Kotlin against a wrong reference"

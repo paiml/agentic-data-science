@@ -1,0 +1,43 @@
+# ads-kotlin-m2-v01-p2-regress-v1: Course D (Kotlin), Module 2, scene m2-01 (P2 regression check)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The scene fits body mass on flipper length by QR on the NA-cleaned penguins, prints the residual sum and compares the fit with datasets/golden/p2.json ols within 1e-6."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m2v01/M2v01.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Golden.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/M2ScenesTest.kt"
+    - "datasets/golden/p2.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene run that must exit 0, no kani harness"
+
+equations:
+  m2v01_residual_and_golden:
+    formula: |
+      |sum_i (y_i - a - b x_i)|      <= 1e-6
+      |intercept - golden.ols.intercept| <= 1e-6
+      |slope - golden.ols.slope|         <= 1e-6
+    domain: "datasets/penguins/penguins.csv, NA dropped only in the two model columns"
+    codomain: "residual sum, golden agreement"
+    postconditions:
+      - "ROW_COUNT: loadClean() keeps 342 rows or fails loudly"
+      - "ZERO_SUM: the printed residual sum is below 1e-6"
+      - "GOLDEN: the last line is VERDICT: Golden P2 PASS"
+      - "CAN_FAIL: a golden with a shifted intercept prints Golden P2 FAIL"
+
+proof_obligations:
+  - type: invariant
+    property: "The QR fit reproduces the R golden and its residuals sum to zero"
+    formal: "|fitQr - golden| <= 1e-6 and |sum residuals| <= 1e-6"
+    applies_to: m2v01_residual_and_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M2V01-001
+    rule: "The QR fit reproduces the R golden and its residuals sum to zero"
+    prediction: "./gradlew -q m2v01 prints Golden P2 PASS and exits 0"
+    test: "./gradlew --console=plain test --tests com.paiml.ads.M2ScenesTest"
+    mutation: "Shift the golden intercept by 1 (m2v01FailsOnAShiftedGolden): the scene prints Golden P2 FAIL"
+    discriminates: "A wrong golden or a non-OLS fit cannot pass the 1e-6 comparison"
+    if_fails: "The video claims agreement with R that does not hold"
