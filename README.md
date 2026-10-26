@@ -34,6 +34,7 @@ Lean 4 (Course E): install elan once, then fetch the Mathlib oleans and build; `
 
 ```bash
 curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+export PATH="$HOME/.elan/bin:$PATH"
 cd lean/AgenticDS
 lake exe cache get
 lake build
@@ -51,6 +52,7 @@ R 4.5 (Course C): install R from https://cran.r-project.org, then the packages n
 
 ```bash
 R CMD INSTALL r/agenticds
+ADS_ROOT="$PWD" Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", package = "agenticds", load_package = "installed")'
 for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
 ```
 
@@ -59,10 +61,10 @@ for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
 The CI R job installs these system libraries first; do the same on your own Ubuntu machine:
 
 ```bash
-sudo apt-get install -y libblas3 liblapack3 gfortran
+sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
 ```
 
-Quality tools (styler, lintr, covr, JuliaFormatter, Coverage.jl, Apache Jena) are not needed to run the examples; they run in separate pinned CI jobs (`make gate`).
+Quality tools (styler, lintr, covr, JuliaFormatter, Coverage.jl, Apache Jena) are not needed to run the examples; they run in separate pinned CI jobs (`make gate-r`, `gate-julia`, `gate-shacl`).
 
 ## Run the gates
 
