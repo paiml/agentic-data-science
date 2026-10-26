@@ -22,7 +22,7 @@ equations:
       design matrices: 342 x 2 (flipper) and 342 x 4 (species, Adelie baseline)
       mutants (leak, wrong fold assignment, no intercept) each fail at least one golden check
     domain: "julia/BM2/data (penguins.csv, folds.csv, p2.json), verbatim copies of the repository datasets and fixtures"
-    codomain: "nine registered examples whose main() prints their stated values"
+    codomain: "nine registered example files; eight have a main() that prints their stated values and v07 holds the gate commands as data"
     postconditions:
       - "REGISTRY: examples v01 to v03 and v05 to v10 each have a testset"
       - "GOLDEN: coefficients and out-of-fold RMSE agree with p2.json"
