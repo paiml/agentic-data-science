@@ -77,7 +77,7 @@ The gates also need Apache Jena (`shacl`) on `PATH` and Java 17.
 ## Usage
 
 ```bash
-cargo run -q --locked --manifest-path rust/ads-rust/Cargo.toml --example a-m1-p1
+ADS_ROOT="$PWD" cargo run -q --locked --manifest-path rust/ads-rust/Cargo.toml --example a-m1-p1
 ```
 
 Each example under `rust/ads-rust/examples/` ends on a `contract: ... OK` line.
