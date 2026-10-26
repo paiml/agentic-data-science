@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/Ols.kt
+lines = 35-57
+ticks = 1-10,11-23
+run = ./gradlew --console=plain check
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = gradle
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the Kotlin gate in one native task: check runs test, ktlintCheck, detekt, koverVerify and the shacl verify tasks (Jena reports show)

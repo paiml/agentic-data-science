@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/Report.kt
+lines = 62-77
+ticks = 1-16
+run = ./gradlew --console=plain ktlintCheck
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = ktlint
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = ktlint max line width 68

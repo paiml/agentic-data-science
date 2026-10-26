@@ -17,7 +17,7 @@ val MEASURES: List<String> =
         "body_mass_g",
     )
 
-/** Typed schema of penguins.csv. NA is a null, never a sentinel. */
+/** Typed schema of penguins.csv; NA is null. */
 @DataSchema
 interface PenguinRow {
     val species: String
@@ -58,7 +58,7 @@ data class SpeciesSummary(
     val sd: Map<String, Double>,
 )
 
-/** Read penguins.csv through a typed DataFrame schema; "NA" becomes null. */
+/** Read penguins.csv with a typed schema; NA is null. */
 fun readPenguins(path: String): List<Penguin> {
     val df: DataFrame<PenguinRow> =
         DataFrame.readCsv(
@@ -67,31 +67,41 @@ fun readPenguins(path: String): List<Penguin> {
     return df.rows().map { r ->
         Penguin(
             r["species"] as String,
-            (r["bill_length_mm"] as Number?)?.toDouble(),
-            (r["bill_depth_mm"] as Number?)?.toDouble(),
-            (r["flipper_length_mm"] as Number?)?.toDouble(),
-            (r["body_mass_g"] as Number?)?.toDouble(),
+            r["bill_length_mm"].num(),
+            r["bill_depth_mm"].num(),
+            r["flipper_length_mm"].num(),
+            r["body_mass_g"].num(),
         )
     }
 }
 
-/** Drop a row iff any numeric measurement is null or NaN. Sex is not read, so a missing sex cannot drop a row. */
+/** Cell as a Double; null stays null. */
+private fun Any?.num() = (this as Number?)?.toDouble()
+
+/**
+ * Drop a row iff a numeric measurement is null or NaN.
+ * Sex is not read, so a missing sex cannot drop a row.
+ */
 fun naPolicy(rows: List<Penguin>): List<Penguin> =
     rows.filter {
             p ->
         p.measures().all { it != null && !it.isNaN() }
     }
 
-private fun mean(xs: List<Double>): Double = xs.sum() / xs.size
+private fun mean(xs: List<Double>) = xs.sum() / xs.size
 
 private fun sampleSd(xs: List<Double>): Double {
     if (xs.size < 2) return Double.NaN
     val m = mean(xs)
-    return sqrt(xs.sumOf { (it - m) * (it - m) } / (xs.size - 1))
+    val ss = xs.sumOf { (it - m) * (it - m) }
+    return sqrt(ss / (xs.size - 1))
 }
 
-/** Count, mean and sample SD (n-1) of each measurement per species, species sorted. */
-fun summariseBySpecies(rows: List<Penguin>): List<SpeciesSummary> =
+/**
+ * Count, mean and sample SD (n-1) of each measure,
+ * per species, species sorted.
+ */
+fun summariseBySpecies(rows: List<Penguin>) =
     rows.groupBy { it.species }.toSortedMap().map {
             (species, group) ->
         val cols =
@@ -107,7 +117,7 @@ fun summariseBySpecies(rows: List<Penguin>): List<SpeciesSummary> =
         )
     }
 
-/** Serialise the per-species profile to the golden JSON layout. */
+/** Serialise the species profile to the golden layout. */
 fun profileJson(path: String): String {
     val body =
         summariseBySpecies(

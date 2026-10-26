@@ -1,0 +1,10 @@
+file = src/main/kotlin/com/paiml/ads/m1v01/M1v01.kt
+lines = 11-21
+ticks = 1-4,5-8,9-11
+run = ./gradlew -q m1v01
+cwd = kotlin
+ready = VERDICT: ingest 344 -> 342 PASS
+plot = none
+main = com.paiml.ads.m1v01.M1v01Kt
+note = P1 ingest: typed CSV, NA policy 344 -> 342
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

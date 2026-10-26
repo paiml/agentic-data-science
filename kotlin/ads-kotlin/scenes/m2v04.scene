@@ -1,0 +1,12 @@
+file = ../../datasets/penguins/penguins.csv
+lines = 12-21
+ticks = 1-5,6-10
+run = sha256sum -c SHA256SUMS
+cwd = datasets/penguins
+ready = penguins.csv: OK
+plot = none
+tool = sha256sum
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the tool's own CLI over the file it reads

@@ -1,0 +1,47 @@
+# ads-kotlin-m2-v10-full-gate-v1: Course D (Kotlin), Module 2, scene m2-10 (full gate)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m2v10 runs the tool's own command (./gradlew --console=plain check) and shows its native output, then exit=0."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Ols.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsFailOnFindingsTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsCanFailTest.kt"
+    - "kotlin/ads-kotlin/shacl.gradle.kts"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/GateWiringTest.kt"
+    - "kotlin/ads-kotlin/scenes/m2v10.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m2-v10-full-gate-v1:
+    formula: |
+      cwd: kotlin
+      run: ./gradlew --console=plain check
+      native pass line: BUILD SUCCESSFUL
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: check holds test, koverVerify, ktlintCheck, detekt and the shacl verify tasks; each exits non-zero on a finding (ToolsFailOnFindingsTest runs test, ktlintCheck, detekt and koverVerify live on planted violations; ToolsCanFailTest runs the real Jena verify task on a broken file; pmat is a separate step, not part of check)"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m2-v10-full-gate-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M2-V10-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain check exits 0 on the scene commit"
+    test: "./gradlew --console=plain check"
+    mutation: "ToolsFailOnFindingsTest: a planted violation turns test, ktlintCheck, detekt or koverVerify red; BuildWiringTest rejects ignoreFailures"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

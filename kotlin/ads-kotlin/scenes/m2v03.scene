@@ -1,0 +1,12 @@
+file = src/test/kotlin/com/paiml/ads/OlsTest.kt
+lines = 37-50
+ticks = 1-14
+run = ./gradlew --console=plain test --tests '*simpleFitMatchesGolden'
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = junit
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the one test the pattern selects, shown whole; the run line fits the 76-col frame

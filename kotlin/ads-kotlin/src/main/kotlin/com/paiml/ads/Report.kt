@@ -59,7 +59,7 @@ fun show(
     value: String,
 ) = term.println(cyan(label.padEnd(LABEL_WIDTH)) + ": " + value)
 
-/** The labelled verdict line: green on pass, red on fail. */
+/** Verdict line: green on pass, red on fail. */
 fun verdict(
     ok: Boolean,
     what: String,

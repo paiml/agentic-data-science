@@ -1,0 +1,12 @@
+file = src/test/kotlin/com/paiml/ads/OlsTest.kt
+lines = 78-95
+ticks = 1-13,14-18
+run = ./gradlew --console=plain test
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = junit
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = ready is the BUILD SUCCESSFUL line, followed by Gradle's task count line

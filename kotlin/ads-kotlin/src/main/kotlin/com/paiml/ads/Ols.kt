@@ -8,7 +8,7 @@ import kotlin.math.abs
 /** Agreement tolerance between the two library solvers. */
 const val TOL = 1e-8
 
-/** Input CSV and output plot; the system properties let the tests redirect them. */
+/** Input CSV and output plot (tests redirect both). */
 val PENGUINS: String =
     System.getProperty(
         "ads.csv",
@@ -17,7 +17,7 @@ val PENGUINS: String =
 val PLOT: String = System.getProperty("ads.plot", "plot.png")
 
 data class Fit(val intercept: Double, val slope: Double) {
-    /** True when both coefficients agree with [other] within [tol]. */
+    /** True when both coefficients agree within [tol]. */
     fun agrees(
         other: Fit,
         tol: Double,
@@ -32,7 +32,7 @@ fun AnyFrame.doubles(name: String): DoubleArray =
         (it as Number).toDouble()
     }.toDoubleArray()
 
-/** Least squares y ~ x by commons-math SimpleRegression. */
+/** Least squares y ~ x (SimpleRegression). */
 fun fitSimple(
     x: DoubleArray,
     y: DoubleArray,
@@ -42,18 +42,21 @@ fun fitSimple(
     return Fit(reg.intercept, reg.slope)
 }
 
-/** The same fit by commons-math QR decomposition (independent code path). */
+/** The same fit by QR (an independent code path). */
 fun fitQr(
     x: DoubleArray,
     y: DoubleArray,
 ): Fit {
     val reg = OLSMultipleLinearRegression()
-    reg.newSampleData(y, Array(x.size) { doubleArrayOf(x[it]) })
+    reg.newSampleData(
+        y,
+        Array(x.size) { doubleArrayOf(x[it]) },
+    )
     val beta = reg.estimateRegressionParameters()
     return Fit(beta[0], beta[1])
 }
 
-/** Sum of residuals y - (a + b x); zero for any OLS fit with an intercept. */
+/** Sum of residuals y - (a + b x); zero for an OLS fit. */
 fun residualSum(
     fit: Fit,
     x: DoubleArray,

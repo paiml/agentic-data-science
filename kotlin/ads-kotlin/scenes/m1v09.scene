@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/P1.kt
+lines = 38-59
+ticks = 1-16,17-22
+run = pmat quality-gate --checks complexity,satd,duplicates
+cwd = kotlin
+ready = Quality gate PASSED
+plot = none
+tool = pmat
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = pmat blocking violations exit non-zero by default; no -q, the tool prints its own verdict

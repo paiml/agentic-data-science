@@ -1,0 +1,43 @@
+# ads-kotlin-m2-v06-ktlint-v1: Course D (Kotlin), Module 2, scene m2-06 (ktlint style)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m2v06 runs the tool's own command (./gradlew --console=plain ktlintCheck) and shows its native output, then exit=0."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Report.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsFailOnFindingsTest.kt"
+    - "kotlin/ads-kotlin/scenes/m2v06.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m2-v06-ktlint-v1:
+    formula: |
+      run: ./gradlew --console=plain ktlintCheck
+      native pass line: BUILD SUCCESSFUL
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: the tool exits non-zero on a finding (ToolsFailOnFindingsTest.ktlintFailsOnALongLineAndPassesWhenItIsFixed runs ktlintCheck live on a planted violation)"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m2-v06-ktlint-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M2-V06-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain ktlintCheck exits 0 on the scene commit"
+    test: "./gradlew --console=plain ktlintCheck"
+    mutation: "ToolsFailOnFindingsTest.ktlintFailsOnALongLineAndPassesWhenItIsFixed: a line over 68 columns fails ktlintCheck and the fixed file passes"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

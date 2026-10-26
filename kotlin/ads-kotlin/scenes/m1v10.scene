@@ -1,0 +1,12 @@
+file = build.gradle.kts
+lines = 47-53
+ticks = 1-4,5-7
+run = ./gradlew --console=plain check
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = gradle
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the Kotlin gate in one native task: test, ktlintCheck, detekt, koverVerify and the shacl verify tasks all hang off check; the file shows the detekt config and the two Kover bounds

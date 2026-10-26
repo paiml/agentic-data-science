@@ -1,0 +1,10 @@
+file = src/main/kotlin/com/paiml/ads/m1v02/M1v02.kt
+lines = 15-23
+ticks = 1-5,6-9
+run = ./gradlew -q m1v02
+cwd = kotlin
+ready = VERDICT: profile matches R golden PASS
+plot = none
+main = com.paiml.ads.m1v02.M1v02Kt
+note = P1 profile: per-species n, mean, sd vs the R golden
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

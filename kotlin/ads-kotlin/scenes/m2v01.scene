@@ -1,0 +1,9 @@
+file = src/main/kotlin/com/paiml/ads/m2v01/M2v01.kt
+lines = 17-32
+ticks = 1-8,9-13,14-16
+run = ./gradlew -q m2v01
+cwd = kotlin
+ready = Golden P2 PASS
+plot = none
+main = com.paiml.ads.m2v01.M2v01Kt
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

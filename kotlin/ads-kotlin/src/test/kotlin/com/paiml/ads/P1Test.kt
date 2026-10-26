@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.math.abs
 
@@ -40,12 +39,8 @@ class P1Test {
 
     @Test
     fun naPolicyDropsNaNMeasurement() {
-        assertEquals(
-            0,
-            naPolicy(
-                listOf(Penguin("A", Double.NaN, 2.0, 3.0, 4.0)),
-            ).size,
-        )
+        val nan = Penguin("A", Double.NaN, 2.0, 3.0, 4.0)
+        assertEquals(0, naPolicy(listOf(nan)).size)
     }
 
     @Test
@@ -202,9 +197,7 @@ class P1Test {
     @Test
     fun readPenguinsRejectsMissingFile() {
         val missing =
-            Files.createTempDirectory(
-                "ads",
-            ).resolve("nope.csv").toString()
+            TempTrash.dir("ads").resolve("nope.csv").path
         assertTrue(runCatching { readPenguins(missing) }.isFailure)
     }
 }

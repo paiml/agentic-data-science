@@ -1,0 +1,42 @@
+# ads-kotlin-m1-v01-p1-ingest-v1: Course D (Kotlin), Module 1, scene m1-01 (P1 ingest)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m1v01 reads penguins.csv through the typed DataFrame schema, applies the NA policy and prints rows read 344 and rows kept 342, ending in a VERDICT PASS line."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m1v01/M1v01.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P1.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/M1ScenesTest.kt"
+    - "kotlin/ads-kotlin/scenes/m1v01.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m1_v01_p1-ingest:
+    formula: |
+      rows(readPenguins(csv))  = 344
+      rows(naPolicy(rows))     = 342
+      verdict(PASS) iff both counts hold
+    domain: "datasets/penguins/penguins.csv"
+    codomain: "row counts and one verdict line"
+    postconditions:
+      - "TYPED_NA: NA in a numeric column is a null, never a sentinel (readPenguinsKeepsAllRowsAndTypesNulls)"
+      - "VERDICT: the scene prints VERDICT: ingest 344 -> 342 PASS only when both counts hold"
+      - "CAN_FAIL: dropping the NA policy (or the typed read) makes countsHold false, so the scene prints FAIL (countsHoldRejectsEachWrongCount)"
+
+proof_obligations:
+  - type: invariant
+    property: "Counts are 344 read and 342 kept"
+    formal: "countsHold(read, kept) iff |read| = 344 and |kept| = 342"
+    applies_to: m1_v01_p1-ingest
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M1-V01-001
+    rule: "Counts are 344 read and 342 kept"
+    prediction: "make gate-kotlin passes with M1ScenesTest.ingestSceneKeeps342Of344 green"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "dropping the NA policy (or the typed read) makes countsHold false, so the scene prints FAIL (countsHoldRejectsEachWrongCount)"
+    discriminates: "A pipeline that keeps 344 rows cannot satisfy kept = 342"
+    if_fails: "Learners trust an ingest that silently keeps NA rows"
