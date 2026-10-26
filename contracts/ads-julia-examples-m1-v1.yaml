@@ -22,7 +22,7 @@ equations:
       sd by species uses n-1 (Gentoo body mass 504.116), the population sd 502.063 differs
       |table - golden/p1.json| <= 1e-9
     domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
-    codomain: "ten registered examples whose main() prints their stated values and ends on a contract line"
+    codomain: "nine registered examples whose main() prints their stated values and ends on a contract line, plus v07, which holds the gate commands as data and prints nothing"
     postconditions:
       - "REGISTRY: the module registers v01 .. v10 and each has a testset"
       - "GOLDEN: the per-species table agrees with p1.json within 1e-9"
@@ -31,7 +31,7 @@ equations:
 
 proof_obligations:
   - type: invariant
-    property: "Every example ends on a contract line that reads OK only when its checks pass"
+    property: "Every example with a main() ends on a contract line that reads OK only when its checks pass"
     formal: "last(output(main)) matches ^contract: .* OK$ iff every check of the example holds"
     applies_to: m1_example_facts
 

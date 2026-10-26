@@ -2,3 +2,4 @@ target/
 .lake/
 *.log
 contracts/.pv/
+.pv/
