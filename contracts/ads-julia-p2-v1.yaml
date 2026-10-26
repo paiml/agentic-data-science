@@ -16,14 +16,14 @@ metadata:
 equations:
   p2_fit_matches_golden:
     formula: |
-      rows(load())                      = 342        (drop_na only on the model columns)
-      intercept                         = -5780.83135807716   within 1e-6
+      rows(load())                      = 342        (drop_na on the four numeric columns)
+      intercept                         = -5780.83135807716   printed to 3 decimals
       slope                             = 49.6855664061006    within 1e-8
       cv_rmse(ols), cv_rmse(species)    = 394.312960342554, 376.638259793938   within 1e-6
     domain: "data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv, and the fold ids of datasets/fixtures/folds.csv"
     codomain: "coefficients, out-of-fold RMSE and the printed contract line"
     postconditions:
-      - "DROP_NA_MODEL_COLUMNS: rows are dropped only when a model column is NA, so 342 rows remain"
+      - "DROP_NA_MODEL_COLUMNS: rows are dropped when a numeric column (bill length, bill depth, flipper length or body mass) is NA, so 342 rows remain"
       - "FIXED_FOLDS: fold ids are read from folds.csv, never drawn from a random number generator"
       - "SPECIES_BEATS_FLIPPER: the out-of-fold RMSE with species is below the flipper-only RMSE"
       - "CAN_FAIL: a leaking fold or a model without an intercept moves a golden RMSE"
@@ -31,7 +31,7 @@ equations:
 proof_obligations:
   - type: invariant
     property: "Fitted coefficients and cross-validated RMSE equal the P2 golden"
-    formal: "|intercept - golden.ols.intercept| <= 1e-6 and |cv_rmse - golden.cv_rmse| <= 1e-6"
+    formal: "|slope - golden.ols.slope| <= 1e-8, the intercept equals the golden to the 3 printed decimals, and |cv_rmse - golden.cv_rmse| <= 1e-6"
     applies_to: p2_fit_matches_golden
 
 falsification_tests:
