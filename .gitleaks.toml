@@ -1,0 +1,17 @@
+# Extends the default gitleaks rules. No rule is disabled.
+# Only allowlist: a Julia Manifest.toml line that is exactly a
+# package-name = "<canonical UUID>" pair, which trips generic-api-key on entropy.
+title = "course-repo gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Julia Manifest.toml package UUID lines only"
+condition = "AND"
+paths = ['''(^|/)Manifest\.toml$''']
+regexTarget = "line"
+regexes = ['''^\s*[A-Za-z0-9_.\-]+\s*=\s*"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"\s*,?\s*$''']
