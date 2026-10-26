@@ -33,22 +33,6 @@ jobs:
           echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
           echo "JULIA_DEPOT_PATH=$RUNNER_TEMP/depot" >> "$GITHUB_ENV"
       - run: make gate-julia
-  r:
-    timeout-minutes: 45
-    runs-on: [self-hosted, clean-room, X64, intel]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
-        run: |
-          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
-          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
-            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
-            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
-      - name: Install R 4.5.1 (pinned, sha256-verified, into RUNNER_TEMP)
-        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.5.1/bin" >> "$GITHUB_PATH"
-      - name: Install pinned R tools (styler, lintr, covr; CRAN snapshot 2026-10-20)
-        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
-      - run: make gate-r
   kotlin:
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:
@@ -71,6 +55,22 @@ jobs:
       - name: Toolchain present (checked, never installed)
         run: java -version 2>&1 | grep -q "17\." && command -v pmat
       - run: make gate-kotlin
+  r:
+    timeout-minutes: 45
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.5.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.5.1/bin" >> "$GITHUB_PATH"
+      - name: Install pinned R tools (styler, lintr, covr; CRAN snapshot 2026-10-20)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
+      - run: make gate-r
   lean:
     runs-on: [self-hosted, clean-room, X64, intel]
     timeout-minutes: 90

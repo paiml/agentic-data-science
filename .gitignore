@@ -5,3 +5,4 @@ kotlin/.gradle/
 kotlin/build/
 kotlin/ads-kotlin/build/
 .kotlin/
+/plot.png
