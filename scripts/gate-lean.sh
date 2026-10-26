@@ -28,6 +28,11 @@ for t in AgenticDSTest/ExamplesM*.lean; do
   out=$(lake env lean "${LEANOPTS[@]}" --run "$t" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
 done
+# Example files lake does not build must still elaborate; the planted fault must still be refused.
+for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/Examples/M2V09.lean; do
+  out=$(lake env lean "$f" 2>&1) || { echo "FAIL $f: $out"; exit 1; }
+done
+if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
 if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
