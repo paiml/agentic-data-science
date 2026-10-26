@@ -2,7 +2,7 @@
 # Lean gate: warnings-as-errors build, no sorry/native_decide/SATD markers, axioms within the allowed set, golden parity test.
 # pmat reads no Lean sources (measured 10-22, pmat 3.42.0: planted TODO file stays green), so it is not a Lean gate.
 set -uo pipefail
-cd "$(dirname "$0")/../lean/AgenticDS"
+cd "$(dirname "$0")/../lean/AgenticDS" || exit 1
 export PATH="$HOME/.elan/bin:$PATH"
 # Same linters as lakefile.toml leanOptions, for the test file lake does not build (Axioms.lean is #print-only: hashCommand would always fire).
 LEANOPTS=(-DwarningAsError=true -Dweak.linter.mathlibStandardSet=true -Dweak.linter.style.longLine.maxLineLength=68 "-Dweak.linter.style.header.license=Released under MIT license as described in the file LICENSE.")

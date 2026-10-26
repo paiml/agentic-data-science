@@ -11,7 +11,7 @@ case "$(uname -s)-$(uname -m)" in
   *) echo "install-elan: unsupported platform $(uname -sm)" >&2; exit 1 ;;
 esac
 tmp="$(mktemp -d)"
-trap 'rm -rf "$tmp"' EXIT
+trap 'rm -rf "${tmp:?}"' EXIT
 curl -fsSL -o "$tmp/elan.tgz" "https://github.com/leanprover/elan/releases/download/v$v/elan-$t.tar.gz"
 echo "$h  $tmp/elan.tgz" > "$tmp/elan.sha"
 if command -v sha256sum >/dev/null; then sha256sum -c "$tmp/elan.sha"; else shasum -a 256 -c "$tmp/elan.sha"; fi

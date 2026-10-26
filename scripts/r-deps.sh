@@ -4,7 +4,8 @@
 # version in scripts/r-pins.txt matches.
 set -euo pipefail
 lib="${1:?usage: r-deps.sh LIBDIR}"
-here="$(cd "$(dirname "$0")" && pwd)"
+here="$(cd "$(dirname "$0")" && pwd)" || exit 1
+case "$lib" in *..*) echo "r-deps: LIBDIR must not contain .." >&2; exit 1 ;; esac
 mkdir -p "$lib"
 export R_LIBS="$lib"
 tmp="$(mktemp)"

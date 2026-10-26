@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # R gate: covr line coverage must be exactly 100, lintr zero lints, styler no diff.
 set -euo pipefail
-root="$(cd "$(dirname "$0")/.." && pwd)"
+root="$(cd "$(dirname "$0")/.." && pwd)" || exit 1
 export ADS_ROOT="$root"
 [ -z "${ADS_RLIB:-}" ] || export R_LIBS="$ADS_RLIB"
 [ "${CI:-}" != true ] || [ -n "${ADS_RLIB:-}" ] || { echo "gate-r: ADS_RLIB unset in CI"; exit 1; }
-cd "$root/r/agenticds"
+cd "$root/r/agenticds" || exit 1
 Rscript -e '
 if (identical(Sys.getenv("CI"), "true")) stopifnot(setequal(normalizePath(.libPaths()), normalizePath(c(Sys.getenv("ADS_RLIB"), .Library))))
 cov <- covr::package_coverage(".")
