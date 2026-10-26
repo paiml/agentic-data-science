@@ -6,6 +6,7 @@ set -euo pipefail
 dest="${1:?usage: install-r.sh DESTDIR}"
 v=4.5.1
 h=9315af8080b38dc14d634d6d4ac08e0fa71cf00753d615239f1ecb63f43f05fc
+case "$dest" in *..*) echo "install-r: DESTDIR must not contain .." >&2; exit 1 ;; esac
 mkdir -p "$dest"
 curl -fsSL -o "$dest/R.tgz" "https://cdn.posit.co/r/ubuntu-2404/R-$v-ubuntu-2404.tar.gz"
 echo "$h  $dest/R.tgz" | sha256sum -c -

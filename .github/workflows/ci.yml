@@ -26,8 +26,13 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup-julia@v2
-        with: { version: "1.12.1" }
+      - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: |
+          h=7d2add9ee74ee2f12b5c268bc194794cc52ea440f8687fbab29db6afefbf69b7
+          curl -fsSL -o "$RUNNER_TEMP/julia.tgz" "https://julialang-s3.julialang.org/bin/linux/x64/1.12/julia-1.12.1-linux-x86_64.tar.gz"
+          echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
       - uses: actions/cache@v4
         with:
           path: ~/.julia
@@ -60,20 +65,26 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: System libraries (Ubuntu)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
-      - uses: r-lib/actions/setup-r@v2
-        with: { r-version: "4.5.1", use-public-rspm: false }
-      - name: Pin CRAN to the 2026-10-20 snapshot
+      - name: System libraries for the R build (Posit ubuntu-2404 tarball)
         run: |
-          echo "options(repos = c(CRAN = \"https://packagemanager.posit.co/cran/__linux__/noble/2026-10-20\"))" | sudo tee -a "$(R RHOME)/etc/Rprofile.site"
-      - uses: r-lib/actions/setup-r-dependencies@v2
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 zlib1g
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.5.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.5.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
         with:
-          working-directory: r/agenticds
-          cache-version: 1
+          path: ${{ runner.temp }}/rlib
+          key: rlib-test-${{ runner.os }}-4.5.1-${{ hashFiles('scripts/r-pins.txt', 'scripts/r-deps.sh') }}
+      - name: Install pinned R dependencies (CRAN snapshot 2026-10-20, versions checked)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "R_LIBS=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
       - name: Install the package
-        run: R CMD INSTALL r/agenticds
+        run: R CMD INSTALL --library="$RUNNER_TEMP/rlib" r/agenticds
       - name: Test the package
         run: Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", package = "agenticds", load_package = "installed")'
         env: { ADS_ROOT: "${{ github.workspace }}" }
