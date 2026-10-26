@@ -1,0 +1,45 @@
+# ads-julia-examples-m2-v1: Course B (Julia), Module 2 examples (v01..v10)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Nine examples for Course B module 2 (the ordinary least squares fit, design matrices, a red-then-green test, fixed-fold cross-validation, MLJ linear regression, the gate commands, three mutants, two worked examples and the recap), checked against the P2 golden."
+  references:
+    - "contracts/ads-julia-p2-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/BM2.jl"
+    - "julia/BM2/test/runtests.jl"
+    - "scripts/gate-julia.sh"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m2_example_facts:
+    formula: |
+      golden ols: intercept -5780.831, slope 49.686
+      cv_rmse flipper only = 394.313, with species = 376.638
+      design matrices: 342 x 2 (flipper) and 342 x 4 (species, Adelie baseline)
+      mutants (leak, wrong fold assignment, no intercept) each fail at least one golden check
+    domain: "julia/BM2/data (penguins.csv, folds.csv, p2.json), verbatim copies of the repository datasets and fixtures"
+    codomain: "nine registered examples whose main() prints their stated values"
+    postconditions:
+      - "REGISTRY: examples v01 to v03 and v05 to v10 each have a testset"
+      - "GOLDEN: coefficients and out-of-fold RMSE agree with p2.json"
+      - "MUTANTS: every mutant is caught by the two golden RMSE checks"
+      - "CAN_FAIL: an example that breaks a stated value fails its testset"
+
+proof_obligations:
+  - type: invariant
+    property: "Each example prints the value the course text states"
+    formal: "main() output lines equal the stated lines"
+    applies_to: m2_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-EXAMPLES-M2-001
+    rule: "Example values match the stated ones"
+    prediction: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()' passes with a testset per example"
+    test: "julia/BM2/test/runtests.jl"
+    mutation: "Fit the species model without the intercept column: the coefficient and cv_rmse lines differ"
+    discriminates: "An example with a wrong number cannot pass its testset"
+    if_fails: "An example prints a value the course text does not state"
