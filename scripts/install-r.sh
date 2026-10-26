@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
-# Install pinned R 4.5.1 (Posit r-builds, ubuntu-2204, sha256-verified) under $1.
+# Install pinned R 4.5.1 (Posit r-builds, ubuntu-2404, sha256-verified) under $1.
 # The tarball is built for /opt/R/4.5.1; paths are rewritten and Rscript is
 # replaced by a wrapper because the Rscript binary hard-codes /opt.
 set -euo pipefail
 dest="${1:?usage: install-r.sh DESTDIR}"
 v=4.5.1
-h=e1de3a5501d23eba5f7bc3d3ea16f36f3178f4d836c3e9e008e16954ceff2871
+h=9315af8080b38dc14d634d6d4ac08e0fa71cf00753d615239f1ecb63f43f05fc
+case "$dest" in *..*) echo "install-r: DESTDIR must not contain .." >&2; exit 1 ;; esac
 mkdir -p "$dest"
-curl -fsSL -o "$dest/R.tgz" "https://cdn.posit.co/r/ubuntu-2204/R-$v-ubuntu-2204.tar.gz"
+curl -fsSL -o "$dest/R.tgz" "https://cdn.posit.co/r/ubuntu-2404/R-$v-ubuntu-2404.tar.gz"
 echo "$h  $dest/R.tgz" | sha256sum -c -
 tar -xzf "$dest/R.tgz" -C "$dest"
 rm "${dest:?}/R.tgz"
