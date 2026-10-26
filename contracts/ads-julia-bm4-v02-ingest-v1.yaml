@@ -1,0 +1,40 @@
+# ads-julia-bm4-v02-ingest-v1: Course B (Julia), Module 4, scene v02 (read_wine and validate_wine)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v02_ingest.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "read_wine stacks the red and white tables; validate_wine refuses a missing value, a quality of 11 and an unknown colour with the exact message, and passes the clean table."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v02_ingest.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v02_ingest_holds:
+    formula: |
+      validate_wine(clean) = clean; refusal(bad_i) = message_i for the 3 bad tables
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V02.main() and its contract verdict"
+    postconditions:
+      - "each bad table is refused with its own message"
+      - "CAN_FAIL: a validator that accepts every table returns accepted and the test fails"
+
+proof_obligations:
+  - type: invariant
+    property: "each bad table is refused with its own message"
+    formal: "validate_wine(clean) = clean; refusal(bad_i) = message_i for the 3 bad tables"
+    applies_to: bm4_v02_ingest_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V02-001
+    rule: "each bad table is refused with its own message"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a validator that accepts every table returns accepted and the test fails"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

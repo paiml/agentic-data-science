@@ -1,0 +1,40 @@
+# ads-julia-bm4-v04-pipeline-v1: Course B (Julia), Module 4, scene v04 (pipeline_wine versus golden)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v04_pipeline.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "pipeline_wine reads, validates, splits and fits a least squares model on 11 features plus colour; held-out rmse 0.760251606 and r2 0.259854491 match the P4 golden within 1e-6."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v04_pipeline.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v04_pipeline_holds:
+    formula: |
+      |rmse - 0.760251606190075| <= 1e-6; |r2 - 0.25985449136456| <= 1e-6
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V04.main() and its contract verdict"
+    postconditions:
+      - "rmse and r2 equal the golden within 1e-6"
+      - "CAN_FAIL: fitting on the test rows moves rmse off the golden"
+
+proof_obligations:
+  - type: invariant
+    property: "rmse and r2 equal the golden within 1e-6"
+    formal: "|rmse - 0.760251606190075| <= 1e-6; |r2 - 0.25985449136456| <= 1e-6"
+    applies_to: bm4_v04_pipeline_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V04-001
+    rule: "rmse and r2 equal the golden within 1e-6"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "fitting on the test rows moves rmse off the golden"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

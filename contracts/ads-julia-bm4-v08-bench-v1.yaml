@@ -1,0 +1,40 @@
+# ads-julia-bm4-v08-bench-v1: Course B (Julia), Module 4, scene v08 (groupby versus loop)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v08_bench.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "aggregate_groupby and aggregate_loop give the same colour means (5.63602 red, 5.87791 white) and counts; bench_wine times both and the scene prints agreement before speed."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v08_bench.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v08_bench_holds:
+    formula: |
+      means and counts agree within 1e-12 and equal the golden means
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V08.main() and its contract verdict"
+    postconditions:
+      - "both engines agree with each other and the golden"
+      - "CAN_FAIL: a changed count makes agree false"
+
+proof_obligations:
+  - type: invariant
+    property: "both engines agree with each other and the golden"
+    formal: "means and counts agree within 1e-12 and equal the golden means"
+    applies_to: bm4_v08_bench_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V08-001
+    rule: "both engines agree with each other and the golden"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a changed count makes agree false"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

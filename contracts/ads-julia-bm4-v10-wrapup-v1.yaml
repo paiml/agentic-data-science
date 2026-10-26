@@ -1,0 +1,40 @@
+# ads-julia-bm4-v10-wrapup-v1: Course B (Julia), Module 4, scene v10 (Gate Report claims)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v10_wrapup.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The four Gate Report claims (sizes, validate first, rmse, r2) are each checked and printed PASS or FAIL; the scene verdict holds only when all four hold."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v10_wrapup.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v10_wrapup_holds:
+    formula: |
+      claims = 4 of 4 hold
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V10.main() and its contract verdict"
+    postconditions:
+      - "all four claims hold on the real data"
+      - "CAN_FAIL: a false claim prints FAIL"
+
+proof_obligations:
+  - type: invariant
+    property: "all four claims hold on the real data"
+    formal: "claims = 4 of 4 hold"
+    applies_to: bm4_v10_wrapup_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V10-001
+    rule: "all four claims hold on the real data"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a false claim prints FAIL"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

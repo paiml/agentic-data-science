@@ -1,0 +1,40 @@
+# ads-julia-bm4-v05-leak-v1: Course B (Julia), Module 4, scene v05 (leaky fit is caught)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v05_leak.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The beta line is mutated to fit on the test rows; the golden checks (rmse, r2, leak, report_ttl) all fail, and the scene prints its verdict only when four checks fail."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v05_leak.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v05_leak_holds:
+    formula: |
+      mutant fails 4 of 4 checks; leaky rmse < golden rmse
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V05.main() and its contract verdict"
+    postconditions:
+      - "all four golden checks fail on the leaky fit"
+      - "CAN_FAIL: an unmutated pipeline passes the same checks, so the suite is not vacuous"
+
+proof_obligations:
+  - type: invariant
+    property: "all four golden checks fail on the leaky fit"
+    formal: "mutant fails 4 of 4 checks; leaky rmse < golden rmse"
+    applies_to: bm4_v05_leak_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V05-001
+    rule: "all four golden checks fail on the leaky fit"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "an unmutated pipeline passes the same checks, so the suite is not vacuous"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"
