@@ -8,5 +8,6 @@ kotlin/ads-kotlin/build/
 /plot.png
 
 # pv lint caches
+lean/AgenticDS/plot.*
 .pv/
 contracts/.pv/
