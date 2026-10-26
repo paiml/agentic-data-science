@@ -1,0 +1,47 @@
+# ads-r-m4-repro-v1: Course C (R), Module 4, scene v09-repro
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/repro.R shows that a split keyed on a sort order moves with LC_COLLATE (C versus en_US.UTF-8) while the every-fifth-row split and the pipeline rmse stay bit-identical, printed to 17 digits."
+  references:
+    - "R/repro.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-repro.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  split_is_locale_free:
+    formula: |
+      order(keys) varies with LC_COLLATE; every-fifth-row split and pipeline rmse do not
+    domain: "six mixed-case sort keys; wine quality red + white"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "MOVES: order(keys) differs between the C and en_US.UTF-8 collations"
+      - "STABLE: n_test is 1299 and rmse is bit-identical (17 digits) under both"
+      - "SCENE: R/repro.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "the row-index split does not depend on the locale"
+    formal: "identical(rmse_C, rmse_en_US)"
+    applies_to: split_is_locale_free
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-REPRO-001
+    rule: "A sort-keyed split moves with the locale, a row-index split does not"
+    prediction: "The two orders differ and the 17-digit rmse is identical"
+    test: "tests/testthat/test-repro.R"
+    mutation: "Split by order(keys) instead of the row index: the rmse differs between locales and the identical check fails"
+    discriminates: "A locale-dependent split cannot reproduce the golden across machines"
+    if_fails: "The golden ticket would hold on one laptop only"
+  - id: FALSIFY-ADS-R-M4-REPRO-002
+    rule: "The pipeline rmse is the golden under both locales"
+    prediction: "rmse equals the golden within 1e-12 in both locales"
+    test: "tests/testthat/test-repro.R"
+    mutation: "Make the pipeline sort the rows: the rmse drifts from the golden"
+    discriminates: "An unnoticed sort would change which rows are test rows"
+    if_fails: "Reproducibility would break silently"

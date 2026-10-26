@@ -1,0 +1,50 @@
+# ads-r-m4-ticket-v1: Course C (R), Module 4, scene v01-ticket (the ticket's oracle)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ticket.R verifies the Wine Quality files against SHA256SUMS, reads the p4 golden JSON as the ticket's oracle, and checks it against the data: 6497 rows, a 1-in-5 test split of 1299 rows, 5198 train rows."
+  references:
+    - "R/ticket.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ticket.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  ticket_oracle_holds:
+    formula: |
+      n_test  = floor(n / 5)
+      n_train = n - n_test
+      golden.n_rows = n, golden.n_test = n_test, golden.n_train = n_train
+    domain: "wine quality red + white after read_wine (n = 6497)"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "CHECKSUMS: sha256sum -c SHA256SUMS passes on the shipped CSV files"
+      - "ROWS: golden n_rows equals nrow(read_wine(red, white)) = 6497"
+      - "SPLIT: golden n_test = 1299 = 6497 %/% 5 and n_train = 5198"
+      - "SCENE: R/ticket.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "n_train + n_test = n_rows"
+    formal: "5198 + 1299 = 6497"
+    applies_to: ticket_oracle_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-TICKET-001
+    rule: "A changed data byte is caught by the checksum gate before any number is trusted"
+    prediction: "check_sums() is TRUE on the shipped data and FALSE after one appended byte"
+    test: "tests/testthat/test-ticket.R"
+    mutation: "Append one byte to data/winequality-red.csv: the checksum test expects FALSE and the scene's stopifnot would halt"
+    discriminates: "A scene that skipped the checksum gate would still print numbers on tampered data"
+    if_fails: "The video would show an oracle computed on unverified data"
+  - id: FALSIFY-ADS-R-M4-TICKET-002
+    rule: "The ticket's split is 1-in-5 of 6497, not any other ratio"
+    prediction: "g$n_test is 1299 and g$n_train is 5198, so the scene verdict is TRUE"
+    test: "tests/testthat/test-ticket.R"
+    mutation: "Replace n %/% 5 with n %/% 4 in R/ticket.R: ok becomes FALSE and the verdict expectation fails"
+    discriminates: "A different split ratio cannot reproduce the golden counts"
+    if_fails: "The scene would print a verdict that does not match the golden ticket"

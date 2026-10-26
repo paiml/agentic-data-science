@@ -1,0 +1,48 @@
+# ads-r-m4-gates-v1: Course C (R), Module 4, scene v07-gates
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/gates.R runs the gates visible in a project directory: the SHA256SUMS check on the shipped CSV files, the artifact shape (class, schemaVersion, generatedBy) the SHACL shape requires, and the golden rmse in the artifact; the repo-level make gate-shacl and gate-r run the same rules in CI."
+  references:
+    - "R/gates.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-gates.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  gates_are_green:
+    formula: |
+      green = sha256sum -c passes and the artifact has schemaVersion, generatedBy and the golden rmse
+    domain: "shipped data files and the artifact Turtle"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "CHECKSUMS: sha256sum -c SHA256SUMS passes on the shipped CSV files"
+      - "SHAPE: the artifact is an ads:Artifact with schemaVersion and generatedBy, as the SHACL shape requires"
+      - "RMSE: the artifact carries the golden rmse to ten decimals"
+      - "SCENE: R/gates.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "the verdict is green only if all three gates pass"
+    formal: "sums and all(shape) and rmse"
+    applies_to: gates_are_green
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-GATES-001
+    rule: "A changed data byte fails the checksum gate"
+    prediction: "check_sums is TRUE on the shipped data and FALSE after one appended byte"
+    test: "tests/testthat/test-gates.R"
+    mutation: "Append one byte to data/winequality-red.csv: check_sums is FALSE and the verdict turns FALSE"
+    discriminates: "A scene that skipped the checksum gate would stay green on tampered data"
+    if_fails: "The video would show gates green over unverified data"
+  - id: FALSIFY-ADS-R-M4-GATES-002
+    rule: "A missing required field fails the shape gate"
+    prediction: "shape_ok is FALSE for a Turtle that lacks ads:generatedBy"
+    test: "tests/testthat/test-gates.R"
+    mutation: "Delete the generatedBy line from the artifact: the shape check flips to FALSE and the verdict turns FALSE"
+    discriminates: "A shape check that ignored the fields would pass an invalid artifact"
+    if_fails: "The scene would certify an artifact that SHACL rejects"

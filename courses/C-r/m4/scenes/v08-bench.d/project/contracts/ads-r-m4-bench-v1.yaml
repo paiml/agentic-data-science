@@ -1,0 +1,48 @@
+# ads-r-m4-bench-v1: Course C (R), Module 4, scene v08-bench
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/bench.R computes the per-colour mean quality with dplyr and with data.table, asserts the two tables are equal, and prints the median wall time of each engine without asserting it."
+  references:
+    - "R/bench.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-bench.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  engines_agree:
+    formula: |
+      aggregate_dplyr(w) = aggregate_data_table(w); timings are shown, never asserted
+    domain: "wine quality red + white, per-colour mean quality and count"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "EQUAL: the two engines return the same table (all.equal)"
+      - "COUNTS: 1599 red and 4898 white rows"
+      - "TIMINGS: printed for both engines, not asserted (non-deterministic)"
+      - "SCENE: R/bench.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "the two aggregates are equal"
+    formal: "all.equal(dplyr, data.table) = TRUE"
+    applies_to: engines_agree
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-BENCH-001
+    rule: "The two engines compute the same aggregate"
+    prediction: "all.equal of the two tables is TRUE and the verdict is TRUE"
+    test: "tests/testthat/test-bench.R"
+    mutation: "Change the data.table mean to a median: the tables differ and the verdict turns FALSE"
+    discriminates: "A faster engine with a different answer would not pass the equality assert"
+    if_fails: "The video would celebrate a speedup that changed the result"
+  - id: FALSIFY-ADS-R-M4-BENCH-002
+    rule: "Timings are never part of the verdict"
+    prediction: "The verdict does not read the timings; the test only checks the engine names and non-negative seconds"
+    test: "tests/testthat/test-bench.R"
+    mutation: "Slow one engine by a sleep: the verdict stays TRUE and only the printed seconds move"
+    discriminates: "A timing assert would flake on a loaded machine"
+    if_fails: "The scene would fail on noise instead of on a wrong answer"

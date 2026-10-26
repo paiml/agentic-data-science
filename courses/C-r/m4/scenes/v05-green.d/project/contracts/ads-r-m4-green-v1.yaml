@@ -1,0 +1,47 @@
+# ads-r-m4-green-v1: Course C (R), Module 4, scene v05-green
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/green.R runs the four golden checks (rows, split, rmse, r2) on pipeline_wine, prints PASS or FAIL for each and ends on a green verdict when all pass."
+  references:
+    - "R/green.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-green.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  all_checks_pass:
+    formula: |
+      pass = rows and split and rmse and r2 all match golden
+    domain: "pipeline_wine output against datasets/golden/p4.json"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "CHECKS: rows, split, rmse and r2 each print PASS in green"
+      - "VERDICT: the scene ends on a green TRUE only when every check passes"
+      - "SCENE: R/green.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "one failing check makes the verdict FALSE"
+    formal: "all(c(TRUE, FALSE)) = FALSE"
+    applies_to: all_checks_pass
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-GREEN-001
+    rule: "Green means every check passed, none skipped"
+    prediction: "Four PASS lines print and the verdict is TRUE"
+    test: "tests/testthat/test-green.R"
+    mutation: "Change the rmse band to 0 in R/green.R: the rmse check prints FAIL and the verdict turns FALSE"
+    discriminates: "A scene that printed PASS without evaluating would not fail"
+    if_fails: "The video would show green over a red check"
+  - id: FALSIFY-ADS-R-M4-GREEN-002
+    rule: "A red check is visible and flips the verdict"
+    prediction: "report(list(a = TRUE, b = FALSE)) prints FAIL b and returns FALSE"
+    test: "tests/testthat/test-green.R"
+    mutation: "Make report always return TRUE: the report test fails"
+    discriminates: "A report that swallowed a failure would hide it from the verdict"
+    if_fails: "The scene would say green after a real failure"

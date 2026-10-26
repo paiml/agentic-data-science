@@ -1,0 +1,5 @@
+w <- read_wine(h$wine("red"), h$wine("white"))
+print(dplyr::count(w, dplyr::pick("color")))
+g <- jsonlite::fromJSON("data/p4.json")
+n <- nrow(w)
+h$verdict(n == g$n_rows, sprintf("%d rows", n))

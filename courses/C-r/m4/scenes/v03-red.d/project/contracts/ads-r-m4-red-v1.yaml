@@ -1,0 +1,47 @@
+# ads-r-m4-red-v1: Course C (R), Module 4, scene v03-red
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/red.R plants a 1-in-4 split in memory next to the shipped 1-in-5 split_wine, prints both test counts against the golden 1299 (the broken one in red) and reports the oracle caught the bug."
+  references:
+    - "R/red.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-red.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  planted_bug_is_caught:
+    formula: |
+      caught = (n_test(split_wine) = golden.n_test) and (n_test(1-in-4) != golden.n_test)
+    domain: "wine quality rows, a correct 1-in-5 split and a planted 1-in-4 split"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "GOOD: split_wine gives 1299 test rows, equal to golden n_test"
+      - "BAD: a 1-in-4 split gives 1624 test rows, not 1299"
+      - "SCENE: R/red.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "1-in-4 test count differs from the golden count"
+    formal: "6497 %/% 4 = 1624 != 1299"
+    applies_to: planted_bug_is_caught
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-RED-001
+    rule: "An oracle that cannot fail proves nothing"
+    prediction: "The broken split prints 1624 in red and the verdict reports the bug caught"
+    test: "tests/testthat/test-red.R"
+    mutation: "Replace the planted 4L with 5L in R/red.R: the broken count becomes 1299 and the verdict turns FALSE"
+    discriminates: "A golden that the planted bug also matches would not discriminate"
+    if_fails: "The oracle in the next scene would be decoration"
+  - id: FALSIFY-ADS-R-M4-RED-002
+    rule: "The correct split still matches the golden"
+    prediction: "nrow(split_wine(w)$test) equals g$n_test = 1299"
+    test: "tests/testthat/test-red.R"
+    mutation: "Change split_wine to every fourth row: the good-split expectation fails"
+    discriminates: "A broken shipped split would show up here before any pipeline run"
+    if_fails: "The scene would claim a bug is caught while the shipped code is wrong too"

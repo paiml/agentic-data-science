@@ -1,0 +1,4 @@
+res <- pipeline_wine(h$wine("red"), h$wine("white"))
+g <- jsonlite::fromJSON("data/p4.json")
+checks <- list(
+h$verdict(h$report(checks), "all four checks pass")

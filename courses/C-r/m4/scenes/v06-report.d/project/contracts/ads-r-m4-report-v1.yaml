@@ -1,0 +1,48 @@
+# ads-r-m4-report-v1: Course C (R), Module 4, scene v06-report
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/report.R writes the pipeline report as an ads:Artifact in Turtle with report_ttl, prints it, and checks it line for line against the shipped p4-artifact.ttl that the repo SHACL gate validates."
+  references:
+    - "R/report.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-report.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  artifact_matches_golden:
+    formula: |
+      report_ttl(pipeline_wine(red, white)) = datasets/golden/p4-artifact.ttl, line for line
+    domain: "wine quality red + white, the ads:Artifact Turtle report"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "SHAPE: the artifact is an ads:Artifact with schemaVersion and generatedBy, the two fields the SHACL shape requires"
+      - "VALUES: rmse is written to ten decimals and rows is 6497"
+      - "PARITY: the written lines equal the shipped p4-artifact.ttl (validated by make gate-shacl in the repo)"
+      - "SCENE: R/report.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "the written artifact equals the validated artifact"
+    formal: "identical(report_ttl(res), p4-artifact.ttl)"
+    applies_to: artifact_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-REPORT-001
+    rule: "The report is the artifact the SHACL gate validates"
+    prediction: "The written Turtle equals data/p4-artifact.ttl and the verdict is TRUE"
+    test: "tests/testthat/test-report.R"
+    mutation: "Change schemaVersion to 2 in report_ttl: the written lines differ from the shipped ttl and the verdict turns FALSE"
+    discriminates: "A drifting report writer would diverge from the shape-checked file"
+    if_fails: "The video would show a report that the gate never validated"
+  - id: FALSIFY-ADS-R-M4-REPORT-002
+    rule: "The artifact carries the golden rmse"
+    prediction: "ads:rmse is the golden 0.7602516062 to ten decimals"
+    test: "tests/testthat/test-report.R"
+    mutation: "Write rmse with %.4f: the ten-digit expectation fails"
+    discriminates: "A rounded report would lose the pinned digits"
+    if_fails: "The artifact would not tie back to p4.json"

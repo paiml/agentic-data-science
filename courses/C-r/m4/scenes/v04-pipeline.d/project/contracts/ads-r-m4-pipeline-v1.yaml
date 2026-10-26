@@ -1,0 +1,48 @@
+# ads-r-m4-pipeline-v1: Course C (R), Module 4, scene v04-pipeline
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/pipeline.R runs pipeline_wine on the red and white files, prints the 5198/1299 split sizes, rmse and r2 and checks them against the golden p4.json within a tolerance of 0.005."
+  references:
+    - "R/pipeline.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-pipeline.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  pipeline_matches_golden:
+    formula: |
+      n_test = golden.n_test, |rmse - golden.rmse| < 0.005, |r2 - golden.r2| < 0.005
+    domain: "wine quality red + white after validate, 1-in-5 split and lm(quality ~ .)"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "SPLIT: 5198 train and 1299 test rows"
+      - "RMSE: 0.7603 on the test rows, within 0.005 of the golden"
+      - "R2: 0.2599 on the test rows, within 0.005 of the golden"
+      - "SCENE: R/pipeline.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "n_train + n_test = n_rows"
+    formal: "5198 + 1299 = 6497"
+    applies_to: pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-PIPELINE-001
+    rule: "The pipeline reproduces the golden numbers"
+    prediction: "rmse 0.760252 and r2 0.259854 print and the verdict is TRUE"
+    test: "tests/testthat/test-pipeline.R"
+    mutation: "Fit on the test rows instead of the train rows: the rmse leaves the 0.005 band and the verdict turns FALSE"
+    discriminates: "A pipeline that scored on its own training data would not match the golden"
+    if_fails: "The scene would show numbers that the ticket did not specify"
+  - id: FALSIFY-ADS-R-M4-PIPELINE-002
+    rule: "Float checks use a tolerance, never equality"
+    prediction: "abs(res$rmse - g$rmse) < 0.005 holds, and the test expects equality only within 1e-6"
+    test: "tests/testthat/test-pipeline.R"
+    mutation: "Perturb the rmse by 0.01: the verdict turns FALSE"
+    discriminates: "An exact-equality check would break on a platform with different float rounding"
+    if_fails: "The scene would flake across machines"

@@ -1,0 +1,8 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#wine-report> a ads:Artifact ;
+  ads:schemaVersion "1" ;
+  ads:generatedBy "agenticds::pipeline_wine" ;
+  ads:rmse "0.7602516062"^^xsd:decimal ;
+  ads:rows "6497"^^xsd:integer .

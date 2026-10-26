@@ -1,0 +1,9 @@
+w <- read_wine(h$wine("red"), h$wine("white"))
+g <- jsonlite::fromJSON("data/p4.json")
+good <- nrow(split_wine(w)$test)
+bad <- sum(seq_len(nrow(w)) %% 4L == 0L)
+cat("golden n_test:", g$n_test, "\n")
+cat("split_wine:   ", good, "\n")
+cat(cli::col_red(paste("broken (1 in 4):", bad)), "\n")
+ok <- good == g$n_test && bad != g$n_test
+h$verdict(ok, "bug caught")

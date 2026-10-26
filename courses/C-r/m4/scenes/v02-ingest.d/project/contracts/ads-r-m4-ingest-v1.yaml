@@ -1,0 +1,47 @@
+# ads-r-m4-ingest-v1: Course C (R), Module 4, scene v02-ingest
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/ingest.R reads the red and white Wine Quality files with read_wine, prints the row count per colour (1599 red, 4898 white) and checks the 6497 total against the golden ticket."
+  references:
+    - "R/ingest.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-ingest.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  read_wine_counts:
+    formula: |
+      n = n_red + n_white; golden.n_rows = n
+    domain: "wine quality red and white CSV files"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "ROWS: red has 1599 rows and white has 4898 rows"
+      - "TOTAL: read_wine binds them into 6497 rows, equal to golden n_rows"
+      - "SCENE: R/ingest.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "n_red + n_white = n_rows"
+    formal: "1599 + 4898 = 6497"
+    applies_to: read_wine_counts
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-INGEST-001
+    rule: "Both colours are read, none dropped"
+    prediction: "The count table shows 1599 red and 4898 white rows"
+    test: "tests/testthat/test-ingest.R"
+    mutation: "Read only the red file: the 6497 expectation fails and the verdict turns FALSE"
+    discriminates: "A reader that dropped a colour cannot reach the golden row count"
+    if_fails: "The scene would show an ingest that loses rows"
+  - id: FALSIFY-ADS-R-M4-INGEST-002
+    rule: "The verdict compares the data to the golden ticket, not to itself"
+    prediction: "nrow(w) == g$n_rows is TRUE for the 6497-row bind"
+    test: "tests/testthat/test-ingest.R"
+    mutation: "Change the golden n_rows in data/p4.json: the verdict prints red FALSE"
+    discriminates: "A self-referential check would stay green on a wrong golden"
+    if_fails: "The scene would certify a count nobody pinned"

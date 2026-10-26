@@ -1,0 +1,48 @@
+# ads-r-m4-wrapup-v1: Course C (R), Module 4, scene v10-wrapup
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "R/wrapup.R runs both P4 examples (the pipeline against golden/p4.json and the dplyr vs data.table check), collects their contract lines and reports green only when both end in OK."
+  references:
+    - "R/wrapup.R"
+    - "R/helpers.R"
+    - "tests/testthat/test-wrapup.R"
+    - "ads-r-p4-v1 (datasets/golden/p4.json)"
+    - "CLASSIFICATION (kind: pattern, not kernel): golden-file parity, no kani harness"
+
+equations:
+  both_p4_contracts_hold:
+    formula: |
+      contracts = grep("^contract:", output of both P4 examples); ok = 2 lines and all end in OK
+    domain: "the two P4 example run.R scripts, c-m4-p4-pipeline and c-m4-p4-bench"
+    codomain: "TRUE or FALSE verdict printed in green or red"
+    postconditions:
+      - "PIPELINE: the pipeline example matches golden/p4.json"
+      - "BENCH: dplyr and data.table agree"
+      - "VERDICT: green TRUE only when exactly two contract lines print and both end in OK"
+      - "SCENE: R/wrapup.R is at most 25 lines and 68 columns wide"
+
+proof_obligations:
+  - type: invariant
+    property: "two contract lines, both OK"
+    formal: "length(hits) = 2 and all(endsWith(hits, OK))"
+    applies_to: both_p4_contracts_hold
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-M4-WRAPUP-001
+    rule: "Each P4 example prints exactly one contract line"
+    prediction: "Two lines print, each ending in OK, and the verdict is TRUE"
+    test: "tests/testthat/test-wrapup.R"
+    mutation: "Make one example stop before its contract line: only one line prints and the verdict turns FALSE"
+    discriminates: "A silent example would not be noticed by a scene that only counted successes"
+    if_fails: "The wrap-up would claim two contracts for one"
+  - id: FALSIFY-ADS-R-M4-WRAPUP-002
+    rule: "A contract that ends in anything but OK is not green"
+    prediction: "all(endsWith(hits, OK)) is TRUE for both lines"
+    test: "tests/testthat/test-wrapup.R"
+    mutation: "Change one example contract line to end in FAIL: the verdict turns FALSE"
+    discriminates: "A scene that counted lines but ignored the suffix would stay green"
+    if_fails: "The wrap-up would hide a failed contract"

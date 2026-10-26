@@ -1,0 +1,19 @@
+# c-m4 v09: a sort-keyed split moves with the locale
+h <- new.env()
+sys.source("R/helpers.R", h)
+
+run_scene <- function() {
+  keys <- c("b1", "A2", "a3", "B4", "c5", "C6")
+  cl <- h$locale_run("C", keys)
+  us <- h$locale_run("en_US.UTF-8", keys)
+  cat("sort order, C:    ", cl$order, "\n")
+  cat("sort order, en_US:", us$order, "\n")
+  cat("rmse, C:    ", format(cl$rmse, digits = 17), "\n")
+  cat("rmse, en_US:", format(us$rmse, digits = 17), "\n")
+  moved <- !identical(cl$order, us$order)
+  same <- identical(cl$rmse, us$rmse)
+  ok <- moved && same
+  h$verdict(ok, "order moves, split and rmse do not")
+}
+
+if (sys.nframe() == 0) run_scene()

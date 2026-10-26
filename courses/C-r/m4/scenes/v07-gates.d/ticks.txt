@@ -1,0 +1,8 @@
+sums <- h$check_sums("data")
+cat("SHA256SUMS:", sums, "\n")
+ttl <- h$read_ttl("data/p4-artifact.ttl")
+shape <- h$shape_ok(ttl)
+print(shape)
+g <- jsonlite::fromJSON("data/p4.json")
+rmse <- h$has_num(ttl, g$rmse)
+h$verdict(sums && all(shape) && rmse, "gates green")

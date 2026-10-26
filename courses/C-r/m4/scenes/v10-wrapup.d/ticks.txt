@@ -1,0 +1,6 @@
+ex <- c("c-m4-p4-pipeline", "c-m4-p4-bench")
+out <- unlist(lapply(ex, function(e) {
+hits <- grep("^contract:", out, value = TRUE)
+writeLines(hits)
+ok <- length(hits) == 2 && all(endsWith(hits, "OK"))
+h$verdict(ok, "two contracts, both OK")

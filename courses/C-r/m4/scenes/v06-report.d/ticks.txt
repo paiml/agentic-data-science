@@ -1,0 +1,8 @@
+res <- pipeline_wine(h$wine("red"), h$wine("white"))
+out <- file.path(tempdir(), "wine-report-artifact.ttl")
+report_ttl(res, out)
+ttl <- readLines(out)
+writeLines(ttl)
+want <- readLines("data/p4-artifact.ttl")
+ok <- identical(ttl, want)
+h$verdict(ok, "artifact matches the golden ttl")

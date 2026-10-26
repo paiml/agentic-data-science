@@ -1,0 +1,9 @@
+stopifnot(h$check_sums("data"))
+g <- jsonlite::fromJSON("data/p4.json")
+str(g)
+w <- read_wine(h$wine("red"), h$wine("white"))
+n <- nrow(w)
+n_test <- n %/% 5
+ok <- g$n_rows == n && g$n_test == n_test &&
+msg <- sprintf("ticket oracle holds for %d rows", n)
+h$verdict(ok, msg)
