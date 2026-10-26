@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/P4.kt
+lines = 141-158
+ticks = 1-15,16-18
+run = ./gradlew --console=plain detekt
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = detekt
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = detekt maxIssues 0, clean run

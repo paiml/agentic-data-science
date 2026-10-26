@@ -1,0 +1,43 @@
+# ads-kotlin-m3-v01-p3-classify-v1: Course D (Kotlin), Module 3, scene v01 (P3 classify and cluster)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "classify (gini tree, rpart defaults) and cluster (Lloyd from fixed centroids) reproduce datasets/golden/p3.json: accuracy 0.976470588235294, confusion [[37,0,0],[0,16,1],[0,1,30]], k-means objective 378.293614632478 and sizes [133,123,86]. The scene m3v01 prints them and ends on a golden verdict."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m3v01/M3v01.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P3.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/GiniTree.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Kmeans.kt"
+    - "kotlin/ads-kotlin/scenes/m3v01.scene"
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): tool or numeric parity against a golden file, no kani harness"
+
+equations:
+  m3_p3_classify_holds:
+    formula: |
+      accuracy = trace(C)/sum(C); objective = sum_i |z_i - c_a(i)|^2; confusion, accuracy, sizes = golden; |objective - golden| <= 1e-6
+    domain: "342 clean penguin rows, split.csv, centroids.csv"
+    codomain: "confusion matrix, accuracy, k-means objective and sizes"
+    postconditions:
+      - "NO_TEST_LEAKAGE: the tree is fitted on rows labelled train only"
+      - "CAN_FAIL: moved starting centroids or a corrupted confusion make matchesGolden false"
+
+proof_obligations:
+  - type: invariant
+    property: "Both P3 models equal the committed golden"
+    formal: "accuracy = trace(C)/sum(C); objective = sum_i |z_i - c_a(i)|^2; confusion, accuracy, sizes = golden; |objective - golden| <= 1e-6"
+    applies_to: m3_p3_classify_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M3-V01-001
+    rule: "Both P3 models equal the committed golden"
+    prediction: "./gradlew -q m3v01 prints VERDICT: P3 matches golden PASS exits 0"
+    test: "./gradlew -q m3v01 prints VERDICT: P3 matches golden PASS"
+    mutation: "Swap the starting centroids (reversed and shifted by 5): matchesGolden is false (movedStartingCentroidsFailTheGolden)"
+    discriminates: "A model that does not start from the fixed centroids cannot reproduce the golden sizes"
+    if_fails: "Learners see a P3 result that is not the reference"

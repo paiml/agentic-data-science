@@ -17,3 +17,11 @@ Nothing yet beyond this page. When the examples land: a Gradle project with a ty
 ## Back to the project
 
 See the [root README](../README.md) for the full course list, the datasets, the ontology and the quality gates.
+
+## Scene
+
+`cd kotlin && ./gradlew -q run` runs the penguins-ols scene
+(`PenguinsOls.kt`, 24 lines; helpers in `Scene.kt`/`Report.kt`):
+load, drop NA, fit by two solvers, plot by species, verdict.
+It reads `datasets/penguins/penguins.csv` and writes `plot.png`
+at the repo root.

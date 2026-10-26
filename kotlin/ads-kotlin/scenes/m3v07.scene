@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/GiniTree.kt
+lines = 98-116
+ticks = 1-5,6-9,10-19
+run = ./gradlew --console=plain detekt
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = detekt
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = detekt maxIssues 0 over the tree growth

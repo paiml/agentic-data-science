@@ -1,0 +1,10 @@
+file = src/main/kotlin/com/paiml/ads/m4v01/M4v01.kt
+lines = 14-30
+ticks = 1-4,5-9,10-14,15-17
+run = ./gradlew -q m4v01
+cwd = kotlin
+ready = P4 vs golden PASS
+plot = none
+main = com.paiml.ads.m4v01.M4v01Kt
+note = P4.kt reproduces datasets/golden/p4.json within 1e-6
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

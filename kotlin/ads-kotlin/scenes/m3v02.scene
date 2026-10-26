@@ -1,0 +1,12 @@
+file = src/test/kotlin/com/paiml/ads/M3ScenesTest.kt
+lines = 153-161
+ticks = 1-9
+run = ./gradlew --console=plain test --rerun
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = junit
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = unit tests incl. the P3 tree: a clean split lands at the midpoint

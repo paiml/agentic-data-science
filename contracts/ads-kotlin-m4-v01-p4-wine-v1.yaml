@@ -1,0 +1,38 @@
+# ads-kotlin-m4-v01-p4-wine-v1: Course D (Kotlin), Module 4, scene m4-01 (P4 wine pipeline)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "m4v01 reads both wine tables, validates, splits (every fifth row is test), fits a linear quality model on train rows and prints held-out RMSE and R2, reproducing datasets/golden/p4.json within 1e-6."
+  references:
+    - "kotlin/ads-kotlin/scenes/m4v01.scene"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4.kt"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m4_v01_wine_pipeline_matches_golden:
+    formula: |
+      rows = 6497; n_train = 5198; n_test = 1299; |rmse - 0.760251606190075| <= 1e-6; |r2 - 0.25985449136456| <= 1e-6
+    domain: "datasets/wine-quality (red 1599 + white 4898 rows, SHA256SUMS verified)"
+    codomain: "rows, train, test, rmse, r2 and a PASS verdict"
+    postconditions:
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "CAN_FAIL: fitting on all rows moves RMSE by more than 1e-4 and matchesGolden is false (fittingOnAllRowsLeaksAndFailsTheOracle)"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE and R2 equal the R oracle within 1e-6"
+    formal: "|rmse - golden.rmse| <= 1e-6 and |r2 - golden.r2| <= 1e-6"
+    applies_to: m4_v01_wine_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M4-V01-001
+    rule: "Held-out RMSE and R2 equal the R oracle within 1e-6"
+    prediction: "./gradlew -q m4v01 exits 0"
+    test: "./gradlew -q m4v01"
+    mutation: "fitting on all rows moves RMSE by more than 1e-4 and matchesGolden is false (fittingOnAllRowsLeaksAndFailsTheOracle)"
+    discriminates: "A leaking pipeline cannot match the held-out golden"
+    if_fails: "Learners report an optimistic wine-quality error"

@@ -1,0 +1,12 @@
+file = src/test/kotlin/com/paiml/ads/P4Test.kt
+lines = 48-54
+ticks = 1-7
+run = ./gradlew --console=plain test --tests '*P4Test'
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = junit
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = held-out RMSE and R2 must match the R golden

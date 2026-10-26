@@ -1,0 +1,12 @@
+file = src/test/kotlin/com/paiml/ads/M4ScenesTest.kt
+lines = 32-40
+ticks = 1-9
+run = ./gradlew --console=plain test
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = junit
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the whole suite; the shown test reads the printed rmse and r2 back against the golden

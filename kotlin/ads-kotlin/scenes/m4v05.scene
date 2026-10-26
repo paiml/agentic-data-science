@@ -1,0 +1,13 @@
+file = src/main/kotlin/com/paiml/ads/P4.kt
+lines = 97-110
+ticks = 1-14
+run = ./gradlew --console=plain koverLog koverLogBranch koverVerify
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+measured = ^(line coverage 100% \(koverVerify bound: 100%\)|branch coverage (9[5-9]|100)(\.[0-9]+)?% \(koverVerify bound: 95%\))$
+plot = none
+tool = kover
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = koverLog and koverLogBranch print the measured line and branch numbers beside the bounds (100 line, 95 branch); koverVerify holds both and fails the build under either

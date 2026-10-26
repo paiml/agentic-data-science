@@ -1,0 +1,44 @@
+# ads-kotlin-m3-v08-gate-kotlin-v1: Course D (Kotlin), Module 3, scene v08 (gate-kotlin tasks)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Scene m3v08 runs the tool's own command (./gradlew --console=plain test koverVerify ktlintCheck detekt) and shows its native output, then exit=0."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/GiniTree.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/SceneLayoutTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/BuildWiringTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsFailOnFindingsTest.kt"
+    - "kotlin/ads-kotlin/scenes/m3v08.scene"
+    - "CLASSIFICATION (kind: pattern, not kernel): scene or tool check, no kani harness"
+
+equations:
+  m3-v08-gate-kotlin-v1:
+    formula: |
+      cwd: kotlin
+      run: ./gradlew --console=plain test koverVerify ktlintCheck detekt
+      native pass line: BUILD SUCCESSFUL
+      echo "exit=$?" prints exit=0
+    domain: "the merged course tree at the scene commit"
+    codomain: "the tool's own output and exit code 0"
+    postconditions:
+      - "NATIVE_OUTPUT: the pass line is the tool's own; nothing in the build prints a fixed verdict (BuildWiringTest.noFixedPassLineIsPrintedByTheBuild)"
+      - "FAILS_ON_FINDINGS: the four named tasks (test, koverVerify, ktlintCheck, detekt) each exit non-zero on a finding (ToolsFailOnFindingsTest runs them live on planted violations); the shacl verify tasks and pmat are not in this scene"
+      - "LAYOUT: the shown region is at most 25 lines of at most 59 columns (SceneLayoutTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The tool exits 0 on the committed tree"
+    formal: "exit(run) = 0 and output contains the native pass line"
+    applies_to: m3-v08-gate-kotlin-v1
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-M3-V08-001
+    rule: "The tool exits 0 on the committed tree"
+    prediction: "./gradlew --console=plain test koverVerify ktlintCheck detekt exits 0 on the scene commit"
+    test: "./gradlew --console=plain test koverVerify ktlintCheck detekt"
+    mutation: "ToolsFailOnFindingsTest: a planted violation turns test, ktlintCheck, detekt or koverVerify red; BuildWiringTest rejects ignoreFailures"
+    discriminates: "A tool that cannot fail certifies nothing"
+    if_fails: "A gate that cannot fail certifies nothing"

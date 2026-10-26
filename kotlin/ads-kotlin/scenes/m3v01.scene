@@ -1,0 +1,10 @@
+file = src/main/kotlin/com/paiml/ads/m3v01/M3v01.kt
+lines = 13-29
+ticks = 1-5,6-10,11-15,16-17
+run = ./gradlew -q m3v01
+cwd = kotlin
+ready = P3 matches golden PASS
+plot = none
+main = com.paiml.ads.m3v01.M3v01Kt
+note = P3 classify: gini tree accuracy and confusion, then Lloyd k-means, against datasets/golden/p3.json
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

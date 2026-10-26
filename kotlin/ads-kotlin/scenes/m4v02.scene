@@ -1,0 +1,10 @@
+file = src/main/kotlin/com/paiml/ads/m4v02/M4v02.kt
+lines = 15-31
+ticks = 1-17
+run = ./gradlew -q m4v02
+cwd = kotlin
+ready = P4 bench PASS
+plot = none
+main = com.paiml.ads.m4v02.M4v02Kt
+note = prints counts and agreement, never wall-clock numbers
+open_rule = project scene, no plot, per-scene gradle task for -q run, logStartupMessage flag in the JavaExec; U5 hold full width and un-faded (project-scene-rule, six scenes only)

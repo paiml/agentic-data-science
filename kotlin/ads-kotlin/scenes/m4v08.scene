@@ -1,0 +1,12 @@
+file = src/main/kotlin/com/paiml/ads/P4.kt
+lines = 127-139
+ticks = 1-13
+run = ./gradlew --console=plain test koverVerify ktlintCheck detekt
+cwd = kotlin
+ready = BUILD SUCCESSFUL
+plot = none
+tool = gradle
+open_rule = no plot in the 3 s hold, full-width scene (tool-scene-rule)
+after = echo "exit=$?"
+exit = exit=0
+note = the four Kotlin gate tasks (test, koverVerify, ktlintCheck, detekt) in one native Gradle call; scripts/gate-kotlin.sh adds verifyShaclAll as the fifth Gradle gate task, then measuredCheck and pmat
