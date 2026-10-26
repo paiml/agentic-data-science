@@ -38,6 +38,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: System libraries for the R build (Posit ubuntu-2204 tarball)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 zlib1g
       - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
         run: |
           h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
