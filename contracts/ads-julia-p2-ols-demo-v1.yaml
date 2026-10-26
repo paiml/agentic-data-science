@@ -1,0 +1,56 @@
+# ads-julia-p2-ols-demo-v1: Course B (Julia), Module 2, Problem P2 demo scene (GLM.jl OLS + CairoMakie plot)
+# Same golden as P2 (datasets/golden/p2.json); the scene file is julia/PenguinsOLS/src/fit.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "load_penguins, fit_ols and save_plot (CSV.jl, DataFrames.jl, GLM.jl, CairoMakie) reproduce the P2 closed-form OLS on penguins: 342 rows, intercept -5780.83, slope 49.69, residuals summing to zero, and a scatter-plus-fitted-line PNG."
+  references:
+    - "datasets/golden/p2.json"
+    - "julia/PenguinsOLS/src/fit.jl"
+    - "julia/PenguinsOLS/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_demo_fit_matches_golden:
+    formula: |
+      rows(load_penguins(csv))        = 342        (drop_na only on flipper_length_mm, body_mass_g)
+      intercept                       = -5780.83135807716   within 1e-6
+      slope                           = 49.6855664061006    within 1e-8
+      round(coef, 2)                  = [-5780.83, 49.69]
+      sum_i residual_i                = 0          within 1e-6
+    domain: "data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, sha256 f204db2c, NA as the string NA)"
+    codomain: "coefficients (intercept, slope), residual vector, plot.png"
+    postconditions:
+      - "DROP_NA_MODEL_COLUMNS: rows are dropped only when flipper_length_mm or body_mass_g is NA; dropping on every column leaves 333 rows and a different slope"
+      - "GOLDEN_FIT: round(coef, 2) equals [-5780.83, 49.69] and the verdict line prints golden: true"
+      - "PLOT_WRITTEN: save_plot writes a non-empty 720x1080 PNG with the scatter, the fitted line and a legend"
+      - "CAN_FAIL: fitting the 333-row table moves the slope off the golden"
+
+proof_obligations:
+  - type: invariant
+    property: "OLS with an intercept leaves residuals that sum to zero"
+    formal: "|sum_i (y_i - yhat_i)| <= 1e-6"
+    applies_to: p2_demo_fit_matches_golden
+  - type: invariant
+    property: "Fitted coefficients equal the P2 golden"
+    formal: "|intercept - golden.ols.intercept| <= 1e-6 and |slope - golden.ols.slope| <= 1e-8"
+    applies_to: p2_demo_fit_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P2-DEMO-001
+    rule: "Rows are dropped only on the model columns"
+    prediction: "Pkg.test passes with nrow == 342 and the golden coefficients"
+    test: "julia --project=julia/PenguinsOLS -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 333 rows and the row-count and slope tests fail"
+    discriminates: "A whole-table drop cannot give 342 rows or the golden slope"
+    if_fails: "The scene would print a fit on the wrong rows"
+  - id: FALSIFY-ADS-JULIA-P2-DEMO-002
+    rule: "Residuals of the intercept model sum to zero"
+    prediction: "the residual-sum test passes within 1e-6"
+    test: "julia --project=julia/PenguinsOLS -e 'using Pkg; Pkg.test()'"
+    mutation: "Fit without an intercept (@formula(body_mass_g ~ 0 + flipper_length_mm)): residuals no longer sum to zero and the golden test fails"
+    discriminates: "A model without the intercept cannot satisfy the residual identity"
+    if_fails: "The proof obligation would not be checked"

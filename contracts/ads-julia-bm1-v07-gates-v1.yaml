@@ -1,0 +1,55 @@
+# ads-julia-bm1-v07-gates-v1: Course B (Julia), Module 1, scene v07 (native gates on the real BM1 package)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v07_gates.jl (data: the gate command lines)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Shell scene. The recorder types make gate-shacl, a native julia --project=julia/gate -e JuliaFormatter check on julia/BM1 and the native full Pkg.test (julia --project=julia/BM1 -e 'using Pkg; Pkg.test()') at a shell prompt, each followed by a separate echo \"exit=$?\" typed by the recorder. No Julia wrapper, no environment guard, no filter. julia/BM1/gate/v07.jl runs the same lines after the package's own Pkg.test, so the package suite contains no v07 run and cannot start itself."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v07_gates.jl"
+    - "julia/BM1/scenes/v07-gates.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "julia/BM1/gate/v07.jl"
+    - "scripts/gate-julia.sh"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  gates_green_native:
+    formula: |
+      make gate-shacl   = exit 0, prints sh:conforms  true
+      Pkg.test()        = exit 0, prints Testing BM1 tests passed
+      format(julia/BM1) = format clean: true on the whole package (no diff), exit 0
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the terminal transcript of the three typed commands; the last 16 rows hold the Test Summary table, the Testing BM1 tests passed line and exit=0"
+    postconditions:
+      - "SHACL_OK: make gate-shacl prints sh:conforms  true and exits 0"
+      - "TESTS_PASS: the full Pkg.test on the real package prints Testing BM1 tests passed and exits 0"
+      - "FORMAT_CLEAN: the native julia -e JuliaFormatter check on julia/BM1 covers the whole package, prints format clean: true and exits 0"
+      - "FINAL_FRAME: the last 16 rows of the transcript contain Test Summary, Testing BM1 tests passed and exit=0; if they cannot fit, report it, never filter"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "Each gate is a tool run whose exit code is shown"
+    formal: "all three exit codes are 0"
+    applies_to: gates_green_native
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V07-001
+    rule: "Gates are green on the real package"
+    prediction: "the three commands exit 0 and the transcript holds three exit=0 lines"
+    test: "julia --project=julia/gate julia/BM1/gate/v07.jl"
+    mutation: "Run the same typed JuliaFormatter command on a directory holding a badly spaced file: it prints format clean: false and the typed echo shows exit=1"
+    discriminates: "A failing tool cannot be reported as a pass"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V07-002
+    rule: "Unformatted code is caught"
+    prediction: "format clean: false and exit=1 on a badly formatted file"
+    test: "julia --project=julia/gate julia/BM1/gate/v07.jl"
+    mutation: "Drop the exit code from the transcript (always exit=0): the exit=1 assertion on a false command fails"
+    discriminates: "A constant true cannot reject f( x )=x+1"
+    if_fails: "A red run would look like a green one on camera"

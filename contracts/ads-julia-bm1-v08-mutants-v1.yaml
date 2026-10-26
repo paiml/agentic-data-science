@@ -1,0 +1,51 @@
+# ads-julia-bm1-v08-mutants-v1: Course B (Julia), Module 1, scene v08 (mutation harness)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v08_mutants.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Two mutants of AgenticDS.jl (dropmissing on every column, a population sd) each fail golden checks: 19 and 12 failures."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v08_mutants.jl"
+    - "julia/BM1/scenes/v08-mutants.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  mutants_are_killed:
+    formula: |
+      mutant 1: dropmissing(df, NUMERIC_COLS) -> dropmissing(df)  : 19 golden failures
+      mutant 2: std => (x -> std(x; corrected = false)) =>        : 12 golden failures
+      unchanged copy                                             :  0 golden failures
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V08.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "BOTH_KILLED: each mutant fails at least one golden check"
+      - "CLEAN_COPY: the unmodified source fails none"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "A mutant that survives is a missing test"
+    formal: "failed(mutant) > 0 and failed(original) = 0"
+    applies_to: mutants_are_killed
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V08-001
+    rule: "Mutants are killed"
+    prediction: "Pkg.test passes with failed: 19 and failed: 12 in the output"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace a string that does not occur: kill returns false because nothing fails"
+    discriminates: "A no-op mutation cannot fail any golden check"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V08-002
+    rule: "The original passes"
+    prediction: "failures(load_module(original source)) is empty"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Break the golden comparison tolerance to 1.0: the mutants survive and the output test fails"
+    discriminates: "A loose tolerance cannot fail the population sd"
+    if_fails: "A red run would look like a green one on camera"

@@ -1,0 +1,51 @@
+# ads-julia-bm1-v03-generate-v1: Course B (Julia), Module 1, scene v03 (generate and test)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v03_generate.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Pkg.generate makes a scratch package; a @testset written first fails (Hello, Julia vs Hello, Julia!) and passes once the code appends the exclamation mark."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v03_generate.jl"
+    - "julia/BM1/scenes/v03-generate.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  red_then_green_testset:
+    formula: |
+      runtests(red)   = 1 failure (Hello, Julia != Hello, Julia!)
+      implement(file) : append ! to the greeting
+      runtests(green) = 0 failures
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V03.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "RED_FIRST: the first run reports exactly one failed test"
+      - "GREEN_AFTER_FIX: the second run reports zero failures and the verdict prints OK"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "The scratch tests really fail before the fix"
+    formal: "runtests(file, red) = 1 and runtests(file, green) = 0"
+    applies_to: red_then_green_testset
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V03-001
+    rule: "The failing test is red before the fix"
+    prediction: "Pkg.test passes with a failing run followed by a passing run"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Skip the implement step: the second run still fails and the verdict reads FAILED"
+    discriminates: "A package that never changes cannot turn green"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V03-002
+    rule: "Non test errors are not hidden"
+    prediction: "an error call in the test code reaches the caller"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Swallow every exception in runtests: the rethrow assertion fails"
+    discriminates: "A runner that hides errors cannot raise the ErrorException"
+    if_fails: "A red run would look like a green one on camera"

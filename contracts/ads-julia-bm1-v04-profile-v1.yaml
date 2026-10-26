@@ -1,0 +1,51 @@
+# ads-julia-bm1-v04-profile-v1: Course B (Julia), Module 1, scene v04 (per-species profile)
+# Pattern contract: numeric parity against a golden file, no kani harness; the scene file is julia/BM1/src/v04_profile.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "summarise_by_species prints counts 151, 68 and 123 and the Gentoo body mass sd 504.116 with n-1; the population sd 502.063 differs."
+  references:
+    - "contracts/ads-julia-p1-v1.yaml"
+    - "datasets/golden/p1.json"
+    - "julia/BM1/src/v04_profile.jl"
+    - "julia/BM1/scenes/v04-profile.scene"
+    - "julia/BM1/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  profile_counts_and_sd:
+    formula: |
+      n by species          = [151, 68, 123]
+      sd(Gentoo mass), n-1  = 504.116  (summarise_by_species = by hand, 1e-12)
+      sd(Gentoo mass), n    = 502.063  (differs by more than 1e-3)
+    domain: "julia/BM1/data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv (344 rows, NA as the string NA)"
+    codomain: "the printed lines of BM1.V04.main() ending in a contract: b-m1 verdict line"
+    postconditions:
+      - "COUNTS: n equals 151, 68 and 123"
+      - "SAMPLE_SD: the library sd equals the by-hand n-1 value and not the n value"
+      - "SCENE_LIMITS: the shown file keeps within its 25 line, 56 column and no backslash limits and its ticks are whole top-level statements"
+
+proof_obligations:
+  - type: invariant
+    property: "The profile uses the sample standard deviation"
+    formal: "|sd_lib - sd_hand(n-1)| <= 1e-12 and |sd_hand(n-1) - sd_hand(n)| > 1e-3"
+    applies_to: profile_counts_and_sd
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM1-V04-001
+    rule: "Counts and sd match"
+    prediction: "Pkg.test passes with 151/68/123 and the n-1 sd"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Use std(x; corrected = false) in summarise_by_species: the by-hand comparison fails"
+    discriminates: "A population sd cannot equal the n-1 value"
+    if_fails: "The scene would print a verdict that the data does not support"
+  - id: FALSIFY-ADS-JULIA-BM1-V04-002
+    rule: "The two sd formulas differ"
+    prediction: "sd_by_hand(x, 1) differs from sd_by_hand(x, 0) by more than 1e-3"
+    test: "julia --project=julia/BM1 -e 'using Pkg; Pkg.test()'"
+    mutation: "Make sd_by_hand ignore k: both values coincide and the assertion fails"
+    discriminates: "A k-blind sd cannot separate n-1 from n"
+    if_fails: "A red run would look like a green one on camera"
