@@ -4,16 +4,26 @@ This directory is the home of the code examples for **Agentic Data Science, Cour
 
 ## Run
 
-The Kotlin examples land with the Kotlin course pull request. Once they do, run them from this directory with:
+Run the examples from this directory with:
 
 ```bash
 ./gradlew -q run
 ```
 
+Module examples (run from `kotlin/`): `./gradlew -q m1v01` (ingest), `m1v02` (profile), `m2v01` (OLS check against the golden), `m3v01` (species tree and k-means), `m4v01` (wine pipeline), `m4v02` (two engines, agreement before timing).
+
 ## What lives here
 
-Nothing yet beyond this page. When the examples land: a Gradle project with a typed loader, the NA policy, the per-species profile and its gate.
+A Gradle project with a typed loader, the NA policy, the per-species profile, the OLS fit, a species tree with k-means, the wine pipeline and their gate.
 
 ## Back to the project
 
 See the [root README](../README.md) for the full course list, the datasets, the ontology and the quality gates.
+
+## Example
+
+`cd kotlin && ./gradlew -q run` runs the penguins-ols example
+(`PenguinsOls.kt`, 24 lines; helpers in `Example.kt`/`Report.kt`):
+load, drop NA, fit by two solvers, plot by species, verdict.
+It reads `datasets/penguins/penguins.csv` and writes `plot.png`
+at the repo root.
