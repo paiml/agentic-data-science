@@ -5,7 +5,7 @@ Authors: Pragmatic AI Labs
 -/
 import AgenticDS.Ols
 
-/-! # Scene file: exact least squares and its residual proof -/
+/-! # Example file: exact least squares and its residual proof -/
 
 open AgenticDS
 
