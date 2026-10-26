@@ -15,6 +15,9 @@ g = JSON3.read(read(joinpath(root, "datasets", "golden", "p2.json"), String))
 gold = [g.ols.intercept, g.ols.slope]
 println("coef golden:    ", round.(gold; digits = 2))
 @info "condition numbers" cond_X = cond(X) cond_XtX = cond(X'X)
-ok = all(isapprox.(b_ne, gold; atol = 1e-6)) && all(isapprox.(b_qr, gold; atol = 1e-8))
-printstyled(uppercase("verdict: "), ok ? "normal equations and backslash match the golden" : "MISMATCH", "\n"; color = ok ? :green : :red, bold = true)
+ok_ne = all(isapprox.(b_ne, gold; atol = 1e-6))
+ok_qr = all(isapprox.(b_qr, gold; atol = 1e-8))
+ok = ok_ne && ok_qr
+msg = ok ? "normal equations and backslash match the golden" : "MISMATCH"
+printstyled("VERDICT: ", msg, "\n"; color = ok ? :green : :red, bold = true)
 @assert ok
