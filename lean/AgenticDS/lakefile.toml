@@ -1,6 +1,7 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo"]
+defaultTargets = ["AgenticDS", "ols-demo", "scene-m1", "scene-m2", "scene-m3", "scene-m4"]
+allowNonModules = true
 
 [leanOptions]
 pp.unicode.fun = true
@@ -21,3 +22,19 @@ name = "AgenticDS"
 [[lean_exe]]
 name = "ols-demo"
 root = "AgenticDS.OlsMain"
+
+[[lean_exe]]
+name = "scene-m1"
+root = "AgenticDS.SceneM1Main"
+
+[[lean_exe]]
+name = "scene-m2"
+root = "AgenticDS.SceneM2Main"
+
+[[lean_exe]]
+name = "scene-m3"
+root = "AgenticDS.SceneM3Main"
+
+[[lean_exe]]
+name = "scene-m4"
+root = "AgenticDS.SceneM4Main"
