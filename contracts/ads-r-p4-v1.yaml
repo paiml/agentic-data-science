@@ -1,0 +1,45 @@
+# ads-r-p4-v1: Course C (R), Module 4, Problem P4 (Wine Quality pipeline and report)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-15"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "pipeline_wine validates, splits (every fifth row is test), fits a linear quality model and scores it, reproducing datasets/golden/p4.json; report_ttl emits an ads:Artifact that conforms to ontology/shapes/artifact.shape.ttl; dplyr and data.table aggregates agree."
+  references:
+    - "r/agenticds/R/p4.R"
+    - "r/agenticds/tests/testthat/test-p4.R"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_pipeline_matches_golden:
+    formula: |
+      rows                 = 1599 + 4898 = 6497
+      test rows            = {i : i mod 5 = 0}                      n_test = 1299
+      rmse, r2             = metrics of lm(quality ~ ., train) on test
+      |rmse - golden|      <= 1e-6
+      aggregate_dplyr      = aggregate_data_table                   per colour, tol 1e-12
+    domain: "winequality-red.csv and winequality-white.csv with SHA256SUMS verified"
+    codomain: "row counts, RMSE, R squared, mean quality per colour, Turtle artifact"
+    postconditions:
+      - "VALIDATE_FIRST: a missing value, a quality outside 0..10 or an unknown colour stops the pipeline"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "NO_TIMINGS_IN_GOLDEN: timings are never part of a parity check"
+      - "CAN_FAIL: fitting on all rows moves RMSE and fails the oracle test (2 expectations, measured 2026-10-15)"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE equals an independent lm oracle within 1e-6"
+    formal: "|rmse - oracle| <= 1e-6"
+    applies_to: p4_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-R-P4-001
+    rule: "The model never sees test rows"
+    prediction: "make gate-r passes"
+    test: "scripts/gate-r.sh"
+    mutation: "Fit on all rows: 2 testthat expectations fail (measured 2026-10-15)"
+    discriminates: "A leaking pipeline cannot match the held-out oracle"
+    if_fails: "Learners report an optimistic wine-quality error"

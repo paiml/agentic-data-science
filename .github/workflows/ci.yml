@@ -1,0 +1,68 @@
+name: ci
+on: { pull_request: {}, merge_group: {}, push: { branches: [main] } }
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  datasets:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-datasets
+  shacl:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Apache Jena (pinned, sha512-verified)
+        run: |
+          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
+          curl -fsSL -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
+          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
+          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+      - run: make gate-shacl
+  julia:
+    timeout-minutes: 45
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: |
+          h=7d2add9ee74ee2f12b5c268bc194794cc52ea440f8687fbab29db6afefbf69b7
+          curl -fsSL -o "$RUNNER_TEMP/julia.tgz" "https://julialang-s3.julialang.org/bin/linux/x64/1.12/julia-1.12.1-linux-x86_64.tar.gz"
+          echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
+          echo "JULIA_DEPOT_PATH=$RUNNER_TEMP/depot" >> "$GITHUB_ENV"
+      - run: make gate-julia
+  r:
+    timeout-minutes: 45
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.5.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.5.1/bin" >> "$GITHUB_PATH"
+      - name: Install pinned R tools (styler, lintr, covr; CRAN snapshot 2026-10-20)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
+      - run: make gate-r
+  lean:
+    runs-on: [self-hosted, clean-room, X64, intel]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - name: Mathlib oleans (download into the workspace, nothing installed on the host)
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - run: make gate-lean
+  gate:
+    name: gate
+    if: always()
+    needs: [datasets, shacl, r, julia, lean]
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}; then exit 1; fi

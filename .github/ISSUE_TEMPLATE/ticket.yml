@@ -1,0 +1,12 @@
+name: Example ticket
+description: Ticket before work (one per example)
+body:
+  - type: input
+    id: problem
+    attributes: { label: Problem id (P1-P4), description: "with language and course" }
+  - type: input
+    id: contract
+    attributes: { label: pv contract id }
+  - type: textarea
+    id: acceptance
+    attributes: { label: Acceptance tests and golden reference }

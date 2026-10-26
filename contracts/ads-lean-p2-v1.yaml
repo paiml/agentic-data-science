@@ -1,0 +1,44 @@
+# ads-lean-p2-v1: Course E (Lean 4), Module 1, Problem P2 (exact OLS on penguins, residual identity proved)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Exact-rational simple linear regression of body_mass_g on flipper_length_mm over Palmer Penguins: 342 rows after dropping NA in the two model columns only, intercept -5780.83, slope 49.69, and the theorem residuals_sum (the residuals of the fit sum to exactly 0 for any data)."
+  references:
+    - "lean/AgenticDS/AgenticDS/Ols.lean"
+    - "lean/AgenticDS/AgenticDS/OlsScene.lean"
+    - "lean/AgenticDS/AgenticDSTest/OlsTest.lean"
+    - "datasets/penguins/penguins.csv"
+    - "CLASSIFICATION (kind: pattern): theorem statement checked by the Lean kernel, numeric postconditions with tolerances"
+
+equations:
+  p2_lean_exact_ols:
+    formula: |
+      slope     = cov(x, y) / var(x)               x = flipper_length_mm, y = body_mass_g
+      intercept = mean(y) - slope * mean(x)
+      sum_i (y_i - (intercept + slope * x_i)) = 0   exactly, for any list of pairs
+      |intercept + 5780.83| <= 0.005,  |slope - 49.69| <= 0.005
+    domain: "datasets/penguins/penguins.csv with SHA256SUMS verified"
+    codomain: "a pair of exact rationals (intercept, slope) and the exact residual sum 0"
+    postconditions:
+      - "NA_POLICY: a row is dropped iff flipper_length_mm or body_mass_g is NA, and no other column matters (342 rows)"
+      - "EXACT: no floating point appears in the fit; decimals parse to rationals"
+      - "AXIOMS: residuals_sum depends only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: reading NA as 0 adds rows at the origin and moves the slope by more than 1"
+
+proof_obligations:
+  - type: invariant
+    property: "Theorem residuals_sum is kernel-checked and axiom-clean (no sorry, no native_decide)"
+    formal: "#print axioms residuals_sum subset {propext, Classical.choice, Quot.sound}"
+    applies_to: p2_lean_exact_ols
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P2-001
+    rule: "The fit reproduces the penguins numbers and the residual identity holds on the data"
+    prediction: "lake env lean --run AgenticDSTest/OlsTest.lean prints 17 checks passed and contract: ads-lean-p2-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/OlsTest.lean"
+    mutation: "Read NA as 0 in pairsOf: the 342 rows, intercept, slope and the CAN_FAIL NA-row checks fail"
+    discriminates: "A fit with a wrong NA policy cannot print 342 rows and slope 49.69"
+    if_fails: "Learners prove a theorem about a pipeline that disagrees with the R reference"
