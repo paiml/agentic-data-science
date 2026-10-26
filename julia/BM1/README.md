@@ -27,8 +27,8 @@ julia --project=julia/BM1 -e 'using BM1; BM1.V04.main()'   # from the repository
 
 - `Pkg.test()` runs JET `test_package`, the run output checks and one testset
   per example, each with a test that can fail.
-- Line coverage is measured with `Pkg.test(coverage = true)` and Coverage.jl
-  from `julia/gate`.
+- The gate runs `Pkg.test()` for this package; line coverage is measured
+  for `julia/AgenticDS.jl` only.
 - JuliaFormatter (margin 56, `.JuliaFormatter.toml`) shows no diff on the whole
   package (`scripts/julia-format.sh julia/BM1`).
 - `scripts/gate-julia.sh` runs the package together with the other Julia packages.
