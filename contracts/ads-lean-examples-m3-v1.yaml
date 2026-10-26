@@ -70,6 +70,6 @@ falsification_tests:
     rule: "No example or library source contains a refused word; the gate scans for them"
     prediction: "scripts/gate-lean.sh finds no refused word and continues"
     test: "scripts/gate-lean.sh (marker scan)"
-    mutation: "Plant one refused word in a example file: the scan prints the hit, FAIL, and exits 1"
+    mutation: "Plant one refused word in an example file: the scan prints the hit, FAIL, and exits 1"
     discriminates: "A scan that reports a pass because it reads nothing"
     if_fails: "The gate's ban would be unenforced"
