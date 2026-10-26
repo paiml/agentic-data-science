@@ -2,8 +2,6 @@
 
 # Agentic Data Science: code examples
 
-![Agentic Data Science](assets/hero.png)
-
 Runnable, tested code examples for the **Agentic Data Science** specialization by Pragmatic AI Labs: the same four data science problems solved in five languages with an AI coding agent in the loop, under strict quality gates.
 
 ## The five courses
