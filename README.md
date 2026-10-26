@@ -22,6 +22,24 @@ Specialization: https://www.coursera.org/specialization/agentic-data-science (li
 - `ontology/`: vocabulary and SHACL shapes that every example's `example.ttl` must satisfy.
 - Language packages (`r/`, `julia/`, `kotlin/`, `rust/`, `lean/`) are added as each course's examples land.
 
+## Installation
+
+```bash
+git clone https://github.com/paiml/agentic-data-science
+cd agentic-data-science
+cargo build --locked --manifest-path rust/ads-rust/Cargo.toml   # needs a stable Rust toolchain
+```
+
+The gates also need Apache Jena (`shacl`) on `PATH` and Java 17.
+
+## Usage
+
+```bash
+cargo run -q --locked --manifest-path rust/ads-rust/Cargo.toml --example a-m1-p1
+```
+
+Each example under `rust/ads-rust/examples/` ends on a `contract: ... OK` line; `demos/` holds the scripted terminal runs used in the course videos.
+
 ## Run the gates
 
 ```bash
@@ -42,6 +60,13 @@ CI jobs for R, Julia and Lean run a format and lint check with zero diff and zer
 | Rust (config only) | rustfmt `--check`, `rust/rustfmt.toml` | clippy `-D warnings` | set in the Rust M1 PR |
 
 Lean has no official formatter, so the Lean gate is the linter set only. styler has no line-width setting; lintr enforces the 68 limit on R code. The Mathlib header linter is set to the MIT licence text this repo uses.
+## Contributing
+
+Open a pull request against `main`. Every change keeps `make gate` green (datasets, SHACL, Rust gate at 100% line and function coverage, clippy with `-D warnings`) and carries a test that fails when the behaviour breaks.
+
+## License
+
+MIT, see `LICENSE`. Datasets keep their own licences, below.
 
 ## Dataset licences
 
