@@ -1,0 +1,8 @@
+file = src/v02_features.jl
+ticks = 1-1,2-10,11-17,18-24
+repl_rows = 10
+startup = using BM3
+run = BM3.V02.main()
+ready = golden: true
+plot = none
+est_run_s = 10

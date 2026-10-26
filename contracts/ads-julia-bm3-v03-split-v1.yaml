@@ -1,0 +1,56 @@
+# ads-julia-bm3-v03-split-v1: Course B (Julia), Module 3, scene v03-split (gini and the best cut)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v03_split.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "gini and best_cut find the cut with the biggest drop in n*gini: the midpoint 6.5 for the toy data in both label orders, the first of two equal cuts on a tie, and no cut between equal values."
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v03_split.jl"
+    - "julia/BM3/scenes/v03-split.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_03_scene_matches_golden:
+    formula: |
+      gini(c)                    = n - sum(c_k^2) / n          n = sum(c)
+      gain(cut)                  = gini(all) - gini(left) - gini(right)
+      best_cut(1,2,3,10,11,12; labels 1,1,1,2,2,2) = (gain 3.0, cut 6.5)
+      best_cut(same x; labels swapped)             = (gain 3.0, cut 6.5)
+      best_cut(1,2,3,4; labels 1,2,1,2)            = cut 1.5 (equal gains at 1.5 and 3.5: the first wins)
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "MIDPOINT: the cut is the midpoint of the two neighbouring values, 6.5"
+      - "LABEL_SYMMETRY: swapping the class names does not move the cut"
+      - "TIE_FIRST: when two cuts have equal gain the earlier cut wins (strict greater-than)"
+      - "NO_CUT_BETWEEN_EQUALS: equal neighbouring values offer no cut, and minbucket keeps both pieces large enough"
+      - "CAN_FAIL: labels that interleave the classes move the cut off 6.5"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_03_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V03-001
+    rule: "best_cut returns the midpoint of the best split"
+    prediction: "Pkg.test passes and BM3.V03.main() prints golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Use interleaved labels [1,2,1,2,1,2] on the same x: the cut is no longer 6.5 (testset: can fail)"
+    discriminates: "Only a cut that separates the classes gives gain 3.0 at 6.5"
+    if_fails: "The tree would pick thresholds that do not reduce impurity"
+  - id: FALSIFY-ADS-JULIA-BM3-V03-002
+    rule: "Equal gains keep the first cut"
+    prediction: "the tie testset returns cut 1.5"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Change gain > best to gain >= best in best_cut: the tie returns 3.5 and the tie test fails (checked in scene v08 on a sandboxed copy of the source)"
+    discriminates: "Only a strict comparison keeps the earlier of two equal cuts"
+    if_fails: "The tree depends on the order of equal candidates and is not reproducible"

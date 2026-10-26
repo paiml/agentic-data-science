@@ -1,0 +1,53 @@
+# ads-julia-bm3-v05-confusion-v1: Course B (Julia), Module 3, scene v05-confusion (confusion matrix)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v05_confusion.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v05: confusion matrix, recall and precision of the tree on the test rows"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v05_confusion.jl"
+    - "julia/BM3/scenes/v05-confusion.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_05_scene_matches_golden:
+    formula: |
+      confusion(test)                  = [37 0 0; 0 16 1; 0 1 30], truth in rows
+      recall                           = 1.0, 0.9412, 0.9677
+      precision                        = 1.0, 0.9412, 0.9677
+      test rows 85, correct 83, errors 2
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "MATRIX_GOLDEN: the confusion matrix of the tree on the 85 test rows equals the golden matrix"
+      - "RATES: recall and precision are the diagonal over the row and column sums"
+      - "CAN_FAIL: a prediction vector with one bird moved changes the matrix and the verdict prints false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_05_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V05-001
+    rule: "The confusion matrix equals the golden matrix"
+    prediction: "BM3.V05.main() prints golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Flip one Gentoo prediction to Adelie: the matrix differs from the golden one and confusion no longer matches (testset: can fail)"
+    discriminates: "A matrix with the same total but another diagonal cannot print green"
+    if_fails: "The error counts shown to learners would not be the golden ones"
+  - id: FALSIFY-ADS-JULIA-BM3-V05-002
+    rule: "Recall and precision are diagonal over sums"
+    prediction: "recall and precision of the golden matrix give 0.9412 and 0.9677 for the two mixed classes"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Swap row and column sums in precision: the values differ for the off-diagonal classes"
+    discriminates: "A transposed definition cannot reproduce the printed rates"
+    if_fails: "Precision would be reported as recall"

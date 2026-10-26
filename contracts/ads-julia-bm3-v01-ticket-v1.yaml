@@ -1,0 +1,55 @@
+# ads-julia-bm3-v01-ticket-v1: Course B (Julia), Module 3, scene v01-ticket (the ticket and its fixtures)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v01_ticket.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "ticket_data, ticket_confusion and ticket_kmeans check that the committed fixtures agree with the golden of ads-r-p3-v1: 342 clean rows, 257 train and 85 test, a confusion matrix summing to 85 with diagonal 83, and k-means sizes summing to 342."
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v01_ticket.jl"
+    - "julia/BM3/scenes/v01-ticket.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_01_scene_matches_golden:
+    formula: |
+      rows(clean penguins)             = 342       (drop NA on the four measurement columns)
+      split                            = 257 train + 85 test (data/split.csv)
+      sum(golden confusion)            = 85,  diagonal = 83,  accuracy = 83/85 within 1e-12
+      sum(golden k-means sizes)        = 342, objective = 378.2936 (4 digits)
+      sha256(data/penguins.csv)        = f204db2c...767a93
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "FIXTURES_AGREE: the split file labels 257 train and 85 test rows of the 342 clean rows"
+      - "ORACLE_CONSISTENT: the golden confusion sums to the test size 85 and its diagonal gives the golden accuracy"
+      - "SIZES_SUM: the golden k-means cluster sizes sum to the 342 rows"
+      - "CAN_FAIL: a split of the wrong size, a skewed confusion matrix or cluster sizes that do not sum to 342 make the checks print false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_01_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V01-001
+    rule: "The ticket oracle is consistent with the committed fixtures"
+    prediction: "Pkg.test passes and BM3.V01.main() prints golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Feed ticket_data a label vector of 300 rows instead of 342: the check returns false (testset: can fail)"
+    discriminates: "A split or row count that disagrees with the fixtures cannot print a green verdict"
+    if_fails: "The module would start from numbers that do not belong to the committed files"
+  - id: FALSIFY-ADS-JULIA-BM3-V01-002
+    rule: "The golden confusion matrix sums to the test size and carries the golden accuracy"
+    prediction: "ticket_confusion returns true for the golden matrix"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace the matrix by [37 0 0; 0 15 2; 0 1 30] (diagonal 82): ticket_confusion returns false"
+    discriminates: "A matrix that still sums to 85 but changes the diagonal cannot keep the golden accuracy"
+    if_fails: "Later scenes would score against an inconsistent oracle"

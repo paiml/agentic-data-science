@@ -1,0 +1,52 @@
+# ads-julia-bm3-v10-wrapup-v1: Course B (Julia), Module 3, scene v10-wrapup (wrap-up)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v10_wrapup.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM3 v10: wrap-up recomputes both results and prints the golden summary"
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v10_wrapup.jl"
+    - "julia/BM3/scenes/v10-wrapup.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_10_scene_matches_golden:
+    formula: |
+      golden accuracy                  = 0.976470588235294
+      golden confusion                 = [37 0 0; 0 16 1; 0 1 30]
+      golden k-means                   = 378.2936 / [133, 123, 86]
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "CONTRACT_LINES: both recomputed results equal the golden, so each contract line says OK"
+      - "SUMMARY_LINE: the golden accuracy, confusion, objective and sizes are printed from the golden constants"
+      - "CAN_FAIL: a failing result prints FAILED on its contract line and the verdict goes false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_10_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V10-001
+    rule: "The wrap-up recomputes both results and equals golden"
+    prediction: "BM3.V10.main() prints two OK lines and golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Pass false to contract: the line says FAILED (testset: can fail)"
+    discriminates: "A false result cannot print OK"
+    if_fails: "The wrap-up would claim a proof that was not measured"
+  - id: FALSIFY-ADS-JULIA-BM3-V10-002
+    rule: "The summary line is read from the golden constants"
+    prediction: "golden_line prints the four golden values"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Call golden_line with a different accuracy: the printed text differs"
+    discriminates: "A summary typed by hand would drift from the oracle"
+    if_fails: "The closing numbers would not be the golden numbers"

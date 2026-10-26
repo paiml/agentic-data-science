@@ -1,0 +1,9 @@
+file = src/v05_confusion.jl
+ticks = 1-2,3-4,5-12,13-22
+repl_rows = 10
+startup = using BM3
+run = BM3.V05.main()
+ready = golden: true
+plot = none
+est_run_s = 10
+note = header reads truth / predicted because the shown file may not contain a backslash

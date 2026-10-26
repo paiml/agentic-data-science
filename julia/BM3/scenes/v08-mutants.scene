@@ -1,0 +1,9 @@
+file = src/v08_mutants.jl
+ticks = 1-9,10-15,16-19,20-24
+repl_rows = 7
+startup = using BM3
+run = BM3.V08.main()
+ready = caught: true
+plot = none
+est_run_s = 20
+note = reshaped: the two mutants are applied in memory to a copy of the source and run in a sandbox module instead of two full Pkg.test runs on scratch copies

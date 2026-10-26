@@ -1,0 +1,54 @@
+# ads-julia-bm3-v02-features-v1: Course B (Julia), Module 3, scene v02-features (z-scoring and the body mass share)
+# Extends ads-r-p3-v1 (same golden, datasets/golden/p3.json); the scene file is julia/BM3/src/v02_features.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "zscore, feature_table and body_share reproduce the module-3 feature facts on the 342 clean penguins: z-scored columns have mean 0 and sd 1, the raw means and sds are 43.92/17.15/200.92/4201.75 and 5.46/1.97/14.06/801.95, and body mass is 0.9894 of the raw squared distance of rows 1 and 2."
+  references:
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "julia/BM3/src/v02_features.jl"
+    - "julia/BM3/scenes/v02-features.scene"
+    - "julia/BM3/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm3_02_scene_matches_golden:
+    formula: |
+      mean(z_j)                        = 0 within 1e-12     z = (X - mean) / sd, X = 4 columns of the 342 clean rows
+      sd(z_j)                          = 1 within 1e-12
+      mean(X) = [43.92, 17.15, 200.92, 4201.75], sd(X) = [5.46, 1.97, 14.06, 801.95]   (2 digits)
+      share = (x1_4 - x2_4)^2 / sum_j (x1_j - x2_j)^2 = 0.9894 (rows 1 and 2, body_mass_g share)
+    domain: "data/penguins.csv (a verbatim copy of datasets/penguins/penguins.csv), data/split.csv, data/centroids.csv"
+    codomain: "the lines the scene prints and its green or red verdict"
+    postconditions:
+      - "Z_MEAN_SD: every z-scored feature has mean 0 and sd 1 within 1e-12"
+      - "RAW_SCALE: the raw columns do not (mean of body_mass_g is 4201.75), so raw distances are dominated by grams"
+      - "BODY_MASS_SHARE: for rows 1 and 2 body mass is 0.9894 of the raw squared distance"
+      - "CAN_FAIL: on the raw columns the mean and sd checks print false"
+
+proof_obligations:
+  - type: invariant
+    property: "The scene prints the golden numbers and a green verdict"
+    formal: "last line of main() == ready string and all checks hold"
+    applies_to: bm3_02_scene_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM3-V02-001
+    rule: "z-scoring gives every feature mean 0 and sd 1"
+    prediction: "Pkg.test passes and BM3.V02.main() prints golden: true"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Skip the scaling and test the raw columns: mean 4201.75 and sd 801.95 break the checks (testset: can fail)"
+    discriminates: "Only a standardised matrix has mean 0 and sd 1 in every column"
+    if_fails: "k-means would cluster by body mass in grams"
+  - id: FALSIFY-ADS-JULIA-BM3-V02-002
+    rule: "Body mass dominates the raw squared distance of rows 1 and 2"
+    prediction: "body_share returns 0.9894 within 5e-5"
+    test: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'"
+    mutation: "Use rows 3 and 4 instead of rows 1 and 2: the share changes and the pair-specific test fails"
+    discriminates: "The share belongs to the pair of rows, not to the table"
+    if_fails: "The narration would quote a number the code does not produce"

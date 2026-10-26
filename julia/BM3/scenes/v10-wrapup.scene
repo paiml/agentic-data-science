@@ -1,0 +1,8 @@
+file = src/v10_wrapup.jl
+ticks = 1-4,5-9,10-15,16-21
+repl_rows = 7
+startup = using BM3
+run = BM3.V10.main()
+ready = golden: true
+plot = none
+est_run_s = 10

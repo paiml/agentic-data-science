@@ -1,0 +1,9 @@
+file = src/v04_tree.jl
+ticks = 1-1,2-13,14-19,20-25
+repl_rows = 10
+startup = using BM3
+run = BM3.V04.main()
+ready = golden: true
+plot = none
+est_run_s = 10
+note = reshaped: the rpart fit is the grow function (maxdepth is not shown; three settings are printed); the plumbing lives in tree.jl

@@ -1,0 +1,10 @@
+file = src/v07_gates.jl
+ticks = 3-3,4-12,13-13,14-14,15-15,16-16
+repl_rows = 16
+shell = 1
+run1 = julia --project=julia/gate -e 'using JuliaFormatter; ok = format(ARGS[1]; overwrite = false); println("format clean: ", ok); exit(ok ? 0 : 1)' julia/BM3
+run2 = julia --project=julia/BM3 -e 'using Pkg; Pkg.test()'
+ready = Testing BM3 tests passed
+plot = none
+est_run_s = 300
+note = shell scene: each runN is typed at a shell prompt, then the recorder types a separate echo "exit=$?"; the commands are the native gates, nothing is wrapped or filtered; the Pkg.test is the full real BM3 suite and does not contain this scene's own run (julia/BM3/gate/v07.jl runs it)

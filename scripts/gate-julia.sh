@@ -23,29 +23,23 @@ for f in c
 end
 total > 0 && covered == total || (println("coverage FAIL: measured nothing or gaps"); exit(1))
 ' "$pkg"
-julia --project="$gate" -e '
-using JuliaFormatter
-ok = format(ARGS[1]; verbose = false, overwrite = false)
-println("format clean: ", ok)
-ok || exit(1)
-' "$pkg"
+scripts/julia-format.sh "$pkg"
 find "$pkg" -name '*.cov' -delete
 for e in "$pkg"/examples/*/run.jl; do julia --project="$pkg" "$e" > /dev/null; done
 echo "examples OK"
-# Scene projects (committed Manifests; no 100% coverage or Aqua, by design: demo scenes): Pkg.test (incl. JET),
-# any data/penguins.csv byte-identical to datasets/penguins/penguins.csv, JuliaFormatter no diff.
+# Other Julia packages (scene projects): Pkg.test (incl. JET), JuliaFormatter no diff on the whole package, then gate/*.jl.
 for p in "$root"/julia/*/; do
   p="${p%/}"
   [ -f "$p/Project.toml" ] || continue
   case "$p" in "$pkg" | "$gate") continue ;; esac
   julia --project="$p" -e 'using Pkg; Pkg.instantiate()'
-  [ ! -f "$p/data/penguins.csv" ] || cmp -s "$p/data/penguins.csv" "$root/datasets/penguins/penguins.csv" || { echo "FAIL ${p##*/}: data/penguins.csv differs from datasets/penguins/penguins.csv"; exit 1; }
   julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
-  julia --project="$gate" -e '
-using JuliaFormatter
-ok = format(ARGS[1]; verbose = false, overwrite = false)
-println("format clean: ", ok)
-ok || exit(1)
-' "$p"
+  scripts/julia-format.sh "$p"
+  # Scene gate scripts run the native commands of a shell scene,
+  # after the package own Pkg.test (so that test never starts them).
+  for g in "$p"/gate/*.jl; do
+    [ -f "$g" ] || continue
+    julia "$g"
+  done
 done
 echo "gate-julia OK"

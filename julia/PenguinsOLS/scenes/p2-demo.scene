@@ -1,0 +1,8 @@
+file = src/fit.jl
+ticks = 1-1,2-2,3-6,7-7,9-16
+repl_rows = 7
+startup = using PenguinsOLS
+run = PenguinsOLS.main()
+ready = golden: true
+plot = plot.png
+est_run_s = 30
