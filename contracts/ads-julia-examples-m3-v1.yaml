@@ -1,0 +1,45 @@
+# ads-julia-examples-m3-v1: Course B (Julia), Module 3 examples (v01..v10)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples for Course B module 3: fixture and golden checks, z-scored features, the Gini cut, the classification tree scored on 85 test rows, the confusion matrix, fixed-start k-means, the gate commands, two mutants, the worked examples and the recap, all checked against the P3 golden of ads-r-p3-v1."
+  references:
+    - "contracts/ads-r-p3-v1.yaml"
+    - "datasets/golden/p3.json"
+    - "julia/BM3/src/BM3.jl"
+    - "julia/BM3/test/runtests.jl"
+    - "scripts/gate-julia.sh"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m3_example_facts:
+    formula: |
+      clean rows = 342, train = 257, test = 85
+      confusion matrix sums to 85 with diagonal 83
+      k-means cluster sizes sum to 342 and the objective equals the golden within 1e-6
+      best_cut on the toy data = 6.5 in both label orders
+    domain: "julia/BM3/data, verbatim copies of the repository penguins, split and centroid fixtures and the P3 golden"
+    codomain: "ten registered examples whose main() prints their stated values"
+    postconditions:
+      - "FIXTURES: the data copies equal the repository files byte for byte and the checksum matches"
+      - "GOLDEN: tree accuracy, confusion matrix and k-means objective agree with p3.json"
+      - "MUTANTS: each mutant of the cut search and the centroid update is caught by a golden check"
+      - "CAN_FAIL: an example that breaks a stated value fails its testset"
+
+proof_obligations:
+  - type: invariant
+    property: "Tree and k-means results equal the P3 golden"
+    formal: "score(fit_tree()) = (83, 85) and lloyd(z, c).objective = golden.objective"
+    applies_to: m3_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-EXAMPLES-M3-001
+    rule: "Example values match the stated ones"
+    prediction: "julia --project=julia/BM3 -e 'using Pkg; Pkg.test()' passes with a testset per example"
+    test: "julia/BM3/test/runtests.jl"
+    mutation: "Let best_cut accept a later equal gain: the tie example reports the wrong cut and its testset fails"
+    discriminates: "An example with a wrong number cannot pass its testset"
+    if_fails: "An example prints a value the course text does not state"
