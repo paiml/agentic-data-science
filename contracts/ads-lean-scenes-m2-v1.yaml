@@ -1,0 +1,95 @@
+# ads-lean-scenes-m2-v1: Course E (Lean 4), Module 2, the ten terminal scenes (verified ordinary least squares)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The ten Module 2 scenes: the closed-form OLS definitions (olsSlope, olsIntercept over the sums sx sy sxx sxy cnt), the kernel-checked normal-equation theorem ols_normal_equations with its lemmas resid_sum and resid_x_sum, the exact penguins fit (slope 1145743050/23059877, intercept -133305260075/23059877), five-fold cross-validated rmse 394.312960 against the golden 394.312960342554, and a guard that turns red on a planted wrong slope."
+  references:
+    - "lean/AgenticDS/AgenticDS/Regression.lean"
+    - "lean/AgenticDS/AgenticDS/Cv.lean"
+    - "lean/AgenticDS/AgenticDS/Scenes/M2.lean"
+    - "lean/AgenticDS/AgenticDSTest/ScenesM2.lean"
+    - "lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean"
+    - "demos/e-m2/scenes.spec"
+    - "lean/AgenticDS/scripts/AxiomsM2.lean"
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "CLASSIFICATION (kind: pattern): theorem statements checked by the Lean kernel, numeric postconditions exact or with stated tolerances"
+
+equations:
+  m2_lean_closed_form_ols:
+    formula: |
+      slope     = (cnt * Sxy - Sx * Sy) / (cnt * Sxx - Sx^2)
+      intercept = (Sy - slope * Sx) / cnt
+      sum_i r_i = 0 and sum_i r_i * x_i = 0   for r_i = y_i - (intercept + slope * x_i),
+                                              when cnt != 0 and cnt * Sxx - Sx^2 != 0
+      penguins: slope = 1145743050/23059877, intercept = -133305260075/23059877
+      cv_rmse(5 folds) = 394.312960 (golden 394.312960342554, tol 1e-6)
+    domain: "datasets/penguins/penguins.csv (342 clean rows) and datasets/fixtures/folds.csv with SHA256SUMS verified"
+    codomain: "exact rationals for slope and intercept; a float only for the final square root of the cv mse"
+    postconditions:
+      - "EXACT: the penguins slope and intercept are the stated fractions, no rounding"
+      - "NORMAL_EQ: ols_normal_equations holds over any field; over the reals ols_residuals_sum_zero_real"
+      - "TOOLS: demos/e-m2/scenes.spec lists the native commands the camera types, each followed by its own echo exit=$?; gate-lean.sh replays them and checks the real output (no script, wrapper, pipe or devnull)"
+      - "AXIOMS: every Module 2 theorem depends only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: the guard olsSlope [(1,2),(2,4),(3,7)] == 5/2 exits 0, the mutant == 2 exits 1"
+      - "SHAPE: each scene file has at most 25 lines of at most 59 columns"
+
+proof_obligations:
+  - type: invariant
+    property: "Module 2 theorems are kernel-checked and axiom-clean (no sorry, no native_decide)"
+    formal: "#print axioms T subset {propext, Classical.choice, Quot.sound} for T in {resid_sum, resid_x_sum, ols_normal_equations, ols_residuals_sum_zero_real, m2v03_zero}"
+    applies_to: m2_lean_closed_form_ols
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-001
+    rule: "The penguins fit is exact: the slope and intercept print as the stated fractions"
+    prediction: "lake env lean --run AgenticDSTest/ScenesM2.lean ../.. prints contract: ads-lean-scenes-m2-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/ScenesM2.lean (checks v06 exact slope, exact intercept, printed fractions)"
+    mutation: "Read NA as 0 in pairsOf (flipperMass): 2 rows at the origin move the slope and the fractions differ"
+    discriminates: "A pipeline with a wrong NA policy cannot print 1145743050/23059877"
+    if_fails: "The video states an exact fraction the code does not compute"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-002
+    rule: "The closed-form fit satisfies both normal equations on the penguins data and on the 3-point data"
+    prediction: "the compile-time guards on resid and residX sums and the runtime v03 check pass"
+    test: "lean/AgenticDS/AgenticDSTest/ScenesM2.lean (resid and residX sums equal 0)"
+    mutation: "Divide by cnt + 1 in olsIntercept: the residual sums are no longer 0"
+    discriminates: "A fit that is not the least-squares line cannot make both sums vanish"
+    if_fails: "The video claims the residuals sum to zero for a line that does not"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-003
+    rule: "Five-fold cross-validation on the fixed folds reproduces the golden rmse"
+    prediction: "cv rmse prints 394.312960 and differs from the golden 394.312960342554 by less than 1e-6"
+    test: "lean/AgenticDS/AgenticDSTest/ScenesM2.lean (v08 checks)"
+    mutation: "Call cvMse with 4 folds instead of 5: rows of fold 5 are never tested and the rmse changes"
+    discriminates: "A different split or fold count cannot print 394.312960"
+    if_fails: "The video compares two numbers that disagree"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-004
+    rule: "A wrong expected value is refused by the guard"
+    prediction: "lake env lean AgenticDS/Scenes/M2V09.lean exits 0 and prints 5 / 2; lake env lean AgenticDSTest/PlantedWrongSlope.lean exits 1"
+    test: "demos/e-m2/scenes.spec v09, replayed by scripts/gate-lean.sh (expects exit=1 then exit=0)"
+    mutation: "Replace #guard by a check that always passes: the mutant 2 also exits 0"
+    discriminates: "A gate that passes a wrong slope cannot give exit code 1"
+    if_fails: "The falsifier of the video no longer falsifies"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-005
+    rule: "Every Module 2 theorem uses only the three standard axioms"
+    prediction: "lake env lean scripts/AxiomsM2.lean prints five depends-on-axioms lines, each within the allowed set"
+    test: "lean/AgenticDS/scripts/AxiomsM2.lean checked by scripts/gate-lean.sh and run natively by demos/e-m2/scenes.spec v07"
+    mutation: "Add a theorem proved with a placeholder to AxiomsM2.lean: its line lists the placeholder axiom"
+    discriminates: "A proof with a placeholder cannot pass the allowed-set filter"
+    if_fails: "A theorem the course calls proved rests on an unproved assumption"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-006
+    rule: "Each scene file shows whole: at most 25 lines of at most 59 columns"
+    prediction: "moduleShape 2 returns no fault and counts ten files"
+    test: "lean/AgenticDS/AgenticDSTest/ScenesM2.lean (shape and registry)"
+    mutation: "Add a 26th line or a 60-column line to Scenes/M2V03.lean"
+    discriminates: "An over-long scene file is reported as a fault"
+    if_fails: "A scene cannot be shown whole on the recording"
+  - id: FALSIFY-ADS-LEAN-SCENES-M2-007
+    rule: "The camera types only native commands, each with its own exit echo"
+    prediction: "scripts/scene-spec.sh replay demos/e-m2/scenes.spec exits 0 and its selftest refuses broken specs"
+    test: "scripts/scene-spec.sh (run by scripts/gate-lean.sh stage 4)"
+    mutation: "Type bash demos/e-m2/x.sh, a pipe or > /dev/null in a spec line: check refuses it; change an expected output line: replay fails"
+    discriminates: "A hidden or wrapped tool, or output the tool no longer prints, cannot merge"
+    if_fails: "A video shows a command the viewer cannot run or output the tool did not print"
