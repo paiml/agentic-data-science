@@ -1,0 +1,8 @@
+file = src/v01_ticket.jl
+ticks = 1-4,6-9,11-11,13-23
+repl_rows = 7
+startup = using BM2
+run = BM2.V01.main()
+ready = species beats flipper: true
+plot = none
+est_run_s = 3

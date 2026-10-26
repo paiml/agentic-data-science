@@ -1,0 +1,50 @@
+# ads-julia-bm2-v08-mutants-v1: Course B (Julia), Module 2 scene v08 (mutation testing the cross-validation)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v08_mutants.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "leak, nobias and fails apply three mutants (a leaking fold, a wrong fold assignment, a dropped intercept) to the P2 cross-validation and check that the two golden cv_rmse values catch every one."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v08_mutants.jl"
+    - "julia/BM2/scenes/v08-mutants.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v08_mutants_caught:
+    formula: |
+      fails(honest cv)                                      = 0  of the 2 golden cv_rmse checks
+      fails(leak), fails(wrong folds), fails(no intercept)  >= 1
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "BASELINE_GREEN: the unmutated cross-validation fails 0 of 2 checks"
+      - "MUTANTS_CAUGHT: each mutant fails at least one golden check"
+      - "VERDICT: the scene ends on caught: true"
+
+proof_obligations:
+  - type: invariant
+    property: "A mutant that survives means a check is too weak"
+    formal: "min(fails(mutants)) >= 1 and fails(honest) == 0"
+    applies_to: b2_v08_mutants_caught
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V08-001
+    rule: "The leaking mutant is caught"
+    prediction: "fails(leak) is 2"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace leak by honest: fails is 0, so the leak-caught test fails"
+    discriminates: "An honest fit passes both checks and so cannot be flagged as a mutant"
+    if_fails: "The leak would go undetected"
+  - id: FALSIFY-ADS-JULIA-BM2-V08-002
+    rule: "The dropped intercept is caught"
+    prediction: "fails(nobias) is 2"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Replace nobias by honest: fails is 0, so the dropped-intercept test fails"
+    discriminates: "An identical fit cannot differ from the golden"
+    if_fails: "The mutant test could not discriminate"

@@ -1,0 +1,9 @@
+file = src/v09_examples.jl
+ticks = 1-8,10-10,12-21,23-25
+repl_rows = 10
+startup = using BM2
+run = BM2.V09.main()
+ready = examples: true
+plot = none
+est_run_s = 3
+note = the two examples are functions of the module, same numbers as the example scripts

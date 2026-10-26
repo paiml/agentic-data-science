@@ -6,7 +6,7 @@ using Test
 
 const CSV_PATH =
     joinpath(@__DIR__, "..", "data", "penguins.csv")
-# datasets/golden/p2.json (ads-julia-p2-v1): closed-form OLS,
+# datasets/golden/p2.json (ads-julia-p2-ols-demo-v1): closed-form OLS,
 # 342 rows
 function read_raw()
     csv = PenguinsOLS.CSV
@@ -60,16 +60,6 @@ end
         @test !isapprox(slope, GOLD_SLOPE; atol = 1e-8)
     end
 
-    @testset "can fail: no intercept breaks the zero-sum residuals" begin
-        nointercept = lm(
-            @formula(
-                body_mass_g ~ 0 + flipper_length_mm
-            ),
-            df,
-        )
-        @test abs(sum(residuals(nointercept))) > 1.0
-    end
-
     @testset "plot is written" begin
         path = joinpath(mktempdir(), "plot.png")
         save_plot(df, model, path)
@@ -96,4 +86,52 @@ end
         @test occursin("rows = 342", text)
         @test occursin("golden: true", text)
     end
+end
+
+@testset "scene manifest" begin
+    root = joinpath(@__DIR__, "..")
+    m = Dict{String,String}()
+    for l in eachline(
+        joinpath(root, "scenes", "v04-normal-eq.scene"),
+    )
+        k, v = split(l, " = "; limit = 2)
+        m[k] = v
+    end
+    src = joinpath(root, m["file"])
+    lines = readlines(src)
+    @test length(lines) <= 25
+    @test all(l -> length(l) <= 56, lines)
+    @test !occursin(Char(92), read(src, String))
+    ticks = map(split(m["ticks"], ",")) do s
+        a, b = parse.(Int, split(s, "-"))
+        return (a, b)
+    end
+    @test 4 <= length(ticks) <= 6
+    @test all(t -> 1 <= t[1] <= t[2], ticks)
+    @test all(
+        i -> ticks[i][2] < ticks[i + 1][1],
+        1:(length(ticks) - 1),
+    )
+    @test ticks[end][2] <= length(lines)
+    for (a, b) in ticks
+        @test !isempty(lines[a])
+        @test !startswith(lines[a], " ")
+        @test !startswith(lines[a], "end")
+        ex = Meta.parseall(join(lines[a:b], "\n"))
+        @test !any(
+            e ->
+                e isa Expr &&
+                e.head in (:error, :incomplete),
+            ex.args,
+        )
+    end
+    # vimrc.demo F2.. jump to the first line of each tick
+    vimrc = read(joinpath(root, "vimrc.demo"), String)
+    keys = [
+        parse(Int, mm[1]) for mm in
+        eachmatch(r"call Tick\((\d+)\)", vimrc)
+    ]
+    @test keys == first.(ticks)
+    # can fail: a drifted vimrc is a different list
+    @test keys != [1, 3, 4, 7, 11, 20, 23, 24]
 end

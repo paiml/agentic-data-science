@@ -1,0 +1,59 @@
+# ads-julia-bm2-v07-gate-v1: Course B (Julia), Module 2 scene v07 (the gate)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v07_gate.jl
+
+metadata:
+  version: "2.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "v07 is a shell scene: the recorder types the two gate commands at a shell prompt, each followed by a separate echo of its exit code. The shown file is data (the GATES list). No Julia wrapper prints exit= or a verdict; the package Pkg.test holds no v07 test, so the native full Pkg.test cannot start itself. julia/BM2/gate/v07.jl runs the same commands after the package Pkg.test."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v07_gate.jl"
+    - "julia/BM2/scenes/v07-gate.scene"
+    - "julia/BM2/gate/v07.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v07_gate_steps:
+    formula: |
+      run1 = julia --project=julia/gate -e '<JuliaFormatter check>' julia/BM2    prints format clean: true, then exit=0
+      run2 = julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'    the full suite, then exit=0
+      each exit= line is a separate echo "exit=$?" typed after its command
+    domain: "the BM2 package tree, typed from the repo root; the manifest keys shell = 1 and run1..runN equal GATES in src/v07_gate.jl"
+    codomain: "the live output of the two tools and two exit= lines"
+    postconditions:
+      - "FORMAT_CLEAN: JuliaFormatter finds no diff over the whole package and prints format clean: true"
+      - "TESTS_PASS: the native Pkg.test prints its own Testing BM2 tests passed"
+      - "EXIT_VISIBLE: each tool is followed by its own separate exit=<code> line"
+      - "FINAL_FRAME: the last repl_rows (16) rows of the Pkg.test run hold Test Summary, the pass line and exit=0"
+
+proof_obligations:
+  - type: invariant
+    property: "A gate step fails the gate when it fails"
+    formal: "the shown exit code is the tool exit code; a nonzero code prints exit=<code> and no pass line"
+    applies_to: b2_v07_gate_steps
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V07-001
+    rule: "A nonzero tool exit is shown as it is"
+    prediction: "gate/v07.jl: the command false typed at a shell ends on exit=1"
+    test: "julia julia/BM2/gate/v07.jl"
+    mutation: "Replace the typed command by false: the final line reads exit=1 and the final-frame check rejects it"
+    discriminates: "A failing tool cannot be shown as a pass"
+    if_fails: "The gate would pass with a failing tool"
+  - id: FALSIFY-ADS-JULIA-BM2-V07-002
+    rule: "Badly formatted code fails the format step"
+    prediction: "gate/v07.jl: run1 on a directory with a badly spaced file prints format clean: false and exit=1"
+    test: "julia julia/BM2/gate/v07.jl"
+    mutation: "Write a source line with odd spacing into a scratch package: format clean: false and exit=1"
+    discriminates: "A clean format check cannot accept a mis-formatted file"
+    if_fails: "The gate would pass unformatted code"
+  - id: FALSIFY-ADS-JULIA-BM2-V07-003
+    rule: "The final frame holds the summary, the pass line and exit=0"
+    prediction: "the last repl_rows (16) rows of the Pkg.test run contain Test Summary, Testing BM2 tests passed, and the last line is exit=0"
+    test: "julia julia/BM2/gate/v07.jl"
+    mutation: "Drop the summary, the pass line or exit=0, or push the summary out of the last repl_rows (16) rows: the frame check rejects it"
+    discriminates: "A truncated or failing run cannot satisfy the final-frame check"
+    if_fails: "The recording could end on a frame that does not show the result"

@@ -1,0 +1,10 @@
+file = src/v07_gate.jl
+ticks = 1-1,2-10,11-11,12-12,13-13,14-15
+repl_rows = 16
+shell = 1
+run1 = julia --project=julia/gate -e 'using JuliaFormatter; ok = format(ARGS[1]; overwrite = false); println("format clean: ", ok); exit(ok ? 0 : 1)' julia/BM2
+run2 = julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'
+ready = Testing BM2 tests passed
+plot = none
+est_run_s = 300
+note = shell scene: each run line is typed at a shell prompt from the repo root, each followed by a separate echo "exit=$?" typed by the recorder. Nothing from Julia prints exit= or a verdict; the package Pkg.test holds no v07 test (julia/BM2/gate/v07.jl runs after it).

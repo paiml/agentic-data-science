@@ -1,0 +1,9 @@
+file = src/v03_red_first.jl
+ticks = 1-5,7-10,12-15,17-25
+repl_rows = 7
+startup = using BM2
+run = BM2.V03.main()
+ready = red, then green: true
+plot = none
+est_run_s = 3
+note = reshaped: the scratch package is a Module(:Scratch) built in process (no Pkg.generate output, no Pkg.test noise); the red is the real UndefVarError, the green the real 2 of 2 checks

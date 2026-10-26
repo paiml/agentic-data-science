@@ -1,0 +1,8 @@
+file = src/v02_design.jl
+ticks = 1-4,6-10,12-12,14-25
+repl_rows = 9
+startup = using BM2
+run = BM2.V02.main()
+ready = design matrices: true
+plot = none
+est_run_s = 3

@@ -1,5 +1,5 @@
 # ads-julia-p2-ols-demo-v1: Course B (Julia), Module 2, Problem P2 demo scene (GLM.jl OLS + CairoMakie plot)
-# Extends ads-julia-p2-v1 (same golden); the scene file is julia/PenguinsOLS/src/fit.jl
+# Same golden as P2 (datasets/golden/p2.json); the scene file is julia/PenguinsOLS/src/fit.jl
 
 metadata:
   version: "1.0.0"
@@ -8,7 +8,6 @@ metadata:
   author: "PAIML Engineering"
   description: "load_penguins, fit_ols and save_plot (CSV.jl, DataFrames.jl, GLM.jl, CairoMakie) reproduce the P2 closed-form OLS on penguins: 342 rows, intercept -5780.83, slope 49.69, residuals summing to zero, and a scatter-plus-fitted-line PNG."
   references:
-    - "contracts/ads-julia-p2-v1.yaml"
     - "datasets/golden/p2.json"
     - "julia/PenguinsOLS/src/fit.jl"
     - "julia/PenguinsOLS/test/runtests.jl"
@@ -45,7 +44,7 @@ falsification_tests:
     rule: "Rows are dropped only on the model columns"
     prediction: "Pkg.test passes with nrow == 342 and the golden coefficients"
     test: "julia --project=julia/PenguinsOLS -e 'using Pkg; Pkg.test()'"
-    mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 342 becomes 333 rows: the nrow(df) == 342 and the golden fit tests fail"
+    mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 333 rows and the row-count and slope tests fail"
     discriminates: "A whole-table drop cannot give 342 rows or the golden slope"
     if_fails: "The scene would print a fit on the wrong rows"
   - id: FALSIFY-ADS-JULIA-P2-DEMO-002

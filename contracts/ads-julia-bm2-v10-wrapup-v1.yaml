@@ -1,0 +1,49 @@
+# ads-julia-bm2-v10-wrapup-v1: Course B (Julia), Module 2 scene v10 (wrap-up)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v10_wrapup.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "quiet, keep and good run the two P2 examples silently and keep only their contract lines, ending on wrap-up: true."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v10_wrapup.jl"
+    - "julia/BM2/scenes/v10-wrapup.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v10_wrapup_contract_lines:
+    formula: |
+      keep(quiet(ols_example)) ++ keep(quiet(cv_example)) = 2 lines, both ending OK
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "SILENT: the examples print nothing to the terminal while they run"
+      - "TWO_CONTRACT_LINES: exactly two contract lines are kept, both OK"
+      - "VERDICT: the scene ends on wrap-up: true"
+
+proof_obligations:
+  - type: invariant
+    property: "Exactly two OK contract lines"
+    formal: "good(lines) holds for the two kept lines"
+    applies_to: b2_v10_wrapup_contract_lines
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V10-001
+    rule: "Exactly two lines are kept"
+    prediction: "good accepts the two lines"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Give good a third line: good returns false and the count test fails if it accepts"
+    discriminates: "A wrong line count cannot pass good"
+    if_fails: "The wrap-up would hide a missing example"
+  - id: FALSIFY-ADS-JULIA-BM2-V10-002
+    rule: "A failing line is rejected"
+    prediction: "good rejects a line ending in FAIL"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Feed good a line ending in FAIL: it returns false, so a test that expects true fails"
+    discriminates: "An OK suffix check rejects FAIL"
+    if_fails: "The wrap-up would pass a failing example"

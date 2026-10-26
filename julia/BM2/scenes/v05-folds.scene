@@ -1,0 +1,8 @@
+file = src/v05_folds.jl
+ticks = 1-1,2-2,4-12,14-25
+repl_rows = 7
+startup = using BM2
+run = BM2.V05.main()
+ready = golden: true
+plot = none
+est_run_s = 3

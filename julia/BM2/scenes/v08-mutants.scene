@@ -1,0 +1,9 @@
+file = src/v08_mutants.jl
+ticks = 1-1,2-2,4-10,12-22
+repl_rows = 7
+startup = using BM2
+run = BM2.V08.main()
+ready = caught: true
+plot = none
+est_run_s = 3
+note = reshaped: the three mutants are applied in process to the cross-validation (training rows, fold ids, intercept column) and judged by the two golden cv_rmse checks, instead of editing src/P2.jl and rerunning the whole suite

@@ -1,0 +1,52 @@
+# ads-julia-bm2-v05-folds-v1: Course B (Julia), Module 2 scene v05 (fixed-fold cross-validation)
+# Extends ads-julia-p2-ols-demo-v1 (same golden); the scene file is julia/BM2/src/v05_folds.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "fold_sizes (helpers), insample and cv_rmse compute the P2 out-of-fold RMSE with fold ids read from datasets/fixtures/folds.csv (never an RNG): 394.313 flipper only and 376.638 with species."
+  references:
+    - "contracts/ads-julia-p2-ols-demo-v1.yaml"
+    - "datasets/golden/p2.json"
+    - "julia/BM2/src/v05_folds.jl"
+    - "julia/BM2/scenes/v05-folds.scene"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  b2_v05_fixed_fold_cv:
+    formula: |
+      fold_sizes(read_folds())      = [69, 69, 68, 68, 68]
+      cv_rmse(flipper)              = 394.312960342554   within 1e-6
+      cv_rmse(species)              = 376.638259793938   within 1e-6
+      insample_rmse(flipper)        = 393.124 < cv_rmse(flipper)
+    domain: "data/penguins.csv (344 rows, NA as the string NA), data/folds.csv and data/p2.json in julia/BM2"
+    codomain: "the printed scene output and its verdict line"
+    postconditions:
+      - "FIXED_FOLDS: fold ids come from the fixture file, sizes 69, 69, 68, 68, 68"
+      - "NO_LEAKAGE: each fold is predicted from a fit on the other four"
+      - "GOLDEN_CV: both cv_rmse values match the golden within 1e-6"
+
+proof_obligations:
+  - type: invariant
+    property: "Out-of-fold error is above the in-sample error"
+    formal: "insample_rmse(X1, y) < cv_rmse(X1, y, folds)"
+    applies_to: b2_v05_fixed_fold_cv
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM2-V05-001
+    rule: "Fixed folds reproduce the golden cv_rmse"
+    prediction: "the cv test passes within 1e-6 and the verdict prints true"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Fit on all rows inside the loop (leak): cv_rmse drops to the in-sample value and the golden test fails"
+    discriminates: "A leaking loop cannot reproduce the out-of-fold golden"
+    if_fails: "The scene would print an optimistic error"
+  - id: FALSIFY-ADS-JULIA-BM2-V05-002
+    rule: "Folds are read from a file"
+    prediction: "fold_sizes equals [69, 69, 68, 68, 68]"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Use mod.(folds, 3) .+ 1 as the folds: the sizes and the cv_rmse change and both tests fail"
+    discriminates: "Different fold ids cannot give the same sizes or the golden"
+    if_fails: "The cross-validation would not be reproducible"
