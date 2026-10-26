@@ -1,0 +1,9 @@
+file = src/v07_gates.jl
+ticks = 1-1,2-11,12-20,21-27
+repl_rows = 7
+startup = using BM4
+run = BM4.V07.main()
+ready = contract: b-m4 datasets and shapes green OK
+plot = none
+est_run_s = 10
+note = a dataset checksum and license check plus an in-Julia shape check replace Jena SHACL and the 7-minute gate-julia; the long gate run is a held frame

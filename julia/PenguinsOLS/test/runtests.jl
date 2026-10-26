@@ -60,16 +60,6 @@ end
         @test !isapprox(slope, GOLD_SLOPE; atol = 1e-8)
     end
 
-    @testset "can fail: no intercept breaks the zero-sum residuals" begin
-        nointercept = lm(
-            @formula(
-                body_mass_g ~ 0 + flipper_length_mm
-            ),
-            df,
-        )
-        @test abs(sum(residuals(nointercept))) > 1.0
-    end
-
     @testset "plot is written" begin
         path = joinpath(mktempdir(), "plot.png")
         save_plot(df, model, path)

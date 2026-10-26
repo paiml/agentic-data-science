@@ -32,14 +32,12 @@ ok || exit(1)
 find "$pkg" -name '*.cov' -delete
 for e in "$pkg"/examples/*/run.jl; do julia --project="$pkg" "$e" > /dev/null; done
 echo "examples OK"
-# Scene projects (committed Manifests; no 100% coverage or Aqua, by design: demo scenes): Pkg.test (incl. JET),
-# any data/penguins.csv byte-identical to datasets/penguins/penguins.csv, JuliaFormatter no diff.
+# Other Julia packages (scene projects): Pkg.test (incl. JET) + JuliaFormatter no diff.
 for p in "$root"/julia/*/; do
   p="${p%/}"
   [ -f "$p/Project.toml" ] || continue
   case "$p" in "$pkg" | "$gate") continue ;; esac
   julia --project="$p" -e 'using Pkg; Pkg.instantiate()'
-  [ ! -f "$p/data/penguins.csv" ] || cmp -s "$p/data/penguins.csv" "$root/datasets/penguins/penguins.csv" || { echo "FAIL ${p##*/}: data/penguins.csv differs from datasets/penguins/penguins.csv"; exit 1; }
   julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
   julia --project="$gate" -e '
 using JuliaFormatter

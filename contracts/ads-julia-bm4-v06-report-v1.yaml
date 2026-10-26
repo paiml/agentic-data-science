@@ -1,0 +1,40 @@
+# ads-julia-bm4-v06-report-v1: Course B (Julia), Module 4, scene v06 (report_ttl matches the R artifact)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v06_report.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "report_ttl writes the Turtle artifact (schema version, rmse to 10 places, rows); it equals datasets/golden/p4-artifact.ttl except the generatedBy line."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v06_report.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v06_report_holds:
+    formula: |
+      report_ttl(res) = p4-artifact.ttl without generatedBy
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V06.main() and its contract verdict"
+    postconditions:
+      - "the artifact equals the R artifact apart from generatedBy"
+      - "CAN_FAIL: a changed rmse makes same_ttl false"
+
+proof_obligations:
+  - type: invariant
+    property: "the artifact equals the R artifact apart from generatedBy"
+    formal: "report_ttl(res) = p4-artifact.ttl without generatedBy"
+    applies_to: bm4_v06_report_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V06-001
+    rule: "the artifact equals the R artifact apart from generatedBy"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a changed rmse makes same_ttl false"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

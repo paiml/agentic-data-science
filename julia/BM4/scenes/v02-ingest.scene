@@ -1,0 +1,8 @@
+file = src/v02_ingest.jl
+ticks = 1-1,2-2,3-6,7-14,15-23
+repl_rows = 9
+startup = using BM4
+run = BM4.V02.main()
+ready = contract: b-m4 validate_wine refuses 3 bad tables OK
+plot = none
+est_run_s = 10

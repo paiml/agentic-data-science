@@ -1,0 +1,8 @@
+file = src/v08_bench.jl
+ticks = 1-4,5-11,12-15,16-23
+repl_rows = 13
+startup = using BM4
+run = BM4.V08.main()
+ready = contract: b-m4 engines agree first OK
+plot = none
+est_run_s = 30

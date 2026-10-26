@@ -1,0 +1,40 @@
+# ads-julia-bm4-v01-ticket-v1: Course B (Julia), Module 4, scene v01 (ticket and data oracle)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v01_ticket.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "BM4.V01 verifies the SHA256SUMS of both wine files, shows the P4 contract header and prints rows 6497 (red 1599, white 4898) against the golden split 5198 plus 1299."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v01_ticket.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v01_ticket_holds:
+    formula: |
+      rows = 6497; train + test = 6497; sha256 matches SHA256SUMS
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V01.main() and its contract verdict"
+    postconditions:
+      - "checksums match and the row counts equal the golden"
+      - "CAN_FAIL: a wrong checksum line makes verify return false"
+
+proof_obligations:
+  - type: invariant
+    property: "checksums match and the row counts equal the golden"
+    formal: "rows = 6497; train + test = 6497; sha256 matches SHA256SUMS"
+    applies_to: bm4_v01_ticket_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V01-001
+    rule: "checksums match and the row counts equal the golden"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a wrong checksum line makes verify return false"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

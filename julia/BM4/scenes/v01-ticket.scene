@@ -1,0 +1,9 @@
+file = src/v01_ticket.jl
+ticks = 1-7,8-8,9-13,14-22
+repl_rows = 10
+startup = using BM4
+run = BM4.V01.main()
+ready = contract: b-m4 ticket oracle fits the data OK
+plot = none
+est_run_s = 10
+note = the contract header line is cut to 57 columns on screen

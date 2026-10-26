@@ -1,0 +1,40 @@
+# ads-julia-bm4-v03-split-v1: Course B (Julia), Module 4, scene v03 (every fifth row is test)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v03_split.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "split_wine takes every fifth row as test (5198 train, 1299 test); the naive tail split fails the same check, so the check can fail."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v03_split.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v03_split_holds:
+    formula: |
+      test = rows 5,10,15,...; train + test = 6497
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V03.main() and its contract verdict"
+    postconditions:
+      - "the fifth-row split passes want and the tail split does not"
+      - "CAN_FAIL: the tail split (last fifth) fails want"
+
+proof_obligations:
+  - type: invariant
+    property: "the fifth-row split passes want and the tail split does not"
+    formal: "test = rows 5,10,15,...; train + test = 6497"
+    applies_to: bm4_v03_split_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V03-001
+    rule: "the fifth-row split passes want and the tail split does not"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "the tail split (last fifth) fails want"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

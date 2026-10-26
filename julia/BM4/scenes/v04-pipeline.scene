@@ -1,0 +1,8 @@
+file = src/v04_pipeline.jl
+ticks = 1-5,6-10,11-19,20-27
+repl_rows = 7
+startup = using BM4
+run = BM4.V04.main()
+ready = contract: b-m4 pipeline_wine matches golden OK
+plot = none
+est_run_s = 10

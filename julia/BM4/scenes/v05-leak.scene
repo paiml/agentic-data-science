@@ -1,0 +1,9 @@
+file = src/v05_leak.jl
+ticks = 1-7,8-8,9-16,17-23
+repl_rows = 12
+startup = using BM4
+run = BM4.V05.main()
+ready = contract: b-m4 the leaky fit is caught OK
+plot = none
+est_run_s = 20
+note = the leaky mutant runs in-process against golden checks (rmse, r2, leak, report_ttl) instead of the 2-minute suite

@@ -1,0 +1,40 @@
+# ads-julia-bm4-v09-examples-v1: Course B (Julia), Module 4, scene v09 (examples keep their contracts)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v09_examples.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "pipeline_example and bench_example run as doc examples with assertions and print the contract line; the scene shows the artifact lines."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v09_examples.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v09_examples_holds:
+    formula: |
+      last line of each example = the contract line
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V09.main() and its contract verdict"
+    postconditions:
+      - "both examples end with the contract line"
+      - "CAN_FAIL: a line that does not mention the artifact is not shown"
+
+proof_obligations:
+  - type: invariant
+    property: "both examples end with the contract line"
+    formal: "last line of each example = the contract line"
+    applies_to: bm4_v09_examples_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V09-001
+    rule: "both examples end with the contract line"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a line that does not mention the artifact is not shown"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"

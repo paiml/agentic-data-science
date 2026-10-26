@@ -1,0 +1,8 @@
+file = src/v10_wrapup.jl
+ticks = 1-6,7-7,8-8,9-9,10-10,11-25
+repl_rows = 10
+startup = using BM4
+run = BM4.V10.main()
+ready = contract: b-m4 all Gate Report claims hold OK
+plot = none
+est_run_s = 20

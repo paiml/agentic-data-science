@@ -1,0 +1,8 @@
+file = src/v06_report.jl
+ticks = 1-1,2-14,15-16,17-17,18-24
+repl_rows = 12
+startup = using BM4
+run = BM4.V06.main()
+ready = contract: b-m4 report_ttl matches the R artifact OK
+plot = none
+est_run_s = 10

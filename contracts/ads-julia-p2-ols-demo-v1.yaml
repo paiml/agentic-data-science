@@ -45,7 +45,7 @@ falsification_tests:
     rule: "Rows are dropped only on the model columns"
     prediction: "Pkg.test passes with nrow == 342 and the golden coefficients"
     test: "julia --project=julia/PenguinsOLS -e 'using Pkg; Pkg.test()'"
-    mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 342 becomes 333 rows: the nrow(df) == 342 and the golden fit tests fail"
+    mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 333 rows and the row-count and slope tests fail"
     discriminates: "A whole-table drop cannot give 342 rows or the golden slope"
     if_fails: "The scene would print a fit on the wrong rows"
   - id: FALSIFY-ADS-JULIA-P2-DEMO-002

@@ -1,0 +1,8 @@
+file = src/v03_split.jl
+ticks = 1-5,6-9,10-12,13-25
+repl_rows = 7
+startup = using BM4
+run = BM4.V03.main()
+ready = contract: b-m4 every fifth row is test OK
+plot = none
+est_run_s = 10

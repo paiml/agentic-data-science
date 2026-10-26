@@ -1,0 +1,40 @@
+# ads-julia-bm4-v07-gates-v1: Course B (Julia), Module 4, scene v07 (datasets and shapes green)
+# Extends ads-julia-p4-v1 (same golden); the scene file is julia/BM4/src/v07_gates.jl
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Dataset checksums and licenses are checked, and the artifact has every property the SHACL shape names (reshaped from the Jena run and the 7-minute gate)."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "julia/BM4/src/v07_gates.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  bm4_v07_gates_holds:
+    formula: |
+      sha256 ok for penguins and wine-quality; every sh:path in the shape is in the artifact
+    domain: "datasets/wine-quality red and white CSV files (6497 rows)"
+    codomain: "the printed lines of BM4.V07.main() and its contract verdict"
+    postconditions:
+      - "checksums and shape properties hold"
+      - "CAN_FAIL: a wrong checksum or the shape file itself fails the check"
+
+proof_obligations:
+  - type: invariant
+    property: "checksums and shape properties hold"
+    formal: "sha256 ok for penguins and wine-quality; every sh:path in the shape is in the artifact"
+    applies_to: bm4_v07_gates_holds
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-BM4-V07-001
+    rule: "checksums and shape properties hold"
+    prediction: "Pkg.test passes and the scene prints its verdict line"
+    test: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()'"
+    mutation: "a wrong checksum or the shape file itself fails the check"
+    discriminates: "A scene that ignores the rule cannot pass this testset"
+    if_fails: "The video would show a verdict the data does not support"
