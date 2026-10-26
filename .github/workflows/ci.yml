@@ -7,6 +7,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: make gate-datasets
+      - name: vcheck unit tests and proofs (ordinary tests, not a new gate; needs ffmpeg, ImageMagick, gcc)
+        run: for t in ffmpeg ffprobe convert identify gcc; do command -v "$t" >/dev/null || { echo "missing $t"; exit 1; }; done; make test-video
   shacl:
     runs-on: [self-hosted, clean-room, X64, intel]
     steps:

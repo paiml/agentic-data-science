@@ -1,5 +1,5 @@
 SHELL := bash
-.PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
+.PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat test-video lab-video
 
 gate: gate-datasets gate-shacl gate-r gate-julia gate-lean gate-pmat
 
@@ -24,3 +24,11 @@ gate-julia:
 
 gate-lean:
 	@scripts/gate-lean.sh
+
+# vcheck proofs: every must-PASS / must-FAIL take of the recording check (scripts/video/README.md). Ordinary tests on synthetic takes (PR job). Needs ffmpeg, ImageMagick, gcc.
+test-video:
+	@scripts/video/tests/run.sh
+
+# Nightly: vcheck --gate over real takes. Nightly only (.github/workflows/video-lab.yml); never in a PR check.
+lab-video:
+	@scripts/video/lab.sh $(TAKES)

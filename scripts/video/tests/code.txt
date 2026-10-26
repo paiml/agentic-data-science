@@ -1,0 +1,23 @@
+def parseRat (s : String) : Option ℚ :=
+  match s.splitOn "." with
+  | [i] => i.toNat?.map (fun n => (n : ℚ))
+    match i.toNat?, f.toNat? with
+    | some a, some b =>
+      some ((a : ℚ) + (b : ℚ) / (10 ^ f.length : ℕ))
+datasets have none). -/
+def parseCsv (txt : String) : List (List String) :=
+already parsed; `none` marks NA. -/
+structure RawRow where
+  measures : List (Option ℚ)
+flipper length, body mass). -/
+def toRawRow (fields : List String) : Option RawRow :=
+  | sp :: _ :: a :: b :: c :: d :: _ =>
+    some ⟨sp, [a, b, c, d].map
+      (fun s => if s = "NA" then none else parseRat s)⟩
+Fit record, residuals, one sum lemma, and the CSV / table / plot /
+color helpers the scene file uses. -/
+def cov (ps : List (ℚ × ℚ)) : ℚ :=
+  (ps.map fun p => (p.1 - mean (ps.map (·.1))) *
+    (p.2 - mean (ps.map (·.2)))).sum / ps.length
+def residuals (f : Fit) (ps : List (ℚ × ℚ)) : List ℚ :=
+  ps.map fun p => p.2 - (f.intercept + f.slope * p.1)

@@ -1,0 +1,63 @@
+# Nightly: vcheck --gate on real takes (scripts/video/lab.sh). Nightly on a self-hosted runner; never in a PR check.
+# No continue-on-error, no third state: the video job is green or red. Any non-green night (failure, cancelled, timed_out, startup) is red or
+# unmeasured: the report job opens or updates ONE ticket (label video-lab, assignee = the owner) and stays silent otherwise. After 7 consecutive
+# non-green nights the lane disables itself until its owner re-enables it. Owner = repo variable VIDEO_LAB_OWNER, else the last committer of scripts/video.
+# Takes = repo variable VIDEO_TAKES (a directory on the runner holding *.mp4 + *.mp4.layout). Unset or empty = no takes = not_measured = red.
+name: video-lab
+on: { schedule: [{ cron: "17 3 * * *" }], workflow_dispatch: {} }
+permissions: { contents: read, issues: write, actions: write }
+concurrency: { group: video-lab, cancel-in-progress: false }
+jobs:
+  video:
+    timeout-minutes: 30
+    runs-on: [self-hosted, clean-room, X64, intel]
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Tools for the recording check (not installed here, so fail loudly)"
+        run: |
+          for t in ffmpeg ffprobe convert identify gcc; do command -v "$t" >/dev/null || { echo "missing $t"; exit 1; }; done
+      - name: "vcheck --gate over the real takes (lab.sh; the synthetic proofs run in the PR job, not here)"
+        run: nice -n 10 scripts/video/lab.sh "${{ vars.VIDEO_TAKES }}" 2>&1 | tee lab.log; test "${PIPESTATUS[0]}" = 0
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with: { name: lab-log, path: lab.log, if-no-files-found: ignore }
+  report:
+    needs: video
+    if: always() && needs.video.result != 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env: { GH_TOKEN: "${{ github.token }}", GH_REPO: "${{ github.repository }}" }
+    steps:
+      - name: "Open or update the one ticket"
+        run: |
+          gh run download "$GITHUB_RUN_ID" -n lab-log 2>/dev/null || true   # absent when the job died before lab.sh wrote a log; the ticket then says so
+          gh label create video-lab --color d93f0b --description "video-lab LAB red (one ticket, one owner)" 2>/dev/null || true
+          owner="${{ vars.VIDEO_LAB_OWNER }}"
+          [ -n "$owner" ] || owner=$(gh api "repos/$GH_REPO/commits?path=scripts/video&per_page=1" --jq '.[0].author.login // empty' 2>/dev/null || true)
+          run="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          log=$(tail -n 40 lab.log 2>/dev/null || true); [ -n "$log" ] || log="(no lab.log: the job ended as '${{ needs.video.result }}' before lab.sh wrote one; not_measured)"
+          body="video-lab ${{ needs.video.result }} on ${GITHUB_SHA::8}, run $run"$'\n\n'"$log"
+          n=$(gh issue list --label video-lab --state open --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then
+            gh issue comment "$n" --body "$body"
+            [ -z "$owner" ] || gh issue edit "$n" --add-assignee "$owner" || echo "owner $owner is not assignable; ticket $n stays as is"   # one ticket, one owner, even if the first run found none
+          else
+            title="video-lab red or not measured (owner: ${owner:-unassigned})"
+            # a non-assignable owner must not abort the run: open the ticket unassigned rather than not at all
+            { [ -n "$owner" ] && gh issue create --label video-lab --title "$title" --assignee "$owner" --body "$body"; } || gh issue create --label video-lab --title "$title" --body "$body"
+          fi
+      - name: "Seven non-green nights in a row (scheduled runs): stop the lane until its owner brings it back"
+        # always(): this runs even when the ticket step above failed (a missing ticket must never keep a dead lane running)
+        if: always() && github.event_name == 'schedule'
+        run: |
+          # Count the 6 newest COMPLETED scheduled runs, only those after the newest "video-lab:disabled" marker comment on ANY video-lab ticket, open or closed (so re-enabling starts
+          # a fresh count: old reds do not disable the lane again after one more red night). This run is in progress (conclusion ""), and the report job
+          # only runs when this night is non-green, so 6 completed non-green runs + this one = 7 nights.
+          n=$(gh issue list --label video-lab --state open --json number --jq '.[0].number // empty')
+          since=$(gh issue list --label video-lab --state all --limit 50 --json comments --jq '[.[].comments[]|select(.body|startswith("video-lab:disabled"))|.createdAt]|max // "1970-01-01T00:00:00Z"')
+          export since
+          r=$(gh run list --workflow video-lab.yml --event schedule --status completed --limit 6 --json conclusion,createdAt --jq '[.[]|select(.conclusion!="success" and .createdAt>env.since)]|length')
+          if [ "${r:-0}" -ge 6 ]; then
+            [ -z "$n" ] || gh issue comment "$n" --body "video-lab:disabled $(date -u +%FT%TZ): 7 non-green nights in a row. Re-enable with: gh workflow enable video-lab.yml"
+            gh workflow disable video-lab.yml; echo "disabled after 7 non-green nights"
+          fi
