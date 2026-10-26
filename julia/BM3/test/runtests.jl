@@ -69,6 +69,7 @@ function example_gate(id, mod, modname; tool = false)
         shown = split(chomp(out), "\n")
         @test err == ""
         @test !isempty(shown[end])
+        @test endswith(shown[end], ": true")
         @test !occursin("Warning", out)
     end
     return nothing

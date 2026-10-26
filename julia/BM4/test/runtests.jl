@@ -74,6 +74,8 @@ end
     @testset "run output" begin
         out = output(MAINS[i])
         @test !isempty(out)
+        @test startswith(last(out), "contract: ")
+        @test endswith(last(out), " OK")
         @test all(l -> length(l) <= 60, out)
         @test !any(contains("Warning"), out)
     end
