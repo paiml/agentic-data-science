@@ -3,14 +3,16 @@ on: { pull_request: {}, merge_group: {}, push: { branches: [main] } }
 concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
 jobs:
   datasets:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: make gate-datasets
   shacl:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
       - name: Install Apache Jena (pinned, sha512-verified)
         run: |
           v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
@@ -21,7 +23,24 @@ jobs:
       - run: make gate-shacl
   julia:
     timeout-minutes: 45
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with: { version: "1.12.1" }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.julia
+          key: julia-${{ runner.os }}-1.12.1-${{ hashFiles('julia/**/Manifest.toml') }}
+      - name: Install the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
+      - name: Test the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
+      - name: Run the examples
+        run: for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
+  julia-quality:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
@@ -31,13 +50,44 @@ jobs:
           echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
-          echo "JULIA_DEPOT_PATH=$RUNNER_TEMP/depot" >> "$GITHUB_ENV"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.julia
+          key: julia-quality-${{ runner.os }}-1.12.1-${{ hashFiles('julia/**/Manifest.toml') }}
       - run: make gate-julia
   r:
     timeout-minutes: 45
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: System libraries (Ubuntu)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libblas3 liblapack3 gfortran
+      - uses: r-lib/actions/setup-r@v2
+        with: { r-version: "4.5.1", use-public-rspm: false }
+      - name: Pin CRAN to the 2026-10-20 snapshot
+        run: |
+          echo "options(repos = c(CRAN = \"https://packagemanager.posit.co/cran/__linux__/noble/2026-10-20\"))" | sudo tee -a "$(R RHOME)/etc/Rprofile.site"
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: r/agenticds
+          cache-version: 1
+      - name: Install the package
+        run: R CMD INSTALL r/agenticds
+      - name: Test the package
+        run: Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", package = "agenticds", load_package = "installed")'
+        env: { ADS_ROOT: "${{ github.workspace }}" }
+      - name: Run the examples
+        run: for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
+  r-quality:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries for the R build (Posit ubuntu-2404 tarball)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 zlib1g
       - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
         run: |
           h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
@@ -46,23 +96,35 @@ jobs:
             echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
       - name: Install R 4.5.1 (pinned, sha256-verified, into RUNNER_TEMP)
         run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.5.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/rlib
+          key: rlib-${{ runner.os }}-4.5.1-${{ hashFiles('scripts/r-pins.txt', 'scripts/r-deps.sh') }}
       - name: Install pinned R tools (styler, lintr, covr; CRAN snapshot 2026-10-20)
         run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
       - run: make gate-r
   lean:
-    runs-on: [self-hosted, clean-room, X64, intel]
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Mathlib oleans (download into the workspace, nothing installed on the host)
+      - name: Install elan (pinned, sha256-verified)
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan/toolchains
+            ~/.cache/mathlib
+          key: lean-${{ runner.os }}-${{ hashFiles('lean/AgenticDS/lean-toolchain', 'lean/AgenticDS/lake-manifest.json') }}
+      - name: Mathlib oleans (download into the workspace)
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get
       - run: make gate-lean
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, r, julia, lean]
-    runs-on: [self-hosted, clean-room, X64, intel]
+    needs: [datasets, shacl, r, r-quality, julia, julia-quality, lean]
+    runs-on: ubuntu-24.04
     steps:
       - run: |
           if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}; then exit 1; fi
