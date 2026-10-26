@@ -9,7 +9,7 @@ const val P1_TOL = 1e-6
 
 /** Committed R golden for P1, found beside the dataset. */
 val GOLDEN_P1: File =
-    File(PENGUINS).parentFile.parentFile
+    File(PENGUINS).absoluteFile.parentFile.parentFile
         .resolve("golden/p1.json")
 
 private val NUMBER = Regex("""^\s*"(\w+)":\s*(-?[0-9.eE+-]+),?$""")

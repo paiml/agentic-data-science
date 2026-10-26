@@ -86,7 +86,7 @@ kover {
 }
 
 // Example entry points:
-// ./gradlew :ads-kotlin:runIngest --args=<csv>
+// ./gradlew :ads-kotlin:runIngest --args=<csv relative to the repo root>
 listOf(
     "Ingest" to "IngestMain",
     "Profile" to "ProfileMain",
@@ -95,6 +95,7 @@ listOf(
     tasks.register<JavaExec>("run$name") {
         classpath = sourceSets["main"].runtimeClasspath
         mainClass = "com.paiml.ads.$cls"
+        workingDir = rootDir.parentFile
     }
 }
 
