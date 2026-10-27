@@ -1,5 +1,5 @@
-# ads-julia-p2-ols-demo-v1: Course B (Julia), Module 2, Problem P2 demo scene (GLM.jl OLS + CairoMakie plot)
-# Extends ads-julia-p2-v1 (same golden); the scene file is julia/PenguinsOLS/src/fit.jl
+# ads-julia-p2-ols-demo-v1: Course B (Julia), Module 2, Problem P2 demo (GLM.jl OLS + CairoMakie plot)
+# Extends ads-julia-p2-v1 (same golden); the example file is julia/PenguinsOLS/src/fit.jl
 
 metadata:
   version: "1.0.0"
@@ -47,7 +47,7 @@ falsification_tests:
     test: "julia --project=julia/PenguinsOLS -e 'using Pkg; Pkg.test()'"
     mutation: "Replace dropmissing(df, [:flipper_length_mm, :body_mass_g]) with dropmissing(df): 342 becomes 333 rows: the nrow(df) == 342 and the golden fit tests fail"
     discriminates: "A whole-table drop cannot give 342 rows or the golden slope"
-    if_fails: "The scene would print a fit on the wrong rows"
+    if_fails: "The example would print a fit on the wrong rows"
   - id: FALSIFY-ADS-JULIA-P2-DEMO-002
     rule: "Residuals of the intercept model sum to zero"
     prediction: "the residual-sum test passes within 1e-6"
