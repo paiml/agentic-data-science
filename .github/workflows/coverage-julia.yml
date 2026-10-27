@@ -1,0 +1,33 @@
+name: coverage-julia
+# Coverage receipt for the Julia package: Coverage.jl line coverage must be 100%.
+# Runs on demand, from a release workflow (workflow_call), and on changes to this file.
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+  pull_request:
+    paths: [".github/workflows/coverage-julia.yml"]
+concurrency: { group: "coverage-julia-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  coverage-julia:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: |
+          h=7d2add9ee74ee2f12b5c268bc194794cc52ea440f8687fbab29db6afefbf69b7
+          curl -fsSL -o "$RUNNER_TEMP/julia.tgz" "https://julialang-s3.julialang.org/bin/linux/x64/1.12/julia-1.12.1-linux-x86_64.tar.gz"
+          echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/julia-1.12.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.julia
+          key: julia-coverage-${{ runner.os }}-1.12.1-${{ hashFiles('julia/**/Manifest.toml') }}
+      - name: Measure coverage (fails unless Coverage.jl lines are all covered)
+        run: set -o pipefail; make gate-julia 2>&1 | tee "$RUNNER_TEMP/coverage-julia.log"
+      - name: Write the coverage receipt
+        run: |
+          { echo "language: Julia"; echo "tool: Coverage.jl"; echo "commit: $GITHUB_SHA"; grep -m1 '^coverage: ' "$RUNNER_TEMP/coverage-julia.log"; } | tee "$RUNNER_TEMP/coverage-julia.txt" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with: { name: coverage-julia, path: "${{ runner.temp }}/coverage-julia.txt" }

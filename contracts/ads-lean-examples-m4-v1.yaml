@@ -1,0 +1,83 @@
+# ads-lean-examples-m4-v1: Course E (Lean 4), Module 4 examples (the wine pipeline, ten examples)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples (M4V01..M4V10) for Module 4. They read AgenticDS/Pipeline.lean: WineRaw and ValidRow, validate and clean with four theorems, the every-fifth-row split with split_partition (6497 = 5198 + 1299), a leakage mutant that breaks the split statement, exact gaussSolve (4/5 and 7/5), the P4 golden test (tolerance 1e-6 on rmse and r2, 1e-9 on colour means) and the gate recap (every listed theorem axiom-checked; the gate counts the #print axioms lines itself)."
+  references:
+    - "lean/AgenticDS/AgenticDS/Pipeline.lean"
+    - "lean/AgenticDS/AgenticDS/P4.lean"
+    - "lean/AgenticDS/AgenticDS/Examples/M4.lean"
+    - "lean/AgenticDS/AgenticDSTest/ExamplesM4.lean"
+    - "lean/AgenticDS/AgenticDSTest/P4.lean"
+    - "lean/AgenticDS/scripts/AxiomsM4.lean"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern): theorems checked by the Lean kernel, numeric postconditions with tolerances"
+
+equations:
+  m4_examples_pipeline:
+    formula: |
+      clean rs = rs.filterMap validate           v in clean rs <-> exists r in rs, validate r = some v
+      |trainRows l| + |testRows l| = |l|         6497 = 5198 + 1299 (every fifth row is test)
+      gaussSolve [[2,1],[1,3]] [3,5] = some [4/5, 7/5]
+      |sqrt(mse) - rmse| <= 1e-6, |r2 - golden| <= 1e-6, |colour mean - golden| <= 1e-9
+    domain: "datasets/wine-quality (red and white) and datasets/golden/p4.json"
+    codomain: "example output text, kernel-checked theorems, the line contract: ads-lean-examples-m4-v1 OK"
+    postconditions:
+      - "REGISTRY: examplesM4 lists v01..v10 and one Examples/M4Vnn.lean file exists per id"
+      - "EXACT: the 2x2 solve prints 4/5 and 7/5, never a float"
+      - "SPLIT: 6497 clean rows give 5198 train and 1299 test rows"
+      - "AXIOMS: every example and pipeline theorem depends only on propext, Classical.choice, Quot.sound"
+      - "CAN_FAIL: the leaking trainRows makes split_partition fail to elaborate"
+
+proof_obligations:
+  - type: invariant
+    property: "Example theorems are kernel-checked and axiom-clean (no sorry, no native_decide)"
+    formal: "#print axioms t subset {propext, Classical.choice, Quot.sound} for t in scripts/AxiomsM4.lean"
+    applies_to: m4_examples_pipeline
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-001
+    rule: "The example registry matches the example files"
+    prediction: "lake env lean --run AgenticDSTest/ExamplesM4.lean prints contract: ads-lean-examples-m4-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM4.lean"
+    mutation: "Add an M4V11.lean file without registering it: the registry check prints FAIL"
+    discriminates: "An unregistered example file cannot pass the registry test"
+    if_fails: "An example file exists that nothing runs or checks"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-002
+    rule: "A leaking training set cannot satisfy split_partition"
+    prediction: "Pipeline.lean elaborates and split_partition holds"
+    test: "lean/AgenticDS/AgenticDS/Pipeline.lean"
+    mutation: "Replace the non-test filter in trainRows by plain l.zipIdx.map (·.1): the split_partition proof fails to elaborate (measured 2026-10-26)"
+    discriminates: "A train set containing test rows stops the build"
+    if_fails: "Learners report an optimistic score from a leaking split"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-003
+    rule: "validate refuses a quality outside 0..10"
+    prediction: "validate with quality 11 is none and #guard in ExamplesM4.lean holds"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM4.lean"
+    mutation: "Widen the quality check to q <= 100 in validate: the proof argument hq no longer matches h_q and Pipeline.lean fails to elaborate (measured 2026-10-26)"
+    discriminates: "A ValidRow cannot carry a quality outside 0..10"
+    if_fails: "A bad row reaches the model"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-004
+    rule: "gaussSolve is exact"
+    prediction: "gaussSolve [[2,1],[1,3]] [3,5] == some [4/5, 7/5] is true at compile time"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM4.lean"
+    mutation: "Divide the pivot row by pv + 1: the #guard on the solution does not evaluate to true (measured 2026-10-26)"
+    discriminates: "A wrong pivot step cannot print 4/5 and 7/5"
+    if_fails: "The fit on the wine data is silently wrong"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-005
+    rule: "The pipeline reproduces the golden file"
+    prediction: "lake env lean --run AgenticDSTest/P4.lean ../.. prints contract: ads-lean-p4-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/P4.lean"
+    mutation: "Fit on all rows instead of the training rows: FAIL rmse and FAIL r2 (measured 2026-10-26)"
+    discriminates: "A leaking fit cannot match the held-out oracle within 1e-6"
+    if_fails: "The reported held-out rmse and r2 are optimistic"
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M4-006
+    rule: "Example theorems use only the standard axioms"
+    prediction: "gate-lean.sh accepts scripts/AxiomsM4.lean"
+    test: "scripts/gate-lean.sh"
+    mutation: "Prove m4v07_exact by native_decide: the axiom list gains m4v07_exact._native.native_decide.ax_1_1 and the gate rejects it (measured 2026-10-26)"
+    discriminates: "A trusted-compiler proof cannot pass the axiom check"
+    if_fails: "An example theorem rests on an unchecked axiom"

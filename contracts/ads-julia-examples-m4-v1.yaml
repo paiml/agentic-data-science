@@ -1,0 +1,45 @@
+# ads-julia-examples-m4-v1: Course B (Julia), Module 4 examples (v01..v10)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples for Course B module 4 on the Wine Quality pipeline: checksums and the golden split, validation that refuses bad tables, the every-fifth-row split, the fitted pipeline, a leaky mutant that every check catches, the Turtle report, the dataset and shape checks, the group-by benchmark, the worked examples and the recap, checked against the P4 golden."
+  references:
+    - "contracts/ads-julia-p4-v1.yaml"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "julia/BM4/src/BM4.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m4_example_facts:
+    formula: |
+      rows = 1599 red + 4898 white = 6497, train = 5198, test = 1299
+      held-out rmse = 0.760251606 and r2 = 0.259854491 within 1e-6
+      validate_wine refuses a missing value, a quality of 11 and an unknown colour
+      a fit on the test rows (a leak) fails the rmse, r2, leak and report checks
+    domain: "datasets/wine-quality (red and white CSV with SHA256SUMS) and datasets/golden/p4.json"
+    codomain: "ten registered examples whose main() prints their stated values"
+    postconditions:
+      - "SPLIT: every fifth row is a test row; the naive tail split fails the same check"
+      - "GOLDEN: rmse, r2 and the Turtle artifact agree with p4.json and p4-artifact.ttl"
+      - "LEAK: the leaky mutant fails all four golden checks"
+      - "CAN_FAIL: an example that breaks a stated value fails its testset"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out metrics equal the P4 golden"
+    formal: "|rmse - golden.rmse| <= 1e-6 and |r2 - golden.r2| <= 1e-6"
+    applies_to: m4_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-EXAMPLES-M4-001
+    rule: "Example values match the stated ones"
+    prediction: "julia --project=julia/BM4 -e 'using Pkg; Pkg.test()' passes with a testset per example"
+    test: "julia/BM4/test/runtests.jl"
+    mutation: "Fit the least squares model on the test rows: the held-out rmse drops below the golden and the leak example fails every check"
+    discriminates: "A leaking pipeline cannot reproduce the golden rmse"
+    if_fails: "A reported error would not be a held-out figure"
