@@ -2,7 +2,6 @@
 # Usage (from the repo root): source("<this file>")
 library(agenticds)
 ex <- c("c-m2-p2-ols", "c-m2-p2-cv")
-Sys.setenv(ADS_ROOT = getwd())
 out <- lapply(ex, function(e) {
   utils::capture.output(source(
     file.path("r/agenticds/inst/examples", e, "run.R"),

@@ -3,8 +3,6 @@
 library(agenticds)
 library(testthat)
 pkg <- "r/agenticds"
-Sys.setenv(ADS_ROOT = getwd())
-options(styler.quiet = TRUE)
 src <- file.path(pkg, "R", c("p1.R", "p2.R"))
 tst <- file.path(
   pkg, "tests", "testthat", c("test-p1.R", "test-p2.R")
@@ -14,7 +12,10 @@ invisible(utils::capture.output(
 ))
 pct <- covr::percent_coverage(cov)
 lints <- sum(vapply(src, function(f) length(lintr::lint(f)), 1L))
-changed <- sum(styler::style_file(src, dry = "on")$changed)
+invisible(utils::capture.output(
+  sty <- styler::style_file(src, dry = "on")
+))
+changed <- sum(sty$changed)
 cat(sprintf("covr: %g%% line coverage\n", pct))
 cat(sprintf("lintr: %d lints\n", lints))
 cat(sprintf("styler: %d files would change\n", changed))

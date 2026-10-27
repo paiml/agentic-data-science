@@ -15,8 +15,9 @@ cat("covr:", pct, "\n")
 print(covr::zero_coverage(cov))
 lints <- lintr::lint_package(pkg)
 cat("lintr:", length(lints), "lints\n")
-options(styler.quiet = TRUE)
-changed <- styler::style_pkg(pkg, dry = "on")$changed
+invisible(utils::capture.output(
+  changed <- styler::style_pkg(pkg, dry = "on")$changed
+))
 cat("styler: changed", sum(changed), "files\n")
 stopifnot(pct == 100, length(lints) == 0, !any(changed))
 verdict("contract: ads-r-p1 coverage, lint, style green OK")

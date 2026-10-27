@@ -1,4 +1,5 @@
 # C-M3 video 7: lint, style and tests-per-export on the P3 code.
+# Usage (from the repo root): source("<this file>")
 library(agenticds)
 code <- "r/agenticds/R/p3.R"
 test <- "r/agenticds/tests/testthat/test-p3.R"
