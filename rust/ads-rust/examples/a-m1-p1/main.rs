@@ -4,8 +4,9 @@
 use ads_rust::p1::{na_policy, read_penguins};
 
 fn main() {
-    let root = std::env::var("ADS_ROOT")
-        .unwrap_or_else(|_| "../..".into());
+    let root = std::env::var("ADS_ROOT").unwrap_or_else(|_| {
+        format!("{}/../..", env!("CARGO_MANIFEST_DIR"))
+    });
     let raw = read_penguins(&format!(
         "{root}/datasets/penguins/penguins.csv"
     ))
