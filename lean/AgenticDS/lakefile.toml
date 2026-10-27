@@ -1,6 +1,6 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo"]
+defaultTargets = ["AgenticDS", "ols-demo", "example-m1", "example-m2", "example-m3", "example-m4"]
 allowNonModules = true
 
 [leanOptions]
@@ -22,3 +22,19 @@ name = "AgenticDS"
 [[lean_exe]]
 name = "ols-demo"
 root = "AgenticDS.OlsMain"
+
+[[lean_exe]]
+name = "example-m1"
+root = "AgenticDS.ExampleM1Main"
+
+[[lean_exe]]
+name = "example-m2"
+root = "AgenticDS.ExampleM2Main"
+
+[[lean_exe]]
+name = "example-m3"
+root = "AgenticDS.ExampleM3Main"
+
+[[lean_exe]]
+name = "example-m4"
+root = "AgenticDS.ExampleM4Main"
