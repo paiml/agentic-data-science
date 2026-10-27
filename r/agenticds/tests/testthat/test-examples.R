@@ -7,8 +7,9 @@ ex <- list.files(
   full.names = TRUE
 )
 
-test_that("there are eight examples", {
-  expect_equal(length(ex), 8L)
+test_that("every example directory holds a run.R", {
+  expect_gte(length(ex), 8L)
+  expect_true(all(file.exists(file.path(ex, "run.R"))))
 })
 
 for (d in ex) {
