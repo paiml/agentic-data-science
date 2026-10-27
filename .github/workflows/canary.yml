@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
-        with: { version: "1.12" }
+        with: { version: "1.13" }
       - name: Install the package
         run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
       - name: Test the package

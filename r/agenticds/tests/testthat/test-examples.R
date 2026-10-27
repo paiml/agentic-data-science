@@ -7,12 +7,29 @@ ex <- list.files(
   full.names = TRUE
 )
 
-test_that("there are eight examples", {
-  expect_equal(length(ex), 8L)
+nested <- paste(
+  "eval\\(parse|test_file|test_dir|file_coverage",
+  "package_coverage|load_all|source\\(",
+  sep = "|"
+)
+# code lines only: a "source(" in a header comment is no nesting
+reloads <- function(d) {
+  code <- readLines(file.path(d, "run.R"))
+  any(grepl(nested, code[!grepl("^\\s*#", code)]))
+}
+
+test_that("every example directory holds a run.R", {
+  expect_gte(length(ex), 8L)
+  expect_true(all(file.exists(file.path(ex, "run.R"))))
 })
 
 for (d in ex) {
   test_that(paste(basename(d), "ends with its contract verdict"), {
+    # under covr, skip scenes that reload, re-source or nest
+    # test runs: they would alter the code being measured
+    skip_if(
+      identical(Sys.getenv("R_COVR"), "true") && reloads(d)
+    )
     old <- setwd(root)
     on.exit(setwd(old))
     out <- utils::capture.output(

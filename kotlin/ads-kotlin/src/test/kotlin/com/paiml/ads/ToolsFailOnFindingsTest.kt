@@ -15,7 +15,7 @@ private val gradleBin = System.getProperty("ads.gradle")
 private val LONG_LINE =
     "val longName = \"${"a".repeat(54)}\"\n"
 private const val CLEAN = "fun ok(a: Int) = a + 1\n"
-private const val UNUSED = "private fun unused() {}\n\n$CLEAN"
+private const val EMPTY_FN = "fun empty() {}\n\n$CLEAN"
 private const val BRANCHY =
     "fun pick(a: Int) = if (a > 0) 1 else 2\n"
 
@@ -39,8 +39,10 @@ private fun exec(
     vararg cmd: String,
 ): Pair<Int, String> {
     val p =
-        ProcessBuilder(*cmd).directory(dir)
-            .redirectErrorStream(true).start()
+        ProcessBuilder(*cmd)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
     val out = p.inputStream.bufferedReader().readText()
     return p.waitFor() to out
 }
@@ -112,10 +114,10 @@ class ToolsFailOnFindingsTest {
     }
 
     @Test
-    fun detektFailsOnAnUnusedMemberAndPassesWhenItIsFixed() {
-        val bad = gradle(buildCopy(UNUSED), "detekt")
+    fun detektFailsOnAnEmptyFunctionAndPassesWhenItIsFixed() {
+        val bad = gradle(buildCopy(EMPTY_FN), "detekt")
         assertNotEquals(0, bad.first, bad.second)
-        has(bad.second, "UnusedPrivate")
+        has(bad.second, "EmptyFunctionBlock")
         val ok = gradle(buildCopy(CLEAN), "detekt")
         assertEquals(0, ok.first, ok.second)
     }

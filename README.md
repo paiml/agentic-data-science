@@ -40,7 +40,7 @@ export PATH="$HOME/.elan/bin:$PATH"
 (cd lean/AgenticDS && lake exe cache get && lake build)
 ```
 
-Julia 1.12.1 (Course B): install it from https://julialang.org/downloads/, then:
+Julia 1.13.3 (Course B): install it from https://julialang.org/downloads/, then:
 
 ```bash
 julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
@@ -48,7 +48,7 @@ julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
 for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
 ```
 
-R 4.5.1 (Course C): install it from https://cran.r-project.org, install the packages named in `r/agenticds/DESCRIPTION` (including Suggests), then:
+R 4.6.1 (Course C): install it from https://cran.r-project.org, install the packages named in `r/agenticds/DESCRIPTION` (including Suggests), then:
 
 ```bash
 R CMD INSTALL r/agenticds
@@ -70,7 +70,7 @@ cd agentic-data-science
 cargo build --locked --manifest-path rust/ads-rust/Cargo.toml   # needs a stable Rust toolchain
 ```
 
-The gates also need Apache Jena (`shacl`) on `PATH` and Java 17.
+The gates also need Apache Jena (`shacl`) on `PATH` and Java 25.
 
 ## Usage
 
