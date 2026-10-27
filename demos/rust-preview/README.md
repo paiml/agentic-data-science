@@ -1,0 +1,3 @@
+# Rust M1 terminal-demo previews (vim first, native run command)
+
+Driver for the ten Course A (Rust) Module 1 terminal demos: `rec-rust-m1.sh NN OUTDIR` records one scene (vim 9.2 with syntax colour and a tick walk over the key lines, then the teleprompter command typed in a bash pane, 100x36 cells at 16x28 px, scaled to 1920x1080); `check.sh` runs the every-frame check (F1 blank, F2 hues, F3 measured line pitch >= 28 px, F4 screen text, F5 last frame, F6 held tail, F7 height 1080); `planted.sh` proves the check fails on a blank tail, a monochrome take, a wrong-output take and a wrong-size take. Set `PV_ROOT` to a work directory holding `scripts/` and a clone at `/tmp/ads-pv`. Previews only.
