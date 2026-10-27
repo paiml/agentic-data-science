@@ -6,7 +6,10 @@ for f in files
     mkpath(dirname(joinpath(sc, f)))
     cp(joinpath(root, f), joinpath(sc, f); force = true)
 end
-gate = Cmd(`make gate-julia`; dir = sc)
+gate = addenv(
+    Cmd(`make gate-julia`; dir = sc),
+    "PATH" => dirname(Base.julia_cmd().exec[1]) * ":" * ENV["PATH"],
+)
 out = read(pipeline(ignorestatus(gate); stderr = devnull), String)
 keep = r"^(coverage|format clean|examples OK|gate-julia OK|UNCOVERED)"
 lines = split(replace(out, sc => "."), '\n')
