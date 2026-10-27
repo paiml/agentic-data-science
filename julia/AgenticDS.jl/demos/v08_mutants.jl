@@ -1,4 +1,4 @@
-# Provable contract: ads-b-m2-v08-mutants. Two P2.jl mutants are each caught by the tests.
+# Provable contract: ads-b-m2-v08-mutants. Two P2.jl mutants are caught by the tests.
 root = abspath(joinpath(@__DIR__, "..", "..", ".."))
 src = joinpath("julia", "AgenticDS.jl", "src", "P2.jl")
 mutants = [
@@ -8,7 +8,8 @@ mutants = [
 caught = Bool[]
 for (name, (from, to)) in mutants
     sc = mktempdir()
-    files = split(read(Cmd(`git ls-files -z`; dir = root), String), '\0'; keepempty = false)
+    ls = read(Cmd(`git ls-files -z`; dir = root), String)
+    files = split(ls, '\0'; keepempty = false)
     for f in files
         mkpath(dirname(joinpath(sc, f)))
         cp(joinpath(root, f), joinpath(sc, f); force = true)
