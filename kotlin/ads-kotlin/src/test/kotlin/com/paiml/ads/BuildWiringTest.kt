@@ -24,7 +24,7 @@ class BuildWiringTest {
     @Test
     fun detektFailsOnTheFirstIssue() {
         assertTrue(
-            "maxIssues" !in detekt,
+            "maxIssues" !in detekt && "failOnSeverity" !in build,
         )
     }
 
