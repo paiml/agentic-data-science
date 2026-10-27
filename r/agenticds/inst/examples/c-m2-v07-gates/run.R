@@ -1,6 +1,7 @@
 # C-M2 video 7: the R gates, run locally on the P1 and P2 code.
 # Usage (from the repo root): source("<this file>")
 library(agenticds)
+library(testthat)
 pkg <- "r/agenticds"
 Sys.setenv(ADS_ROOT = getwd())
 options(styler.quiet = TRUE)

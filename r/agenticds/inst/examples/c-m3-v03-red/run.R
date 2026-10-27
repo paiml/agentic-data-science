@@ -1,17 +1,22 @@
-# C-M3 video 3: invert the accuracy test; the oracle goes red.
+# C-M3 video 3: invert the accuracy test; the tests go red.
 # Usage (from the repo root): source("this file")
 library(agenticds)
-d <- na_policy(read_penguins("datasets/penguins/penguins.csv"))
-g <- jsonlite::fromJSON("datasets/golden/p3.json")
-s <- read_split("datasets/fixtures/split.csv")
-fit <- fit_species_clf(d[s == "train", ])
-pred <- predict_species_clf(fit, d[s == "test", ])
-truth <- factor(d$species[s == "test"], levels = levels(pred))
-# the planted bug: == turned into !=
-broken <- mean(truth != pred)
-cat(sprintf("golden accuracy %.4f\n", g$accuracy))
-cat(sprintf("broken accuracy %.4f\n", broken))
-r <- all.equal(broken, g$accuracy, tolerance = 1e-9)
-cat("oracle says:", r, "\n")
-stopifnot(!isTRUE(r))
+old <- deparse(accuracy)
+src <- paste(old, collapse = "\n")
+src <- sub("truth == pred", "truth != pred", src, fixed = TRUE)
+broken <- eval(parse(text = src))
+environment(broken) <- environment(accuracy)
+new <- deparse(broken)
+cat("- ", old[old != new], "\n+ ", new[new != old], "\n", sep = "")
+env <- new.env(parent = asNamespace("agenticds"))
+env$accuracy <- broken
+tdir <- "r/agenticds/tests/testthat"
+res <- as.data.frame(testthat::test_file(
+  file.path(tdir, "test-p3.R"), reporter = "silent",
+  stop_on_failure = FALSE, env = env
+))
+cat("passed", sum(res$passed), "failed", sum(res$failed), "\n")
+cat(paste("FAILED:", res$test[res$failed > 0]), sep = "\n")
+stopifnot(length(new) == length(old), !identical(new, old))
+stopifnot(sum(res$failed) > 0, !any(res$error))
 verdict("contract: ads-r-p3 inverted accuracy is caught OK")

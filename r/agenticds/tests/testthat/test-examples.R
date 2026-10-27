@@ -14,7 +14,7 @@ test_that("every example directory holds a run.R", {
 
 for (d in ex) {
   test_that(paste(basename(d), "ends with its contract verdict"), {
-    # a gates scene runs covr itself, which cannot nest inside covr
+    # a gates example runs covr itself; it cannot nest in covr
     skip_if(
       identical(Sys.getenv("R_COVR"), "true") &&
         grepl("-gates$", basename(d))

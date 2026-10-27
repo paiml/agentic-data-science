@@ -1,14 +1,22 @@
-# C-M2 video 3: plant a slope bug; the golden oracle goes red.
+# C-M2 video 3: plant a slope bug in a copy; the tests go red.
 # Usage (from the repo root): source("<this file>")
 library(agenticds)
-d <- na_policy(read_penguins("datasets/penguins/penguins.csv"))
-g <- jsonlite::fromJSON("datasets/golden/p2.json")
-b <- ols_closed_form(d$flipper_length_mm, d$body_mass_g)
-good <- all.equal(b[["slope"]], g$ols$slope, tolerance = 1e-9)
-broken <- b[["slope"]] + 1 # the planted bug
-r <- all.equal(broken, g$ols$slope, tolerance = 1e-9)
-cat(sprintf("golden slope %.4f\n", g$ols$slope))
-cat(sprintf("broken slope %.4f\n", broken))
-cat("oracle says:", r, "\n")
-stopifnot(isTRUE(good), !isTRUE(r))
-verdict("contract: ads-r-p2 broken slope caught by oracle OK")
+old <- deparse(ols_closed_form)
+src <- paste(old, collapse = "\n")
+src <- sub("slope = b[[2]]", "slope = b[[1]]", src, fixed = TRUE)
+broken <- eval(parse(text = src))
+environment(broken) <- environment(ols_closed_form)
+new <- deparse(broken)
+cat("- ", old[old != new], "\n+ ", new[new != old], "\n", sep = "")
+env <- new.env(parent = asNamespace("agenticds"))
+env$ols_closed_form <- broken
+tdir <- "r/agenticds/tests/testthat"
+res <- as.data.frame(testthat::test_file(
+  file.path(tdir, "test-p2.R"), reporter = "silent",
+  stop_on_failure = FALSE, env = env
+))
+cat("passed", sum(res$passed), "failed", sum(res$failed), "\n")
+cat(paste("FAILED:", res$test[res$failed > 0]), sep = "\n")
+stopifnot(length(new) == length(old), !identical(new, old))
+stopifnot(sum(res$failed) > 0, !any(res$error))
+verdict("contract: ads-r-p2 a wrong slope is caught OK")

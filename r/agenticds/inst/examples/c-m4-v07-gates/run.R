@@ -1,5 +1,4 @@
 # C-M4 video 7: each gate either passes or blocks the merge.
-# Run from the repo root: source("<this file>")
 library(agenticds)
 wine <- file.path("datasets", "wine-quality")
 gold <- file.path("datasets", "golden")
@@ -10,14 +9,15 @@ match_sum <- function(s) {
   substr(have, 1, 64) == s[1]
 }
 f <- file.path(wine, "winequality-%s.csv")
-out <- tempfile(fileext = ".ttl")
-red <- sprintf(f, "red")
-report_ttl(pipeline_wine(red, sprintf(f, "white")), out)
-want <- readLines(file.path(gold, "p4-artifact.ttl"))
+res <- pipeline_wine(sprintf(f, "red"), sprintf(f, "white"))
+report_ttl(res, out <- tempfile(fileext = ".ttl"))
+g <- jsonlite::fromJSON(file.path(gold, "p4.json"))
+k <- c("rmse", "r2")
 gates <- c(
   datasets = all(vapply(sums, match_sum, logical(1))),
-  golden = file.size(file.path(gold, "p4.json")) > 0,
-  report = identical(readLines(out), want)
+  golden = isTRUE(all.equal(unlist(g[k]), unlist(res[k]), 1e-6)),
+  report = identical(readLines(out),
+                     readLines(file.path(gold, "p4-artifact.ttl")))
 )
 print(gates)
 stopifnot(all(gates))

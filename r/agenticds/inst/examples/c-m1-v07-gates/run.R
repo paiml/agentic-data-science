@@ -1,4 +1,4 @@
-# C-M1 video 7: the R quality gates, run locally.
+# C-M1 video 7: coverage, lint and style, run locally.
 # Run from the repo root: source("<this file>")
 library(agenticds)
 pkg <- file.path("r", "agenticds")
@@ -19,4 +19,4 @@ options(styler.quiet = TRUE)
 changed <- styler::style_pkg(pkg, dry = "on")$changed
 cat("styler: changed", sum(changed), "files\n")
 stopifnot(pct == 100, length(lints) == 0, !any(changed))
-verdict("contract: ads-r-p1 gates green OK")
+verdict("contract: ads-r-p1 coverage, lint, style green OK")
