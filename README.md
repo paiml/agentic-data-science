@@ -48,7 +48,7 @@ julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
 for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
 ```
 
-R 4.5.1 (Course C): install it from https://cran.r-project.org, install the packages named in `r/agenticds/DESCRIPTION` (including Suggests), then:
+R 4.6.1 (Course C): install it from https://cran.r-project.org, install the packages named in `r/agenticds/DESCRIPTION` (including Suggests), then:
 
 ```bash
 R CMD INSTALL r/agenticds
