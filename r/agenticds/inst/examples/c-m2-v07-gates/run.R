@@ -8,7 +8,10 @@ tst <- file.path(
   pkg, "tests", "testthat", c("test-p1.R", "test-p2.R")
 )
 invisible(utils::capture.output(
-  cov <- covr::file_coverage(src, tst)
+  cov <- withr::with_envvar(
+    c(ADS_ROOT = getwd()),
+    covr::file_coverage(src, tst)
+  )
 ))
 pct <- covr::percent_coverage(cov)
 lints <- sum(vapply(src, function(f) length(lintr::lint(f)), 1L))
