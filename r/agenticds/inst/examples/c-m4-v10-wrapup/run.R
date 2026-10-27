@@ -8,7 +8,7 @@ out <- lapply(ex, function(e) {
     local = TRUE
   ))
 })
-lines <- grep("^contract:", unlist(out), value = TRUE)
+lines <- grep("^contract: ads-r-p4", unlist(out), value = TRUE)
 writeLines(lines)
 stopifnot(length(lines) == 2L, all(endsWith(lines, "OK")))
 verdict("contract: ads-r-p4 both example contracts hold OK")

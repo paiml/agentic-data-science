@@ -3,9 +3,8 @@
 f <- "datasets/wine-quality/winequality-%s.csv"
 w <- agenticds::read_wine(sprintf(f, "red"), sprintf(f, "white"))
 g <- jsonlite::fromJSON("datasets/golden/p4.json")
-split_wine <- agenticds::split_wine
-verdict <- agenticds::verdict
-src <- sub("== 0L", "== 1L", deparse(split_wine), fixed = TRUE)
+ours <- agenticds::split_wine
+src <- sub("== 0L", "== 1L", deparse(ours), fixed = TRUE)
 shifted <- eval(parse(text = src))
 cat("mutation: test rows are row mod 5 is 1, not 0\n")
 checks <- function(split) {
@@ -18,7 +17,9 @@ checks <- function(split) {
     rmse = isTRUE(all.equal(m$rmse, g$rmse, tolerance = 1e-9))
   )
 }
-res <- rbind(ours = checks(split_wine), shifted = checks(shifted))
+res <- rbind(ours = checks(ours), shifted = checks(shifted))
 print(res)
 stopifnot(all(res["ours", ]), !any(res["shifted", ]))
-verdict("contract: ads-r-p4 a shifted split is caught OK")
+agenticds::verdict(
+  "contract: ads-r-p4 a shifted split is caught OK"
+)

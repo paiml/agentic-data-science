@@ -1,4 +1,4 @@
-# C-M3 video 3: invert the accuracy test; the tests go red.
+# C-M3 video 3: mutate accuracy(); the tests go red.
 # Usage (from the repo root): source("this file")
 library(agenticds)
 old <- deparse(accuracy)
@@ -19,4 +19,4 @@ cat("passed", sum(res$passed), "failed", sum(res$failed), "\n")
 cat(paste("FAILED:", res$test[res$failed > 0]), sep = "\n")
 stopifnot(length(new) == length(old), !identical(new, old))
 stopifnot(sum(res$failed) > 0, !any(res$error))
-verdict("contract: ads-r-p3 inverted accuracy is caught OK")
+verdict("contract: ads-r-p3 mutated accuracy() is caught OK")

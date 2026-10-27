@@ -17,3 +17,8 @@ test_that("verdict returns its text", {
   out <- utils::capture.output(r <- verdict("t", color = FALSE))
   expect_identical(r, "t")
 })
+
+test_that("verdict default is plain when output is captured", {
+  out <- utils::capture.output(verdict("contract: ads-r-p1 x OK"))
+  expect_identical(out, "contract: ads-r-p1 x OK")
+})

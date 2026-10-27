@@ -3,7 +3,6 @@
 ids <- c("b1", "A2", "a3", "B4", "c5", "C6")
 f <- file.path("datasets", "wine-quality", "winequality-%s.csv")
 w <- sprintf(f, c("red", "white"))
-pipeline_wine <- agenticds::pipeline_wine
 under <- function(loc, code) {
   old <- Sys.getlocale("LC_COLLATE")
   on.exit(Sys.setlocale("LC_COLLATE", old))
@@ -12,7 +11,7 @@ under <- function(loc, code) {
 }
 en <- "en_US.UTF-8"
 ord <- function() order(ids)
-run <- function() pipeline_wine(w[1], w[2])$rmse
+run <- function() agenticds::pipeline_wine(w[1], w[2])$rmse
 o <- rbind(C = under("C", ord), en_US = under(en, ord))
 print(o)
 r <- c(C = under("C", run), en_US = under(en, run))

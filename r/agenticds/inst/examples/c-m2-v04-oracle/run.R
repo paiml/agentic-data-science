@@ -19,4 +19,6 @@ print(round(coefs, 4))
 ok <- all.equal(coefs[1, ], coefs[2, ], tolerance = 1e-8)
 print(ok)
 stopifnot(isTRUE(ok))
-verdict("contract: ads-r-p2 closed form == parsnip linear_reg OK")
+verdict(
+  "contract: ads-r-p2 solve() closed form == parsnip linear_reg OK"
+)

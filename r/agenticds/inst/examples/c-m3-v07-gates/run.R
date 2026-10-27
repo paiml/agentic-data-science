@@ -11,9 +11,11 @@ invisible(utils::capture.output(
 ))
 cat(sprintf("styler: %d files would change\n", sum(sty$changed)))
 lines <- readLines(code)
+tl <- readLines(test)
+tl <- tl[!grepl("^\\s*#", tl)]
 fns <- sub(" <-.*", "", lines[grep("^#' @export", lines) + 1])
 tested <- vapply(fns, function(f) {
-  any(grepl(paste0("\\b", f, "\\("), readLines(test)))
+  any(grepl(paste0("\\b", f, "\\("), tl))
 }, NA)
 cat(sprintf("exports: %d, without a test: %d\n",
             length(fns), sum(!tested)))

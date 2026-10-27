@@ -1,13 +1,13 @@
 # C-M2 video 9: a sort-based split moves with the locale.
 # Usage (from the repo root): source("<this file>")
 ids <- c("b1", "A2", "a3", "B4", "c5", "C6")
-raw <- agenticds::read_penguins("datasets/penguins/penguins.csv")
-d <- agenticds::na_policy(raw)
-f <- agenticds::read_folds("datasets/fixtures/folds.csv")
 under <- function(loc) {
   old <- Sys.getlocale("LC_COLLATE")
   on.exit(Sys.setlocale("LC_COLLATE", old))
   if (!nzchar(Sys.setlocale("LC_COLLATE", loc))) stop("no ", loc)
+  raw <- agenticds::read_penguins("datasets/penguins/penguins.csv")
+  d <- agenticds::na_policy(raw)
+  f <- agenticds::read_folds("datasets/fixtures/folds.csv")
   list(order = order(ids), cv = agenticds::cv_rmse(d, f, FALSE))
 }
 by_loc <- lapply(c("C", "en_US.UTF-8"), under)

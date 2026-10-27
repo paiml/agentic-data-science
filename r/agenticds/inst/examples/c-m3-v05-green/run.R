@@ -17,6 +17,7 @@ truth <- factor(d$species[s == "test"], levels = levels(pred))
 cat(sprintf("accuracy %.4f\n", accuracy(truth, pred)))
 stopifnot(
   sum(res$failed) + sum(res$error) == 0,
-  sum(res$passed) > 0
+  sum(res$passed) > 0,
+  sum(res$skipped) == 0
 )
 verdict("contract: ads-r-p3 tests green OK")
