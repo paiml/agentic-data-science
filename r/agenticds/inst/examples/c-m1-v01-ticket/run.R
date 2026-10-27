@@ -22,4 +22,4 @@ ok <- identical(as.integer(ns), as.integer(table(d$species)[names(ns)])) &&
   nrow(raw) == 344L &&
   nrow(d) == 342L
 stopifnot(ok)
-cat(cli::col_green(cli::style_bold("contract: ads-r-p1 ticket oracle (344 -> 342) OK")), fill = TRUE)
+cat(cli::col_green(cli::style_bold("contract: ads-r-p1 ticket (344 -> 342) OK")), fill = TRUE)
