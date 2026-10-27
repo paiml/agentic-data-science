@@ -2,14 +2,14 @@
 
 julia_version = "1.13.2"
 manifest_format = "2.1"
-project_hash = "26a0d34b1aa2543ca6bceab6884a2620fe747951"
+project_hash = "a06df9433fb88cb87acf1f3cc5977894e693a89d"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 version = "1.11.0"
 
 [[deps.BM4]]
-deps = ["BenchmarkTools", "CSV", "DataFrames", "JSON3", "LinearAlgebra", "SHA", "Statistics"]
+deps = ["BenchmarkTools", "CSV", "DataFrames", "JSON3", "LinearAlgebra", "Printf", "SHA", "Statistics"]
 path = "."
 uuid = "7c2d5a14-3b8e-4f60-9d1a-6e0b4c8f2a53"
 version = "0.1.0"
