@@ -61,9 +61,10 @@ data class SpeciesSummary(
 /** Read penguins.csv with a typed schema; NA is null. */
 fun readPenguins(path: String): List<Penguin> {
     val df: DataFrame<PenguinRow> =
-        DataFrame.readCsv(
-            path,
-        ).cast(verify = true)
+        DataFrame
+            .readCsv(
+                path,
+            ).cast(verify = true)
     return df.rows().map { r ->
         Penguin(
             r["species"] as String,
@@ -83,8 +84,7 @@ private fun Any?.num() = (this as Number?)?.toDouble()
  * Sex is not read, so a missing sex cannot drop a row.
  */
 fun naPolicy(rows: List<Penguin>): List<Penguin> =
-    rows.filter {
-            p ->
+    rows.filter { p ->
         p.measures().all { it != null && !it.isNaN() }
     }
 
@@ -102,15 +102,13 @@ private fun sampleSd(xs: List<Double>): Double {
  * per species, species sorted.
  */
 fun summariseBySpecies(rows: List<Penguin>) =
-    rows.groupBy { it.species }.toSortedMap().map {
-            (species, group) ->
+    rows.groupBy { it.species }.toSortedMap().map { (sp, group) ->
         val cols =
-            MEASURES.indices.map {
-                    i ->
+            MEASURES.indices.map { i ->
                 group.mapNotNull { it.measures()[i] }
             }
         SpeciesSummary(
-            species,
+            sp,
             group.size,
             MEASURES.zip(cols.map(::mean)).toMap(),
             MEASURES.zip(cols.map(::sampleSd)).toMap(),

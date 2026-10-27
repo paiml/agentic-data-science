@@ -20,8 +20,11 @@ private fun number(
     json: String,
     key: String,
 ): Double =
-    json.substringAfter(quoted(key) + ":").trim()
-        .takeWhile { it in NUMERIC }.toDouble()
+    json
+        .substringAfter(quoted(key) + ":")
+        .trim()
+        .takeWhile { it in NUMERIC }
+        .toDouble()
 
 /** The R oracle fit: body mass on flipper length. */
 fun goldenOls(): Fit {

@@ -63,5 +63,6 @@ val names =
     }
 check(names.isNotEmpty()) { "shacl gate is empty (fail closed)" }
 tasks.register("verifyShaclAll") { dependsOn(names) }
-tasks.matching { it.name == "check" }
+tasks
+    .matching { it.name == "check" }
     .configureEach { dependsOn("verifyShaclAll") }

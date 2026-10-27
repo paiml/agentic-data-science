@@ -7,14 +7,14 @@
 # byte-identical files only).
 set -euo pipefail
 cd "$(dirname "$0")/../kotlin"
-gbin="$HOME/.local/opt/gradle-8.14.3/bin"
+gbin="$HOME/.local/opt/gradle-9.8.2/bin"
 command -v gradle >/dev/null || export PATH="$gbin:$PATH"
 command -v gradle >/dev/null || {
   echo "FAIL: gradle not on PATH (not_measured)"
   exit 1
 }
 # Toolchain autodetection misses the runners JDK: hand it
-# JAVA_HOME (the workflow pins JDK 17), else java on PATH.
+# JAVA_HOME (the workflow pins JDK 25), else java on PATH.
 java_home() {
   local j
   j=$(readlink -f "$(command -v java)")

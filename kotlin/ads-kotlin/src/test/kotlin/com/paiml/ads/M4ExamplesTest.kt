@@ -26,7 +26,9 @@ private fun printed(
     out: String,
     label: String,
 ) = Regex("$label[^:]*:\\s*([0-9.]+)")
-    .find(out)!!.groupValues[1].toDouble()
+    .find(out)!!
+    .groupValues[1]
+    .toDouble()
 
 class M4ExamplesTest {
     @Test

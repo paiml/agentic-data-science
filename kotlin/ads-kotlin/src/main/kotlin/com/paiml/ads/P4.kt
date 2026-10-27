@@ -59,9 +59,15 @@ class Wine(
         )
 }
 
-data class Split(val train: Wine, val test: Wine)
+data class Split(
+    val train: Wine,
+    val test: Wine,
+)
 
-data class Score(val rmse: Double, val r2: Double)
+data class Score(
+    val rmse: Double,
+    val r2: Double,
+)
 
 private fun AnyFrame.column(name: String): List<Double> =
     this[name].values().map {
