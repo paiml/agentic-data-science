@@ -1,0 +1,17 @@
+# C-M3 video 3: invert the accuracy test; the oracle goes red.
+# Usage (from the repo root): source("this file")
+library(agenticds)
+d <- na_policy(read_penguins("datasets/penguins/penguins.csv"))
+g <- jsonlite::fromJSON("datasets/golden/p3.json")
+s <- read_split("datasets/fixtures/split.csv")
+fit <- fit_species_clf(d[s == "train", ])
+pred <- predict_species_clf(fit, d[s == "test", ])
+truth <- factor(d$species[s == "test"], levels = levels(pred))
+# the planted bug: == turned into !=
+broken <- mean(truth != pred)
+cat(sprintf("golden accuracy %.4f\n", g$accuracy))
+cat(sprintf("broken accuracy %.4f\n", broken))
+r <- all.equal(broken, g$accuracy, tolerance = 1e-9)
+cat("oracle says:", r, "\n")
+stopifnot(!isTRUE(r))
+verdict("contract: ads-r-p3 inverted accuracy is caught OK")
