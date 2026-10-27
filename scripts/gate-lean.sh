@@ -23,6 +23,11 @@ out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/Main.lean ../.. 2>&1) |
 echo "$out" | grep -q "contract: ads-lean-p1-v1 OK$" || { echo "FAIL golden parity: $out"; exit 1; }
 out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/OlsTest.lean ../.. 2>&1) || { echo "FAIL ols test: $out"; exit 1; }
 echo "$out" | grep -q "contract: ads-lean-p2-v1 OK$" || { echo "FAIL ols test: $out"; exit 1; }
+# The ols-demo exe ends with its proved verdict: a wrong residual sum must fail the gate, not only the p2 test.
+out=$(lake exe ols-demo ../.. 2>&1) || { echo "FAIL ols-demo: $out"; exit 1; }
+last=$(echo "$out" | tail -n 1 | sed 's/\x1b\[[0-9;]*m//g')
+[ "$last" = "residuals sum to 0: proved (theorem residuals_sum)" ] || { echo "FAIL ols-demo last line: $last"; exit 1; }
+
 # One test per module of examples, each ending in its own contract line.
 for t in AgenticDSTest/ExamplesM*.lean; do
   [ -e "$t" ] || continue
