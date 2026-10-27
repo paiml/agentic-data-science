@@ -70,7 +70,7 @@ cd agentic-data-science
 cargo build --locked --manifest-path rust/ads-rust/Cargo.toml   # needs a stable Rust toolchain
 ```
 
-The gates also need Apache Jena (`shacl`) on `PATH` and Java 17.
+The gates also need Apache Jena (`shacl`) on `PATH` and Java 25.
 
 ## Usage
 

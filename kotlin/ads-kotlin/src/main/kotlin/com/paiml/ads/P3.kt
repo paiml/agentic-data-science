@@ -9,7 +9,9 @@ private val DATASETS: File =
     File(PENGUINS).absoluteFile.parentFile.parentFile
 
 /** Confusion matrix: truth in rows, prediction in columns. */
-data class Scored(val confusion: List<List<Int>>) {
+data class Scored(
+    val confusion: List<List<Int>>,
+) {
     fun accuracy(): Double =
         confusion.indices.sumOf { confusion[it][it] }.toDouble() /
             confusion.sumOf { it.sum() }
@@ -17,14 +19,21 @@ data class Scored(val confusion: List<List<Int>>) {
 
 /** The fixed train/test label of each clean row. */
 fun readSplit(): List<String> =
-    File(DATASETS, "fixtures/split.csv").readLines().drop(1)
+    File(DATASETS, "fixtures/split.csv")
+        .readLines()
+        .drop(1)
         .map { it.substringAfter(",") }
 
 /** The fixed initial centroids, one raw-unit row per cluster. */
 fun readCentroids(): List<DoubleArray> =
-    File(DATASETS, "fixtures/centroids.csv").readLines().drop(1)
+    File(DATASETS, "fixtures/centroids.csv")
+        .readLines()
+        .drop(1)
         .map { line ->
-            line.split(",").drop(1).map { it.toDouble() }
+            line
+                .split(",")
+                .drop(1)
+                .map { it.toDouble() }
                 .toDoubleArray()
         }
 
@@ -59,8 +68,10 @@ private val NUMBER = Regex("-?\\d+(\\.\\d+)?")
 
 /** The golden numbers in file order: accuracy, 9 cells, objective, 3 sizes. */
 private fun goldenNumbers(): List<Double> =
-    NUMBER.findAll(File(DATASETS, "golden/p3.json").readText())
-        .map { it.value.toDouble() }.toList()
+    NUMBER
+        .findAll(File(DATASETS, "golden/p3.json").readText())
+        .map { it.value.toDouble() }
+        .toList()
 
 /** True when both models reproduce datasets/golden/p3.json. */
 fun matchesGolden(

@@ -24,7 +24,7 @@ class BuildWiringTest {
     @Test
     fun detektFailsOnTheFirstIssue() {
         assertTrue(
-            Regex("""maxIssues:\s*0""").containsMatchIn(detekt),
+            "maxIssues" !in detekt && "failOnSeverity" !in build,
         )
     }
 

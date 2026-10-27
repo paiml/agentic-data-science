@@ -23,9 +23,10 @@ class OlsTest {
             root.resolve("datasets/golden/p2.json").toFile(),
         )["ols"]
     private val df =
-        DataFrame.readCsv(
-            PENGUINS,
-        ).dropNulls("flipper_length_mm", "body_mass_g")
+        DataFrame
+            .readCsv(
+                PENGUINS,
+            ).dropNulls("flipper_length_mm", "body_mass_g")
     private val x = df.doubles("flipper_length_mm")
     private val y = df.doubles("body_mass_g")
 
