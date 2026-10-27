@@ -4,7 +4,7 @@ Released under MIT license as described in the file LICENSE.
 Authors: Pragmatic AI Labs
 -/
 import AgenticDS.Ols
-import AgenticDS.OlsScene
+import AgenticDS.OlsExample
 
 /-! # OLS demo checks
 

@@ -9,12 +9,14 @@ for s in ontology/shapes/*.shape.ttl; do shacl parse --out=text "$s" >/dev/null;
 files=$(git ls-files '*/example.ttl')
 [ -z "$files" ] && { echo "shapes parse OK; no example.ttl yet"; exit 0; }
 for f in $files; do
+  case "$f" in /*|*..*) echo "FAIL unsafe path $f"; exit 1 ;; esac
   cat ontology/ads.ttl "$f" > "${TMPDIR:-/tmp}/ads-data.ttl"
   for s in ontology/shapes/*.shape.ttl; do
     shacl validate --shapes "$s" --data "${TMPDIR:-/tmp}/ads-data.ttl" | grep -Eq 'sh:conforms +true' || { echo "FAIL $f vs $s"; exit 1; }
   done
 done
 for a in $(git ls-files "*artifact.ttl"); do
+  case "$a" in /*|*..*) echo "FAIL unsafe path $a"; exit 1 ;; esac
   cat ontology/ads.ttl "$a" > "${TMPDIR:-/tmp}/ads-data.ttl"
   shacl validate --shapes ontology/shapes/artifact.shape.ttl --data "${TMPDIR:-/tmp}/ads-data.ttl" | grep -Eq "sh:conforms +true" || { echo "FAIL $a vs artifact shape"; exit 1; }
 done

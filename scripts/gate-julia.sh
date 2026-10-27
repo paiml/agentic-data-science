@@ -1,51 +1,55 @@
 #!/usr/bin/env bash
 # Julia gate: Pkg.test (incl. Aqua + JET) with coverage, Coverage.jl lines must be 100, JuliaFormatter no diff.
-# Scene projects under julia/ (not AgenticDS.jl) get Pkg.test (JET) and the format check.
+# Other Julia packages under julia/ get Pkg.test (incl. JET) and the format check.
+# Usage: gate-julia.sh [part ...]. Parts: AgenticDS (the main package) and each other package directory name.
+# No argument runs every part. CI runs one part per matrix job and sets ADS_JULIA_PARTS to the full matrix
+# list; every package directory must be in that list, so a new package cannot be left out of CI.
 set -euo pipefail
-root="$(cd "$(dirname "$0")/.." && pwd)"
-[ -z "${ADS_JULIA_DEPOT:-}" ] || export JULIA_DEPOT_PATH="$ADS_JULIA_DEPOT"
+root="$(cd "$(dirname "$0")/.." && pwd)" || exit 1
+depot="${ADS_JULIA_DEPOT:-}"
+if [ -n "$depot" ]; then export JULIA_DEPOT_PATH="$depot"; fi
 pkg="$root/julia/AgenticDS.jl"
 gate="$root/julia/gate"
-cd "$root"
-find "$pkg" -name '*.cov' -delete
-julia --project="$gate" -e 'using Pkg; Pkg.instantiate()'
-julia --project="$pkg" -e 'using Pkg; Pkg.instantiate()'
-julia --project="$pkg" --inline=no -e 'using Pkg; Pkg.test(coverage = true)'
-julia --project="$gate" -e '
-using Coverage
-c = process_folder(joinpath(ARGS[1], "src"))
-covered, total = get_summary(c)
-println("coverage: ", covered, "/", total)
-for f in c
-    for (i, n) in enumerate(f.coverage)
-        n === 0 && println("UNCOVERED ", f.filename, ":", i)
-    end
-end
-total > 0 && covered == total || (println("coverage FAIL: measured nothing or gaps"); exit(1))
-' "$pkg"
-julia --project="$gate" -e '
-using JuliaFormatter
-ok = format(ARGS[1]; verbose = false, overwrite = false)
-println("format clean: ", ok)
-ok || exit(1)
-' "$pkg"
-find "$pkg" -name '*.cov' -delete
-for e in "$pkg"/examples/*/run.jl; do julia --project="$pkg" "$e" > /dev/null; done
-echo "examples OK"
-# Scene projects (committed Manifests; no 100% coverage or Aqua, by design: demo scenes): Pkg.test (incl. JET),
-# any data/penguins.csv byte-identical to datasets/penguins/penguins.csv, JuliaFormatter no diff.
+cd "$root" || exit 1
+
+others=()
 for p in "$root"/julia/*/; do
   p="${p%/}"
   [ -f "$p/Project.toml" ] || continue
   case "$p" in "$pkg" | "$gate") continue ;; esac
+  others+=("${p##*/}")
+done
+
+if [ -n "${ADS_JULIA_PARTS:-}" ]; then
+  for n in AgenticDS "${others[@]}"; do
+    case " $ADS_JULIA_PARTS " in *" $n "*) ;; *) echo "FAIL julia part $n is not in the CI matrix"; exit 1 ;; esac
+  done
+fi
+
+parts=("$@")
+if [ ${#parts[@]} -eq 0 ]; then parts=(AgenticDS "${others[@]}"); fi
+
+main_part() {
+  find "$pkg" -name '*.cov' -delete
+  julia --project="$gate" -e 'using Pkg; Pkg.instantiate()'
+  julia --project="$pkg" -e 'using Pkg; Pkg.instantiate()'
+  julia --project="$pkg" --inline=no -e 'using Pkg; Pkg.test(coverage = true)'
+  julia --project="$gate" "$root/scripts/julia-coverage.jl" "$pkg"
+  julia --project="$gate" "$root/scripts/julia-format.jl" "$pkg"
+  find "$pkg" -name '*.cov' -delete
+  for e in "$pkg"/examples/*/run.jl; do julia --project="$pkg" "$e" > /dev/null; done
+  echo "examples OK"
+}
+
+other_part() {
+  local p="$root/julia/$1"
+  [ -f "$p/Project.toml" ] || { echo "FAIL no julia package $1"; exit 1; }
   julia --project="$p" -e 'using Pkg; Pkg.instantiate()'
-  [ ! -f "$p/data/penguins.csv" ] || cmp -s "$p/data/penguins.csv" "$root/datasets/penguins/penguins.csv" || { echo "FAIL ${p##*/}: data/penguins.csv differs from datasets/penguins/penguins.csv"; exit 1; }
   julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
-  julia --project="$gate" -e '
-using JuliaFormatter
-ok = format(ARGS[1]; verbose = false, overwrite = false)
-println("format clean: ", ok)
-ok || exit(1)
-' "$p"
+  scripts/julia-format.sh "$p"
+}
+
+for part in "${parts[@]}"; do
+  if [ "$part" = AgenticDS ]; then main_part; else other_part "$part"; fi
 done
 echo "gate-julia OK"

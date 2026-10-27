@@ -1,0 +1,47 @@
+# ads-julia-p4-v1: Course B (Julia), Module 4, Problem P4 (Wine Quality pipeline, report artifact and benchmark)
+# Tickets: paiml/agentic-data-science issues 35 and 36
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Julia functions read_wine, validate_wine, split_wine, pipeline_wine, report_ttl and bench_wine reproduce datasets/golden/p4.json: 6497 rows, 5198 train and 1299 test, held-out RMSE and R squared, mean quality per colour, and the Turtle artifact of the R course."
+  references:
+    - "julia/BM4/src/v04_pipeline.jl"
+    - "julia/BM4/test/runtests.jl"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_pipeline_matches_golden:
+    formula: |
+      rows                 = 1599 + 4898 = 6497
+      test rows            = {i : i mod 5 = 0}                      n_test = 1299
+      rmse, r2             = metrics of least squares (intercept, 11 measurements, white indicator) fitted on train, scored on test
+      |rmse - golden|      <= 1e-6
+      |r2 - golden|        <= 1e-6
+      groupby, loop        = same mean quality and count per colour, tol 1e-12
+    domain: "winequality-red.csv and winequality-white.csv with SHA256SUMS verified"
+    codomain: "row counts, RMSE, R squared, mean quality per colour, Turtle artifact"
+    postconditions:
+      - "VALIDATE_FIRST: a missing value, a quality outside 0..10 or an unknown colour stops the pipeline with an ArgumentError naming the rule"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "NO_TIMINGS_IN_GOLDEN: timings are never part of a parity check"
+      - "CAN_FAIL: fitting on the test rows moves RMSE below the golden and fails the oracle tests"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE and R squared equal the independent R fit within 1e-6"
+    formal: "|rmse - golden.rmse| <= 1e-6 and |r2 - golden.r2| <= 1e-6"
+    applies_to: p4_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P4-001
+    rule: "The model never sees test rows"
+    prediction: "scripts/gate-julia.sh passes"
+    test: "scripts/gate-julia.sh"
+    mutation: "Fit on the test rows (s.train becomes s.test in the beta line): the RMSE, R squared and leak tests fail"
+    discriminates: "A leaking pipeline cannot match the held-out golden"
+    if_fails: "Learners report an optimistic wine-quality error"

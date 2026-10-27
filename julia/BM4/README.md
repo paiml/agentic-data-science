@@ -1,0 +1,22 @@
+# BM4: Course B (Julia), Module 4 examples
+
+Ten example files (`src/v01_ticket.jl` .. `src/v10_wrapup.jl`) for the
+Wine Quality pipeline (problem P4). The module contract is
+`contracts/ads-julia-examples-m4-v1.yaml` and the project contract is
+`contracts/ads-julia-p4-v1.yaml`. Plumbing is in `src/helpers.jl`
+and `src/BM4.jl`.
+
+Run an example: `julia --project=julia/BM4 -e 'using BM4; BM4.V04.main()'`
+
+Gate: `Pkg.test()` (JET, golden values, can-fail tests, run output), JuliaFormatter margin 56.
+
+## pmat
+
+pmat has no Julia analyzer. No pmat result is claimed for this package;
+quality here rests on the Julia gate above, not on a pmat pass.
+
+## Notes
+
+v05 runs the leaky mutant in-process with golden checks instead of the
+2-minute suite; v07 checks dataset checksums and licenses plus an in-Julia
+shape check instead of Jena SHACL and the full gate.
