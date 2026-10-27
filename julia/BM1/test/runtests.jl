@@ -186,7 +186,7 @@ end
             out,
         )
         @test occursin(
-            "golden n: [151, 123, 68] sums to 342",
+            "golden n: [151, 68, 123] sums to 342",
             out,
         )
 
