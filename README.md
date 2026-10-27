@@ -40,7 +40,7 @@ export PATH="$HOME/.elan/bin:$PATH"
 (cd lean/AgenticDS && lake exe cache get && lake build)
 ```
 
-Julia 1.12.1 (Course B): install it from https://julialang.org/downloads/, then:
+Julia 1.13.3 (Course B): install it from https://julialang.org/downloads/, then:
 
 ```bash
 julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
