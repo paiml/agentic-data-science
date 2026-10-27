@@ -1,0 +1,18 @@
+[package]
+name = "ads-rust"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Agentic Data Science, Course A (Rust): examples P1-P4"
+
+[dependencies]
+polars = { version = "0.46", default-features = false, features = ["lazy", "csv", "dtype-full"] }
+serde_json = "1"
+
+[[example]]
+name = "a-m1-p1"
+path = "examples/a-m1-p1/main.rs"
+
+[[example]]
+name = "a-m1-p1-profile"
+path = "examples/a-m1-p1-profile/main.rs"

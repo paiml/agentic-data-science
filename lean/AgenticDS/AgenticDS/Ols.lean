@@ -9,7 +9,7 @@ import AgenticDS.Stats
 /-! # Exact simple linear regression over ℚ
 
 Fit record, residuals, one sum lemma, and the CSV / table / plot /
-color helpers the scene file uses. -/
+color helpers the example file uses. -/
 
 namespace AgenticDS
 
@@ -25,7 +25,7 @@ def cov (ps : List (ℚ × ℚ)) : ℚ :=
 def residuals (f : Fit) (ps : List (ℚ × ℚ)) : List ℚ :=
   ps.map fun p => p.2 - (f.intercept + f.slope * p.1)
 
-/-- The residual sum in closed form (the only lemma the scene proof
+/-- The residual sum in closed form (the only lemma the proof
 needs). -/
 theorem sum_residuals (a b : ℚ) (ps : List (ℚ × ℚ)) :
     (ps.map fun p => p.2 - (a + b * p.1)).sum =

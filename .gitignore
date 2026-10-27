@@ -1,3 +1,13 @@
 target/
 .lake/
 *.log
+kotlin/.gradle/
+kotlin/build/
+kotlin/ads-kotlin/build/
+.kotlin/
+/plot.png
+
+# pv lint caches
+lean/AgenticDS/plot.*
+.pv/
+contracts/.pv/

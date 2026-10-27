@@ -1,0 +1,43 @@
+# ads-rust-p1-v1: Course A (Rust), Module 1, Problem P1 (ingest and profile Palmer Penguins)
+# Ticket: https://github.com/paiml/agentic-data-science/issues/10
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-15"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Rust functions read_penguins, na_policy and summary_by_species reproduce datasets/golden/p1.json: 342 complete rows, per-species n, mean and sample SD of the four measurement columns."
+  references:
+    - "rust/ads-rust/src/p1.rs"
+    - "rust/ads-rust/tests/p1.rs"
+    - "datasets/golden/p1.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p1_summary_matches_golden:
+    formula: |
+      rows(read_penguins(csv))                      = 344
+      rows(na_policy(df))                           = 342
+      n_g, mean_g(c), sd_g(c)                       = golden.species[g] for g in {Adelie, Chinstrap, Gentoo}, c in the four measurement columns
+      |computed - golden|                           <= 1e-9
+    domain: "datasets/penguins/penguins.csv with SHA256SUMS verified"
+    codomain: "per-species n, mean and sample SD (n-1 denominator)"
+    postconditions:
+      - "NA_POLICY: a row is dropped iff a numeric measurement column is NA; an NA in sex alone keeps the row"
+      - "SAMPLE_SD: sd uses the n-1 denominator"
+      - "CAN_FAIL: dropping the NA policy changes the species counts, so the golden comparison fails"
+
+proof_obligations:
+  - type: invariant
+    property: "Summary statistics equal the golden JSON within 1e-9"
+    formal: "for all g, c: |stat(g, c) - golden(g, c)| <= 1e-9"
+    applies_to: p1_summary_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-P1-001
+    rule: "Per-species counts, means and SDs match the golden within 1e-9"
+    prediction: "make gate-rust passes with llvm-cov lines = 100 and the golden JSON reproduced by summary_by_species"
+    test: "scripts/gate-rust.sh"
+    mutation: "Remove na_policy from the pipeline: n becomes 152, 68, 124 and the count test fails"
+    discriminates: "A summary computed without the NA policy cannot satisfy n = 151, 68, 123"
+    if_fails: "Learners compare their own language against a wrong reference"

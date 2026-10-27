@@ -1,0 +1,44 @@
+# ads-kotlin-examples-m4-v1: Course D (Kotlin), Module 4 examples (wine pipeline and engine comparison)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Two examples for Course D module 4: m4v01 reads both wine tables, validates, splits (every fifth row is a test row), fits a linear quality model on train rows and prints held-out RMSE and R2, reproducing datasets/golden/p4.json within 1e-6; m4v02 aggregates mean quality and row count per colour with a DataFrame groupBy and with plain collections, checks that they agree, and only then times them."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m4v01/M4v01.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m4v02/M4v02.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/M4ExamplesTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/P4Test.kt"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  m4_examples_hold:
+    formula: |
+      rows = 6497; n_train = 5198; n_test = 1299
+      |rmse - 0.760251606190075| <= 1e-6; |r2 - 0.25985449136456| <= 1e-6
+      |mean_dataframe - mean_plain| <= 1e-12 per colour; counts equal (red 1599, white 4898)
+    domain: "datasets/wine-quality (red 1599 + white 4898 rows, SHA256SUMS verified)"
+    codomain: "rows, split sizes, rmse, r2, per-colour counts, agree flag, engine count and PASS verdicts"
+    postconditions:
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "AGREE_BEFORE_TIMING: agreement is printed before the timing line, and the engines are timed only when they agree"
+      - "CAN_FAIL: fitting on all rows moves RMSE by more than 1e-4 and a shifted mean or count makes enginesAgree false"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE and R2 equal the R oracle within 1e-6, and two engines agree before any timing is reported"
+    formal: "|rmse - golden.rmse| <= 1e-6 and |r2 - golden.r2| <= 1e-6 and enginesAgree(a, b)"
+    applies_to: m4_examples_hold
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-EXAMPLES-M4-001
+    rule: "Held-out RMSE and R2 match the golden within 1e-6"
+    prediction: "M4ExamplesTest and P4Test pass inside scripts/gate-kotlin.sh"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Fit on all rows instead of the training rows: RMSE moves by more than 1e-4 and the golden check fails (fittingOnAllRowsLeaksAndFailsTheOracle)"
+    discriminates: "A model that sees its test rows cannot match the oracle"
+    if_fails: "Learners report a leaked, optimistic score"

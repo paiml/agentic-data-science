@@ -15,12 +15,14 @@ conforms() { # shapes data label
 files=$(git ls-files '*/example.ttl')
 [ -z "$files" ] && { echo "shapes parse OK; no example.ttl yet"; exit 0; }
 for f in $files; do
+  case "$f" in /*|*..*) echo "FAIL unsafe path $f"; exit 1 ;; esac
   cat ontology/ads.ttl "$f" > "${TMPDIR:-/tmp}/ads-data.ttl"
   for s in ontology/shapes/*.shape.ttl; do
     conforms "$s" "${TMPDIR:-/tmp}/ads-data.ttl" "$f" || { echo "FAIL $f vs $s"; exit 1; }
   done
 done
 for a in $(git ls-files "*artifact.ttl"); do
+  case "$a" in /*|*..*) echo "FAIL unsafe path $a"; exit 1 ;; esac
   cat ontology/ads.ttl "$a" > "${TMPDIR:-/tmp}/ads-data.ttl"
   conforms ontology/shapes/artifact.shape.ttl "${TMPDIR:-/tmp}/ads-data.ttl" "$a" || { echo "FAIL $a vs artifact shape"; exit 1; }
 done
