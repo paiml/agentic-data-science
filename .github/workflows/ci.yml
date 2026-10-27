@@ -44,8 +44,15 @@ jobs:
       - name: Run the examples
         run: for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
   julia-quality:
+    name: julia-quality (${{ matrix.part }})
     timeout-minutes: 45
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [AgenticDS, BM1, BM2]
+    env:
+      ADS_JULIA_PARTS: AgenticDS BM1 BM2
     steps:
       - uses: actions/checkout@v4
       - name: Install Julia 1.12.1 (pinned, sha256-verified, into RUNNER_TEMP)
@@ -58,8 +65,8 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.julia
-          key: julia-quality-${{ runner.os }}-1.12.1-${{ hashFiles('julia/**/Manifest.toml') }}
-      - run: make gate-julia
+          key: julia-quality-${{ matrix.part }}-${{ runner.os }}-1.12.1-${{ hashFiles('julia/**/Manifest.toml') }}
+      - run: scripts/gate-julia.sh ${{ matrix.part }}
   r:
     timeout-minutes: 45
     runs-on: ubuntu-24.04

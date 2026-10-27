@@ -19,7 +19,7 @@ gate-r:
 	@scripts/gate-r.sh
 
 gate-julia:
-	@scripts/gate-julia.sh
+	@scripts/gate-julia.sh $(JULIA_PARTS)
 
 gate-kotlin:
 	@scripts/gate-kotlin.sh
