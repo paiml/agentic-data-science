@@ -1,4 +1,4 @@
-#' Print the contract line of an example, in green when colour is on.
+#' Print the contract line of an example, in green on a terminal.
 #' @param text The contract line, ending in OK.
 #' @param color Whether to wrap the line in ANSI colour codes.
 #' @return The text, invisibly.
