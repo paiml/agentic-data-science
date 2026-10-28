@@ -34,6 +34,7 @@
   assign("source", function(...) {
     cat(cli::col_grey(R.version.string), "\n", sep = "")
     suppressMessages(base::source(...))
+    Sys.sleep(2.5)
     cat(cli::col_grey("# done"), "\n", sep = "")
     invisible(NULL)
   }, envir = globalenv())
