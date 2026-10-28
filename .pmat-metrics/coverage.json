@@ -1,24 +1,12 @@
 {
-  "git_hash": "9fac1c0f48541aeb811586e49462b0aa22a24805",
-  "tool": "cargo-llvm-cov 0.8.5",
-  "coverage_percent": 100,
-  "line_coverage": 100,
-  "files": [
-    {
-      "filename": "rust/ads-rust/src/p1.rs",
-      "line_percent": 100.0
-    },
-    {
-      "filename": "rust/ads-rust/src/p2.rs",
-      "line_percent": 100.0
-    },
-    {
-      "filename": "rust/ads-rust/src/p3.rs",
-      "line_percent": 100.0
-    },
-    {
-      "filename": "rust/ads-rust/src/p4.rs",
-      "line_percent": 100.0
-    }
-  ]
+  "coverage": 100,
+  "tool": "cargo-llvm-cov",
+  "scope": "lines",
+  "git_hash": "bd2753ca92db72102f955d94190f4de60ebe6f25",
+  "files": {
+    "rust/ads-rust/src/p1.rs": 100.0,
+    "rust/ads-rust/src/p2.rs": 100.0,
+    "rust/ads-rust/src/p3.rs": 100.0,
+    "rust/ads-rust/src/p4.rs": 100.0
+  }
 }
