@@ -3,6 +3,7 @@ package com.paiml.ads
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
@@ -23,6 +24,19 @@ private fun capture(block: () -> Unit): String {
     System.setOut(PrintStream(buf))
     try {
         block()
+    } finally {
+        System.setOut(old)
+    }
+    return buf.toString()
+}
+
+/** Output of a block that must end by throwing. */
+private fun captureFailing(block: () -> Unit): String {
+    val buf = ByteArrayOutputStream()
+    val old = System.out
+    System.setOut(PrintStream(buf))
+    try {
+        assertThrows(IllegalStateException::class.java, block)
     } finally {
         System.setOut(old)
     }
@@ -53,7 +67,7 @@ class M2ExamplesTest {
     fun m2v01PrintsGreenVerdicts() {
         val out = capture { com.paiml.ads.m2v01.main() }
         assertTrue(out.contains("Residual sum PASS"))
-        assertTrue(out.trim().endsWith("Golden P2 PASS"))
+        assertTrue(out.contains("Golden P2 PASS"))
         assertFalse(out.contains("FAIL"))
     }
 
@@ -69,8 +83,11 @@ class M2ExamplesTest {
         )
         System.setProperty(GOLDEN_KEY, shifted.toString())
         try {
-            val out = capture { com.paiml.ads.m2v01.main() }
+            val out =
+                captureFailing { com.paiml.ads.m2v01.main() }
             assertTrue(out.contains("Golden P2 FAIL"))
+            assertTrue(out.contains("ads-kotlin-p2-v1"))
+            assertTrue(out.trim().endsWith(" FAILED"))
             assertTrue(out.contains("Residual sum PASS"))
         } finally {
             System.setProperty(GOLDEN_KEY, goldenPath.toString())

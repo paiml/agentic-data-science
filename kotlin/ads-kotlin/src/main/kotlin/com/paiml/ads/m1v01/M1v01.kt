@@ -2,6 +2,7 @@ package com.paiml.ads.m1v01
 
 import com.paiml.ads.PENGUINS
 import com.paiml.ads.countsHold
+import com.paiml.ads.emitContract
 import com.paiml.ads.naPolicy
 import com.paiml.ads.readPenguins
 import com.paiml.ads.show
@@ -19,4 +20,9 @@ fun main() {
     // The counts are the contract: 344 in, 342 kept.
     val ok = countsHold(rows, kept)
     verdict(ok, "ingest 344 -> 342")
+    emitContract(
+        "ads-kotlin-examples-m1-v1",
+        "rows ${rows.size} -> ${kept.size}",
+        ok,
+    )
 }

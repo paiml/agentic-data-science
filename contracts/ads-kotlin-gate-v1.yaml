@@ -1,0 +1,42 @@
+# ads-kotlin-gate-v1: Kotlin gate (tests, detekt and the tool can-fail tests)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-28"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "A Gradle run that covers more than one area, or the can-fail tests of the gate tools, ends on one contract line. It reads OK only when tests ran and none failed, detekt reported no issue, and the Gradle task itself passed; otherwise it reads FAILED and the exit code is non-zero."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Contract.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/RelayMain.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ContractListener.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ContractTest.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/ToolsCanFailTest.kt"
+    - "kotlin/ads-kotlin/build.gradle.kts"
+    - "CLASSIFICATION (kind: pattern, not kernel): tool output asserted by the test, no kani harness"
+
+equations:
+  gate_line_is_measured:
+    formula: |
+      line = "contract: <name> <measured> OK"  iff  tests > 0 and failed = 0 and issues = 0 and task passed
+    domain: "JUnit results written by the test listener, the detekt XML report, the Gradle task state"
+    codomain: "one contract line, exit code 0 on OK and non-zero on FAILED"
+    postconditions:
+      - "MEASURED: the numbers in the line are read from the test run and the detekt report"
+      - "RERUN: the line is printed by a finalizer task with no outputs, so an up-to-date test or detekt task cannot hide it"
+      - "CAN_FAIL: a failing test, a detekt issue or a missing report prints FAILED (ContractTest)"
+
+proof_obligations:
+  - type: invariant
+    property: "The line reads OK only when every measured condition holds"
+    formal: "OK iff tests > 0 and failed = 0 and issues = 0 and passed"
+    applies_to: gate_line_is_measured
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-GATE-001
+    rule: "The gate line reflects the real test run and detekt report"
+    prediction: "ContractTest passes inside scripts/gate-kotlin.sh"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Plant one detekt issue or fail one test: the line reads FAILED and the exit code is non-zero"
+    discriminates: "A run with a finding cannot print OK"
+    if_fails: "Learners watch a green line over a red gate"

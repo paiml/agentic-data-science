@@ -18,7 +18,7 @@ dependencies {
     runtimeOnly(libs.slf4j.nop)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.jackson)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {
@@ -46,6 +46,7 @@ tasks.test {
 detekt {
     config.setFrom(file("detekt.yml"))
     buildUponDefaultConfig = true
+    reports { xml.required = true }
 }
 
 val lineBound = 100
@@ -162,3 +163,6 @@ tasks.test { outputs.upToDateWhen { false } }
 
 // The wired shacl gate tasks (verifyShacl*).
 apply(from = "shacl.gradle.kts")
+
+// Contract line for the gradle scene entry points.
+apply(from = "contract.gradle.kts")

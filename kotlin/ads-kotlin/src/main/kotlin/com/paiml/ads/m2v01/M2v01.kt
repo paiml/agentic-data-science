@@ -5,6 +5,7 @@ import com.paiml.ads.MASS
 import com.paiml.ads.ORACLE_TOL
 import com.paiml.ads.ZERO_SUM_TOL
 import com.paiml.ads.doubles
+import com.paiml.ads.emitContract
 import com.paiml.ads.fitQr
 import com.paiml.ads.goldenOls
 import com.paiml.ads.loadClean
@@ -25,9 +26,16 @@ fun main() {
     // With an intercept, residuals sum to zero.
     val res = residualSum(fit, x, y)
     show("residuals", "%.1e".format(res))
-    verdict(abs(res) < ZERO_SUM_TOL, "Residual sum")
+    val zero = abs(res) < ZERO_SUM_TOL
+    verdict(zero, "Residual sum")
 
     // The fit must match the R golden within 1e-6.
     val gold = goldenOls()
-    verdict(fit.agrees(gold, ORACLE_TOL), "Golden P2")
+    val golden = fit.agrees(gold, ORACLE_TOL)
+    verdict(golden, "Golden P2")
+    emitContract(
+        "ads-kotlin-p2-v1",
+        "residuals %.1e slope %.2f".format(res, fit.slope),
+        zero and golden,
+    )
 }

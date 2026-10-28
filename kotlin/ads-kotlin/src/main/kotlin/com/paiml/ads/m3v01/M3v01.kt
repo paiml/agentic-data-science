@@ -2,6 +2,7 @@ package com.paiml.ads.m3v01
 
 import com.paiml.ads.classify
 import com.paiml.ads.cluster
+import com.paiml.ads.emitContract
 import com.paiml.ads.loadClean
 import com.paiml.ads.matchesGolden
 import com.paiml.ads.readCentroids
@@ -26,5 +27,14 @@ fun main() {
     show("sizes", "${km.sizes}")
 
     // Both models must reproduce the R golden.
-    verdict(matchesGolden(scored, km), "P3 matches golden")
+    val ok = matchesGolden(scored, km)
+    verdict(ok, "P3 matches golden")
+    emitContract(
+        "ads-kotlin-p3-v1",
+        "accuracy %.4f objective %.4f".format(
+            scored.accuracy(),
+            km.objective,
+        ),
+        ok,
+    )
 }

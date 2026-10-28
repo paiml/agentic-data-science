@@ -45,6 +45,12 @@ private fun exec(
     return p.waitFor() to out
 }
 
+private val CONTRACT_APPLY =
+    Regex(
+        """\n*// Contract line for the gradle[^\n]*\n""" +
+            """apply\(from = "contract.gradle.kts"\)\n?""",
+    )
+
 private val SHACL_APPLY =
     Regex(
         """\n*// The wired shacl[^\n]*\n""" +
@@ -71,8 +77,10 @@ private fun buildCopy(
     // Tool copies have no repo tree; the shacl gate is tested apart.
     val gb = File(tmp, "ads-kotlin/build.gradle.kts")
     val stripped = gb.readText().replace(SHACL_APPLY, "\n")
+    val bare = stripped.replace(CONTRACT_APPLY, "\n")
     check(stripped != gb.readText()) { "no shacl apply line" }
-    gb.writeText(stripped)
+    check(bare != stripped) { "no contract apply line" }
+    gb.writeText(bare)
     val src = File(tmp, "ads-kotlin/src/main/kotlin")
     src.mkdirs()
     File(src, "Source.kt").writeText(source)

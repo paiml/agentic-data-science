@@ -5,6 +5,7 @@ import com.paiml.ads.WHITE
 import com.paiml.ads.aggregateFrame
 import com.paiml.ads.aggregatePlain
 import com.paiml.ads.benchWine
+import com.paiml.ads.emitContract
 import com.paiml.ads.enginesAgree
 import com.paiml.ads.readWine
 import com.paiml.ads.show
@@ -28,5 +29,11 @@ fun main() {
 
     val live =
         secs.isNotEmpty() && secs.values.all { it > 0 }
-    verdict(agree && live, "P4 bench")
+    val ok = agree && live
+    verdict(ok, "P4 bench")
+    emitContract(
+        "ads-kotlin-examples-m4-v1",
+        "engines agree, timed ${secs.size}",
+        ok,
+    )
 }
