@@ -1,69 +1,44 @@
-/-
-Copyright (c) 2026 Pragmatic AI Labs. All rights reserved.
-Released under MIT license as described in the file LICENSE.
-Authors: Pragmatic AI Labs
--/
-import Mathlib
-/-! # Closed-form OLS over any field -/
+import AgenticDS.Ols
+import AgenticDS.Profile
+
 namespace AgenticDS
-variable {K : Type*} [Field K]
-abbrev Data (K : Type*) := List (K × K)
-def sx (d : Data K) : K := (d.map (·.1)).sum
-def sy (d : Data K) : K := (d.map (·.2)).sum
-def sxx (d : Data K) : K := (d.map fun p => p.1 * p.1).sum
-def sxy (d : Data K) : K := (d.map fun p => p.1 * p.2).sum
-def cnt (d : Data K) : K := (d.length : K)
 
-def olsSlope (d : Data K) : K :=
-  (cnt d * sxy d - sx d * sy d) /
-    (cnt d * sxx d - sx d ^ 2)
+/-- Fitted line value at `x`. -/
+def predict (a b x : ℚ) : ℚ := a + b * x
 
-def olsIntercept (d : Data K) : K :=
-  (sy d - olsSlope d * sx d) / cnt d
+/-- (flipper_length_mm, body_mass_g) pairs of the complete rows. -/
+def flipperMass (txt : String) : List (ℚ × ℚ) :=
+  (completeRows txt).filterMap (fun r => match r.2[2]?, r.2[3]? with
+    | some x, some y => some (x, y)
+    | _, _ => none)
 
-/-- Residuals of the line a + b x. -/
-def resid (d : Data K) (a b : K) : List K :=
-  d.map fun p => p.2 - (a + b * p.1)
+/-- Sum of squared residuals of the line `a + b x` over `d`. -/
+def sse (a b : ℚ) (d : List (ℚ × ℚ)) : ℚ := (d.map fun p => (p.2 - predict a b p.1) ^ 2).sum
 
-/-- Residuals weighted by x. -/
-def residX (d : Data K) (a b : K) : List K :=
-  d.map fun p => (p.2 - (a + b * p.1)) * p.1
+/-- Total sum of squares around the mean of y. -/
+def sst (d : List (ℚ × ℚ)) : ℚ :=
+  let m := (d.map Prod.snd).sum / (d.length : ℚ)
+  (d.map fun p => (p.2 - m) ^ 2).sum
 
-theorem resid_sum (d : Data K) (a b : K) :
-    (resid d a b).sum = sy d - cnt d * a - b * sx d := by
-  induction d with
-  | nil => simp [resid, sy, cnt, sx]
-  | cons p t ih =>
-    simp only [resid, sy, cnt, sx] at ih ⊢
-    simp only [List.map_cons, List.sum_cons,
-      List.length_cons]
-    push_cast
-    linear_combination ih
+def r2 (d : List (ℚ × ℚ)) : ℚ :=
+  1 - sse (olsIntercept d) (olsSlope d) d / sst d
 
-theorem resid_x_sum (d : Data K) (a b : K) :
-    (residX d a b).sum = sxy d - a * sx d - b * sxx d := by
-  induction d with
-  | nil => simp [residX, sxy, sx, sxx]
-  | cons p t ih =>
-    simp only [residX, sxy, sx, sxx] at ih ⊢
-    simp only [List.map_cons, List.sum_cons]
-    linear_combination ih
+/-- Mean squared error of the fitted line (RMSE is its square root). -/
+def mse (d : List (ℚ × ℚ)) : ℚ := sse (olsIntercept d) (olsSlope d) d / (d.length : ℚ)
 
-/-- T4: the fit satisfies both normal equations. -/
-theorem ols_normal_equations (d : Data K)
-    (hn : cnt d ≠ 0)
-    (hden : cnt d * sxx d - sx d ^ 2 ≠ 0) :
-    (resid d (olsIntercept d) (olsSlope d)).sum = 0 ∧
-    (residX d (olsIntercept d) (olsSlope d)).sum = 0 := by
-  rw [resid_sum, resid_x_sum]
-  simp only [olsIntercept, olsSlope]
-  constructor <;> field_simp <;> ring
+/-- Fold ids from `folds.csv` (header dropped), one per complete row. -/
+def readFolds (txt : String) : List Nat :=
+  (parseCsv txt).drop 1 |>.filterMap (fun f => f[1]?.bind String.toNat?)
 
-/-- T5: over the reals the residuals sum to zero. -/
-theorem ols_residuals_sum_zero_real (d : List (ℝ × ℝ))
-    (hn : cnt d ≠ 0)
-    (hden : cnt d * sxx d - sx d ^ 2 ≠ 0) :
-    (resid d (olsIntercept d) (olsSlope d)).sum = 0 :=
-  (ols_normal_equations d hn hden).1
+/-- Pooled out-of-fold mean squared error: train on the other folds, predict the held-out fold. -/
+def cvMse (d : List (ℚ × ℚ)) (folds : List Nat) (k : Nat) : ℚ :=
+  let tagged := d.zip folds
+  let errs := (List.range k).flatMap fun f =>
+    let train := (tagged.filter (·.2 ≠ f + 1)).map Prod.fst
+    let test := (tagged.filter (·.2 = f + 1)).map Prod.fst
+    let a := olsIntercept train
+    let b := olsSlope train
+    test.map fun p => (p.2 - predict a b p.1) ^ 2
+  errs.sum / (errs.length : ℚ)
 
 end AgenticDS
