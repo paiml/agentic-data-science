@@ -1,4 +1,4 @@
-# Native-R scene template (DEMO-NATIVE-001): loaded by the R console through R_PROFILE_USER, off-camera.
+# Native-R scene template: loaded by the R console through R_PROFILE_USER, off-camera.
 # Env (set per scene in the spec): ADS_RUN = pinned example run.R; the panel title is that path.
 # It loads the pinned package, then prints the example's own source, highlighted, and holds it 4 s
 # before the prompt returns, so the course code is on screen >= 3 s before anything is typed or run.
@@ -38,5 +38,5 @@
     cat(cli::col_grey("# done"), "\n", sep = "")
     invisible(NULL)
   }, envir = globalenv())
-  cat(cli::col_grey("# ready: R 4.6.1, agenticds loaded"), "\n", sep = "")
+  cat(cli::col_grey("# ready: ", R.version.string, ", agenticds loaded"), "\n", sep = "")
 }
