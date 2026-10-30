@@ -1,5 +1,7 @@
 package com.paiml.ads
 
+import java.util.Locale
+
 /**
  * Provable contract: ads-kotlin-p2-v1, printed only after both solvers agree.
  */
@@ -15,8 +17,8 @@ fun main() {
     val y = df.doubles(MASS)
     val fit = fitSimple(x, y)
     val qr = fitQr(x, y)
-    show("intercept", "%.2f".format(fit.intercept))
-    show("slope", "%.2f".format(fit.slope))
+    show("intercept", "%.2f".format(Locale.ROOT, fit.intercept))
+    show("slope", "%.2f".format(Locale.ROOT, fit.slope))
 
     // Scatter by species plus the fitted line.
     plotFit(df, fit)
@@ -27,7 +29,7 @@ fun main() {
     verdict(ok, "Simple vs QR")
     emitContract(
         "ads-kotlin-p2-v1",
-        "simple vs QR slope %.2f".format(fit.slope),
+        "simple vs QR slope %.2f".format(Locale.ROOT, fit.slope),
         ok,
     )
 }

@@ -8,7 +8,38 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.PrintStream
 
-private val okLine = Regex("^contract: .+ OK$")
+private val okLine = Regex("^contract: [a-z0-9-]+ [^\\r\\n]+ OK$")
+private const val NUM = "-?[0-9]+\\.[0-9]+"
+private const val EXP = "[0-9]\\.[0-9]+e[+-][0-9]{2}"
+
+/** Exact shape of each example's contract line (locale-independent: ASCII digits, '.'). */
+private val pinned =
+    mapOf(
+        "m1v01" to
+            Regex(
+                "^contract: ads-kotlin-examples-m1-v1 rows [0-9]+ -> [0-9]+ OK$",
+            ),
+        "m1v02" to
+            Regex(
+                "^contract: ads-kotlin-examples-m1-v1 golden max gap $EXP OK$",
+            ),
+        "m2v01" to
+            Regex(
+                "^contract: ads-kotlin-p2-v1 residuals $EXP slope $NUM OK$",
+            ),
+        "m3v01" to
+            Regex(
+                "^contract: ads-kotlin-p3-v1 accuracy $NUM objective $NUM OK$",
+            ),
+        "m4v01" to
+            Regex(
+                "^contract: ads-kotlin-examples-m4-v1 rmse $NUM r2 $NUM OK$",
+            ),
+        "m4v02" to
+            Regex(
+                "^contract: ads-kotlin-examples-m4-v1 engines agree, timed [0-9]+ OK$",
+            ),
+    )
 
 private fun out(block: () -> Unit): String {
     val buf = ByteArrayOutputStream()
@@ -70,7 +101,8 @@ class ContractTest {
             val all = lines(run)
             val last = all.last()
             assertTrue(
-                okLine.matches(last),
+                okLine.matches(last) &&
+                    pinned.getValue(name).matches(last),
                 "$name last line: $last",
             )
             assertEquals(
