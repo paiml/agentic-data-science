@@ -2,6 +2,7 @@ package com.paiml.ads.m3v01
 
 import com.paiml.ads.classify
 import com.paiml.ads.cluster
+import com.paiml.ads.emitContract
 import com.paiml.ads.loadClean
 import com.paiml.ads.matchesGolden
 import com.paiml.ads.readCentroids
@@ -9,6 +10,9 @@ import com.paiml.ads.readSplit
 import com.paiml.ads.show
 import com.paiml.ads.verdict
 
+/**
+ * Provable contract: ads-kotlin-p3-v1, printed only after the check passes.
+ */
 fun main() {
     // The 342 clean rows, the fixed split and centroids.
     val df = loadClean()
@@ -26,5 +30,14 @@ fun main() {
     show("sizes", "${km.sizes}")
 
     // Both models must reproduce the R golden.
-    verdict(matchesGolden(scored, km), "P3 matches golden")
+    val ok = matchesGolden(scored, km)
+    verdict(ok, "P3 matches golden")
+    emitContract(
+        "ads-kotlin-p3-v1",
+        "accuracy %.4f objective %.4f".format(
+            scored.accuracy(),
+            km.objective,
+        ),
+        ok,
+    )
 }

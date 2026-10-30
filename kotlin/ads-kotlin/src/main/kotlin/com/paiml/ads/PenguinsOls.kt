@@ -1,5 +1,8 @@
 package com.paiml.ads
 
+/**
+ * Provable contract: ads-kotlin-p2-v1, printed only after both solvers agree.
+ */
 fun main() {
     showVersions()
 
@@ -20,5 +23,11 @@ fun main() {
     show("plot", PLOT)
 
     // Both solvers must agree within 1e-8.
-    verdict(fit.agrees(qr, tol = 1e-8), "Simple vs QR")
+    val ok = fit.agrees(qr, tol = 1e-8)
+    verdict(ok, "Simple vs QR")
+    emitContract(
+        "ads-kotlin-p2-v1",
+        "simple vs QR slope %.2f".format(fit.slope),
+        ok,
+    )
 }

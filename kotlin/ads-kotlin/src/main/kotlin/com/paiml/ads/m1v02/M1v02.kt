@@ -2,6 +2,7 @@ package com.paiml.ads.m1v02
 
 import com.paiml.ads.GOLDEN_P1
 import com.paiml.ads.PENGUINS
+import com.paiml.ads.emitContract
 import com.paiml.ads.goldenGap
 import com.paiml.ads.naPolicy
 import com.paiml.ads.readPenguins
@@ -11,6 +12,9 @@ import com.paiml.ads.summariseBySpecies
 import com.paiml.ads.verdict
 import com.paiml.ads.withinTol
 
+/**
+ * Provable contract: ads-kotlin-examples-m1-v1, printed only after the check passes.
+ */
 fun main() {
     // Ingest, then profile each species.
     val kept = naPolicy(readPenguins(PENGUINS))
@@ -20,5 +24,11 @@ fun main() {
     // Compare every number with the committed R golden.
     val gap = goldenGap(rows, GOLDEN_P1)
     show("max gap", "%.2e".format(gap))
-    verdict(withinTol(gap), "profile matches R golden")
+    val ok = withinTol(gap)
+    verdict(ok, "profile matches R golden")
+    emitContract(
+        "ads-kotlin-examples-m1-v1",
+        "golden max gap %.2e".format(gap),
+        ok,
+    )
 }
