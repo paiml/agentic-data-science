@@ -10,7 +10,7 @@ import java.io.PrintStream
 
 private val okLine = Regex("^contract: [a-z0-9-]+ [^\\r\\n]+ OK$")
 private const val NUM = "-?[0-9]+\\.[0-9]+"
-private const val EXP = "[0-9]\\.[0-9]+e[+-][0-9]{2}"
+private const val EXP = "-?[0-9]\\.[0-9]+e[+-][0-9]{2}"
 
 /** Exact shape of each example's contract line (locale-independent: ASCII digits, '.'). */
 private val pinned =
