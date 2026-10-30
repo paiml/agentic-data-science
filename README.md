@@ -43,6 +43,33 @@ CI jobs for R, Julia and Lean run a format and lint check with zero diff and zer
 
 Lean has no official formatter, so the Lean gate is the linter set only. styler has no line-width setting; lintr enforces the 68 limit on R code. The Mathlib header linter is set to the MIT licence text this repo uses.
 
+## Installation
+
+```bash
+git clone https://github.com/paiml/agentic-data-science
+cd agentic-data-science
+lake build --dir lean/AgenticDS   # uses the Lean toolchain pinned in lean/AgenticDS/lean-toolchain
+```
+
+`make gate` also needs elan (the Lean toolchain manager), R with the covr, lintr and styler packages, Julia, Apache Jena (`shacl`, Java 17 or later) and pmat on `PATH`.
+
+## Usage
+
+```bash
+make lean-scan
+make gate
+```
+
+`make gate` runs the dataset, SHACL, R, Julia, Lean and pmat gates in turn.
+
+## Contributing
+
+Open a pull request against `main`. Every change keeps `make gate` green and carries a test that fails when the behaviour breaks.
+
+## License
+
+The datasets and the R package (`datasets/penguins`, `datasets/wine-quality`, `r/agenticds`) each carry their own `LICENSE` file; see Dataset licences, below.
+
 ## Dataset licences
 
 - Palmer Penguins: CC0 1.0 (Palmer Station LTER data policy).
