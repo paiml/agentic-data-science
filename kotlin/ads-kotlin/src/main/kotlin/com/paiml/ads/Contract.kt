@@ -1,6 +1,8 @@
 package com.paiml.ads
 
+import org.jetbrains.kotlinx.dataframe.api.ParserOptions
 import java.io.File
+import java.util.Locale
 
 /** Contract named by a run that touches more than one area. */
 const val GATE_CONTRACT = "ads-kotlin-gate-v1"
@@ -102,3 +104,6 @@ fun gateLine(
         passed && t > 0 && n == 0,
     )
 }
+
+/** CSV cells parse with `.` as the decimal point whatever the host locale. */
+val CSV_PARSER: ParserOptions = ParserOptions(locale = Locale.ROOT)

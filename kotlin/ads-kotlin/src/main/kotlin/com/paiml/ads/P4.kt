@@ -76,7 +76,7 @@ private fun AnyFrame.column(name: String): List<Double> =
 
 /** Read one colour table (predictors, quality, colour). */
 private fun readOne(path: String): Wine {
-    val df = DataFrame.readCsv(path)
+    val df = DataFrame.readCsv(path, parserOptions = CSV_PARSER)
     val cols = FEATURES.map { df.column(it) }
     return Wine(
         (0 until df.rowsCount()).map { i ->

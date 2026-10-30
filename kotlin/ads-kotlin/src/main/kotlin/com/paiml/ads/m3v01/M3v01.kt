@@ -9,6 +9,7 @@ import com.paiml.ads.readCentroids
 import com.paiml.ads.readSplit
 import com.paiml.ads.show
 import com.paiml.ads.verdict
+import java.util.Locale
 
 /**
  * Provable contract: ads-kotlin-p3-v1, printed only after the check passes.
@@ -21,12 +22,12 @@ fun main() {
 
     // Gini tree: fit on train rows, score on test rows.
     val scored = classify(df, split)
-    show("accuracy", "%.4f".format(scored.accuracy()))
+    show("accuracy", "%.4f".format(Locale.ROOT, scored.accuracy()))
     show("confusion", "${scored.confusion}")
 
     // Lloyd k-means from the fixed starting centroids.
     val km = cluster(df, start)
-    show("objective", "%.4f".format(km.objective))
+    show("objective", "%.4f".format(Locale.ROOT, km.objective))
     show("sizes", "${km.sizes}")
 
     // Both models must reproduce the R golden.
@@ -35,6 +36,7 @@ fun main() {
     emitContract(
         "ads-kotlin-p3-v1",
         "accuracy %.4f objective %.4f".format(
+            Locale.ROOT,
             scored.accuracy(),
             km.objective,
         ),

@@ -12,6 +12,7 @@ import com.paiml.ads.loadClean
 import com.paiml.ads.residualSum
 import com.paiml.ads.show
 import com.paiml.ads.verdict
+import java.util.Locale
 import kotlin.math.abs
 
 /**
@@ -23,12 +24,12 @@ fun main() {
     val x = df.doubles(FLIPPER)
     val y = df.doubles(MASS)
     val fit = fitQr(x, y)
-    show("intercept", "%.2f".format(fit.intercept))
-    show("slope", "%.2f".format(fit.slope))
+    show("intercept", "%.2f".format(Locale.ROOT, fit.intercept))
+    show("slope", "%.2f".format(Locale.ROOT, fit.slope))
 
     // With an intercept, residuals sum to zero.
     val res = residualSum(fit, x, y)
-    show("residuals", "%.1e".format(res))
+    show("residuals", "%.1e".format(Locale.ROOT, res))
     val zero = abs(res) < ZERO_SUM_TOL
     verdict(zero, "Residual sum")
 
@@ -38,7 +39,11 @@ fun main() {
     verdict(golden, "Golden P2")
     emitContract(
         "ads-kotlin-p2-v1",
-        "residuals %.1e slope %.2f".format(res, fit.slope),
+        "residuals %.1e slope %.2f".format(
+            Locale.ROOT,
+            res,
+            fit.slope,
+        ),
         zero and golden,
     )
 }

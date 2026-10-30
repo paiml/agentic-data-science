@@ -11,6 +11,7 @@ import com.paiml.ads.showSpecies
 import com.paiml.ads.summariseBySpecies
 import com.paiml.ads.verdict
 import com.paiml.ads.withinTol
+import java.util.Locale
 
 /**
  * Provable contract: ads-kotlin-examples-m1-v1, printed only after the check passes.
@@ -23,12 +24,12 @@ fun main() {
 
     // Compare every number with the committed R golden.
     val gap = goldenGap(rows, GOLDEN_P1)
-    show("max gap", "%.2e".format(gap))
+    show("max gap", "%.2e".format(Locale.ROOT, gap))
     val ok = withinTol(gap)
     verdict(ok, "profile matches R golden")
     emitContract(
         "ads-kotlin-examples-m1-v1",
-        "golden max gap %.2e".format(gap),
+        "golden max gap %.2e".format(Locale.ROOT, gap),
         ok,
     )
 }
