@@ -56,9 +56,10 @@ private val TESTS = Regex("""tests (\d+) OK$""")
 
 private fun issues(xml: File) =
     if (xml.isFile) {
-        ISSUE.findAll(
-            xml.readText(),
-        ).count()
+        ISSUE
+            .findAll(
+                xml.readText(),
+            ).count()
     } else {
         -1
     }

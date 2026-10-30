@@ -4,9 +4,10 @@ import kotlin.math.abs
 
 /** Mean quality per colour, colours sorted. */
 fun meanByColor(wine: Wine): Map<String, Double> =
-    wine.color.indices.groupBy { wine.color[it] }.toSortedMap()
-        .mapValues {
-                (_, i) ->
+    wine.color.indices
+        .groupBy { wine.color[it] }
+        .toSortedMap()
+        .mapValues { (_, i) ->
             i.sumOf { wine.quality[it] } / i.size
         }
 

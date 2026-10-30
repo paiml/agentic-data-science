@@ -24,15 +24,15 @@ private fun dist(
     b: DoubleArray,
 ): Double = a.indices.sumOf { (a[it] - b[it]) * (a[it] - b[it]) }
 
-private class Scaler(x: List<DoubleArray>) {
+private class Scaler(
+    x: List<DoubleArray>,
+) {
     private val centre =
-        MEASURES.indices.map {
-                c ->
+        MEASURES.indices.map { c ->
             mean(x.map { it[c] })
         }
     private val spread =
-        MEASURES.indices.map {
-                c ->
+        MEASURES.indices.map { c ->
             sd(x.map { it[c] })
         }
 

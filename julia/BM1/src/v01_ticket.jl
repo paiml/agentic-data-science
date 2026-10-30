@@ -11,7 +11,7 @@ function drops(raw, clean)
     return (n, m) == (344, 342)
 end
 function golden_n(clean)
-    sp = unique(clean.species)
+    sp = sort(unique(clean.species))
     ns = [gold_sp(s).n for s in sp]
     println("golden n: ", ns, " sums to ", sum(ns))
     return ns == [sum(clean.species .== s) for s in sp]

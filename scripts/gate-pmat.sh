@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # pmat quality-gate on the languages pmat can analyze (pilot R5: Rust only; Kotlin runs its measured pmat checks in gate-kotlin, Lean has no analyzer, see gate-lean).
-# Julia and R have no pmat analyzer and are gated by their native tools (gate-r, gate-julia).
+# pmat has no analyzer for R, Julia or Lean, so it checks none of their code
+# (`pmat analyze hardcoded-paths` on courses/C-r read the yaml/json files only, 0 of the .R files,
+# so it is not run). R is gated by scripts/gate-r.sh (covr, lintr, styler, testthat).
 # Rust: the crate dir is passed (dead-code needs Cargo.toml) and the coverage check is left to
 # cargo llvm-cov (gate-rust.sh, lines=100): pmat's coverage check only reads a report it did not make.
 set -uo pipefail

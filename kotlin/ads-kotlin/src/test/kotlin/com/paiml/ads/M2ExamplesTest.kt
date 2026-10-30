@@ -15,7 +15,8 @@ private const val GOLDEN_KEY = "ads.golden"
 private const val EXACT = 1e-12
 
 private val goldenPath: Path =
-    Path.of(System.getProperty("ads.root"))
+    Path
+        .of(System.getProperty("ads.root"))
         .resolve("datasets/golden/p2.json")
 
 private fun capture(block: () -> Unit): String {
@@ -65,7 +66,11 @@ class M2ExamplesTest {
 
     @Test
     fun m2v01PrintsGreenVerdicts() {
-        val out = capture { com.paiml.ads.m2v01.main() }
+        val out =
+            capture {
+                com.paiml.ads.m2v01
+                    .main()
+            }
         assertTrue(out.contains("Residual sum PASS"))
         assertTrue(out.contains("Golden P2 PASS"))
         assertFalse(out.contains("FAIL"))
@@ -74,17 +79,24 @@ class M2ExamplesTest {
     @Test
     fun m2v01FailsOnAShiftedGolden() {
         val shifted =
-            TempTrash.dir("ads-p2").toPath()
+            TempTrash
+                .dir("ads-p2")
+                .toPath()
                 .resolve("p2.json")
         Files.writeString(
             shifted,
-            goldenPath.toFile().readText()
+            goldenPath
+                .toFile()
+                .readText()
                 .replace("-5780.8", "-5781.8"),
         )
         System.setProperty(GOLDEN_KEY, shifted.toString())
         try {
             val out =
-                captureFailing { com.paiml.ads.m2v01.main() }
+                captureFailing {
+                    com.paiml.ads.m2v01
+                        .main()
+                }
             assertTrue(out.contains("Golden P2 FAIL"))
             assertTrue(out.contains("ads-kotlin-p2-v1"))
             assertTrue(out.trim().endsWith(" FAILED"))

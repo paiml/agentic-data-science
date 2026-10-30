@@ -122,9 +122,10 @@ class P4Test {
         val shifted =
             Wine(
                 wine.x,
-                wine.quality.map {
-                    it + 1
-                }.toDoubleArray(),
+                wine.quality
+                    .map {
+                        it + 1
+                    }.toDoubleArray(),
                 wine.color,
             )
         assertFalse(matchesGolden(shifted, split, score))
@@ -207,14 +208,12 @@ class P4Test {
         assertEquals(4898, b.getValue("white").second)
         assertTrue(enginesAgree(a, b))
         val shifted =
-            b.mapValues {
-                    (_, v) ->
+            b.mapValues { (_, v) ->
                 v.first + 1 to v.second
             }
         assertFalse(enginesAgree(a, shifted))
         val counts =
-            b.mapValues {
-                    (_, v) ->
+            b.mapValues { (_, v) ->
                 v.first to v.second + 1
             }
         assertFalse(enginesAgree(a, counts))

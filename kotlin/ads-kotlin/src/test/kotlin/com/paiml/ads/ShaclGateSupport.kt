@@ -34,15 +34,18 @@ private val TABLE_ROW =
 internal fun shaclTasks(): List<String> =
     TABLE_ROW
         .findAll(File(scripts, "shacl.gradle.kts").readText())
-        .map { "verifyShacl${it.groupValues[1]}" }.toList()
+        .map { "verifyShacl${it.groupValues[1]}" }
+        .toList()
 
 internal fun shaclRun(
     dir: File,
     vararg cmd: String,
 ): Pair<Int, String> {
     val p =
-        ProcessBuilder(*cmd).directory(dir)
-            .redirectErrorStream(true).start()
+        ProcessBuilder(*cmd)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
     val out = p.inputStream.bufferedReader().readText()
     return p.waitFor() to out
 }
@@ -85,8 +88,10 @@ internal class ShaclRepoCopy {
             }
         val text = f.readText()
         val broken =
-            text.replace("\"kotlin\"", "\"cobol\"")
-                .lines().filterNot { "schemaVersion" in it }
+            text
+                .replace("\"kotlin\"", "\"cobol\"")
+                .lines()
+                .filterNot { "schemaVersion" in it }
                 .joinToString("\n")
         check(broken != text) { "nothing to break in $f" }
         f.writeText(broken)

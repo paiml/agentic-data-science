@@ -26,12 +26,30 @@ private fun lines(block: () -> Unit) = out(block).trim().lines()
 
 private val examples =
     mapOf<String, () -> Unit>(
-        "m1v01" to { com.paiml.ads.m1v01.main() },
-        "m1v02" to { com.paiml.ads.m1v02.main() },
-        "m2v01" to { com.paiml.ads.m2v01.main() },
-        "m3v01" to { com.paiml.ads.m3v01.main() },
-        "m4v01" to { com.paiml.ads.m4v01.main() },
-        "m4v02" to { com.paiml.ads.m4v02.main() },
+        "m1v01" to {
+            com.paiml.ads.m1v01
+                .main()
+        },
+        "m1v02" to {
+            com.paiml.ads.m1v02
+                .main()
+        },
+        "m2v01" to {
+            com.paiml.ads.m2v01
+                .main()
+        },
+        "m3v01" to {
+            com.paiml.ads.m3v01
+                .main()
+        },
+        "m4v01" to {
+            com.paiml.ads.m4v01
+                .main()
+        },
+        "m4v02" to {
+            com.paiml.ads.m4v02
+                .main()
+        },
     )
 
 /** Every example ends on exactly one OK contract line. */

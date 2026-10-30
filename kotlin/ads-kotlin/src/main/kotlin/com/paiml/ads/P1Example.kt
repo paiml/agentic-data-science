@@ -9,7 +9,8 @@ const val P1_TOL = 1e-6
 
 /** Committed R golden for P1, found beside the dataset. */
 val GOLDEN_P1: File =
-    File(PENGUINS).absoluteFile.parentFile.parentFile
+    File(PENGUINS)
+        .absoluteFile.parentFile.parentFile
         .resolve("golden/p1.json")
 
 private val NUMBER = Regex("""^\s*"(\w+)":\s*(-?[0-9.eE+-]+),?$""")
@@ -32,16 +33,17 @@ fun goldenValues(file: File): Map<String, Double> {
 
 /** The same keys (species/...) for a computed summary. */
 fun summaryValues(rows: List<SpeciesSummary>): Map<String, Double> =
-    rows.flatMap { s ->
-        val p = "species/${s.species}"
-        listOf("$p/n" to s.n.toDouble()) +
-            MEASURES.flatMap { c ->
-                listOf(
-                    "$p/$c/mean" to s.mean.getValue(c),
-                    "$p/$c/sd" to s.sd.getValue(c),
-                )
-            }
-    }.toMap()
+    rows
+        .flatMap { s ->
+            val p = "species/${s.species}"
+            listOf("$p/n" to s.n.toDouble()) +
+                MEASURES.flatMap { c ->
+                    listOf(
+                        "$p/$c/mean" to s.mean.getValue(c),
+                        "$p/$c/sd" to s.sd.getValue(c),
+                    )
+                }
+        }.toMap()
 
 /** Largest |computed - golden|; infinite if the keys differ. */
 fun goldenGap(

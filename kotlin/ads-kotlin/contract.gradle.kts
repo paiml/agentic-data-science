@@ -5,11 +5,15 @@
 import org.gradle.api.tasks.SourceSetContainer
 
 val testsResult: String =
-    layout.buildDirectory.file("contract/tests.txt")
-        .get().asFile.absolutePath
+    layout.buildDirectory
+        .file("contract/tests.txt")
+        .get()
+        .asFile.absolutePath
 val detektXml: String =
-    layout.buildDirectory.file("reports/detekt/detekt.xml")
-        .get().asFile.absolutePath
+    layout.buildDirectory
+        .file("reports/detekt/detekt.xml")
+        .get()
+        .asFile.absolutePath
 val inCheck = "${project.path}:check"
 val main =
     extensions.getByType<SourceSetContainer>()["main"]
