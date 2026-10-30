@@ -11,6 +11,9 @@ import com.paiml.ads.splitWine
 import com.paiml.ads.validate
 import com.paiml.ads.verdict
 
+/**
+ * Provable contract: ads-kotlin-examples-m4-v1, printed only after the check passes.
+ */
 fun main() {
     // Read both colours; validate before anything else.
     val wine = validate(readWine(RED, WHITE))

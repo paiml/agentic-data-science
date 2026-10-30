@@ -18,6 +18,9 @@ val inCheck = "${project.path}:check"
 val main =
     extensions.getByType<SourceSetContainer>()["main"]
 
+// A run that skips the tests (check -x test) must not relay an earlier run line.
+gradle.taskGraph.whenReady { File(testsResult).delete() }
+
 tasks.named<Test>("test") {
     systemProperty("ads.contract.out", testsResult)
     finalizedBy("contractTests")

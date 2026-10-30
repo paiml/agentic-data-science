@@ -12,6 +12,9 @@ import com.paiml.ads.summariseBySpecies
 import com.paiml.ads.verdict
 import com.paiml.ads.withinTol
 
+/**
+ * Provable contract: ads-kotlin-examples-m1-v1, printed only after the check passes.
+ */
 fun main() {
     // Ingest, then profile each species.
     val kept = naPolicy(readPenguins(PENGUINS))

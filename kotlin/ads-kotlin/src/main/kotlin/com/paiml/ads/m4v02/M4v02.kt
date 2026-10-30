@@ -12,6 +12,9 @@ import com.paiml.ads.show
 import com.paiml.ads.validate
 import com.paiml.ads.verdict
 
+/**
+ * Provable contract: ads-kotlin-examples-m4-v1, printed only after the check passes.
+ */
 fun main() {
     // Two engines aggregate the same wine table.
     val wine = validate(readWine(RED, WHITE))

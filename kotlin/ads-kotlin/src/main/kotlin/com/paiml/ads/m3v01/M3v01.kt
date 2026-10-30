@@ -10,6 +10,9 @@ import com.paiml.ads.readSplit
 import com.paiml.ads.show
 import com.paiml.ads.verdict
 
+/**
+ * Provable contract: ads-kotlin-p3-v1, printed only after the check passes.
+ */
 fun main() {
     // The 342 clean rows, the fixed split and centroids.
     val df = loadClean()

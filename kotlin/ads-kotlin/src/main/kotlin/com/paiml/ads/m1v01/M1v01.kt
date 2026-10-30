@@ -8,6 +8,9 @@ import com.paiml.ads.readPenguins
 import com.paiml.ads.show
 import com.paiml.ads.verdict
 
+/**
+ * Provable contract: ads-kotlin-examples-m1-v1, printed only after the check passes.
+ */
 fun main() {
     // Typed read: NA is a null, never a sentinel.
     val rows = readPenguins(PENGUINS)

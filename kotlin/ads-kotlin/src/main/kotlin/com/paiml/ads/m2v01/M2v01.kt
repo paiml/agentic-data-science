@@ -14,6 +14,9 @@ import com.paiml.ads.show
 import com.paiml.ads.verdict
 import kotlin.math.abs
 
+/**
+ * Provable contract: ads-kotlin-p2-v1, printed only after the check passes.
+ */
 fun main() {
     // Clean the two model columns, then fit by QR.
     val df = loadClean()
