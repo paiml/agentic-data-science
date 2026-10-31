@@ -1,7 +1,7 @@
 //! P3: species classifier (CART, rpart defaults) and k-means from fixed initial centroids.
 use ndarray::{Array1, Array2, Axis};
 use polars::prelude::DataFrame;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::p1::MEASURES;
 
