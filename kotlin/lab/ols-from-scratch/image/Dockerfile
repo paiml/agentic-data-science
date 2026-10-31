@@ -27,4 +27,5 @@ WORKDIR /w/kotlin/lab/ols-from-scratch
 RUN gradle --no-daemon -Pvariant=solution test
 RUN set +e; gradle --no-daemon -Pvariant=starter test; rc=$?; test "$rc" = 1
 RUN gradle --no-daemon --offline -Pvariant=solution test
-# Proof inside the image, network none: bash proof.sh asserts the JUnit XML (8 run; the 7 named failures on starter; 8/8 on solution).
+COPY kotlin/lab/ols-from-scratch/image/proof.sh /usr/local/bin/proof.sh
+# Proof (network none): docker run --rm --network none IMAGE proof.sh
