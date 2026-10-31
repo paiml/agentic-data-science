@@ -47,6 +47,7 @@ include("v06_kmeans.jl")
 end
 
 module V07
+using ..BM3: verdict
 include("v07_gates.jl")
 end
 
