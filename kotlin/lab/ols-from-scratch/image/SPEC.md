@@ -17,4 +17,4 @@ Open follow-up (lane 2 point 4): no Gradle dependency verification metadata / lo
 ## BUILT 2026-10-31 (quorum PASS: receipt /mnt/nvme-raid0/tmp-de/lab-c04/receipt-image-quorum.md)
 Built from `git archive f80e212`. Base debian@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8. Derived image 127.0.0.1:5000/ads-kotlin-lab:1 = sha256:df9388c09d9968690b3e47340eb3134f1334e7c33792d70c6445bec9756da973.
 Proof with `docker run --rm --network none ... proof.sh`: exit 0, "starter exit 1 (7/8 named failures), solution exit 0 (8/8) OK" (log image-proof.log). Correction: the two .dockerignore files are inert (Docker reads <context>/.dockerignore); the clean git-archive context is what excludes build output.
-Still owed: Gradle dependency verification metadata; Coursera lab runtime (not run).
+Gradle dependency verification: DONE at c78ee5b (gradle/verification-metadata.xml, 58 components, proven in a fresh GRADLE_USER_HOME and in image :2 = sha256:7f2937682614d503a262e3097be3e8b1ae55f0fba6216b19ff1fe0470737b932, proof.sh OK network none). Still owed: Coursera lab runtime (not run).
