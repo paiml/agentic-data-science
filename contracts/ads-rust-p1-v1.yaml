@@ -24,7 +24,7 @@ equations:
     codomain: "per-species n, mean and sample SD (n-1 denominator)"
     postconditions:
       - "NA_POLICY: a row is dropped iff a numeric measurement column is NA; an NA in sex alone keeps the row"
-      - "SAMPLE_SD: sd uses the n-1 denominator"
+      - "SAMPLE_SD: sd uses the n-1 denominator, the n-1 denominator"
       - "CAN_FAIL: dropping the NA policy changes the species counts, so the golden comparison fails"
 
 proof_obligations:
