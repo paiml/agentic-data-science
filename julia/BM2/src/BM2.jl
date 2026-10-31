@@ -42,6 +42,7 @@ include("v06_mlj.jl")
 end
 
 module V07
+using ..BM2: verdict
 include("v07_gate.jl")
 end
 
