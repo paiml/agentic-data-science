@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#a-m4-p4-bench> a ads:Example ;
+  ads:language "rust" ;
+  ads:course "A" ;
+  ads:module "4"^^xsd:integer ;
+  ads:problem "P4" ;
+  ads:dataset ads:wine-quality ;
+  ads:readme "rust/ads-rust/examples/a-m4-p4-bench/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#42" ;
+  ads:contract "contracts/ads-rust-p4-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p4.json" ;
+  ads:branchCasesEnumerated true .

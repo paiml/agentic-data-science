@@ -174,12 +174,3 @@ pub fn p2_json(c: &Cols, folds: &[usize]) -> Value {
         "cv_rmse": {"ols": cv_rmse(c, folds, false), "species": cv_rmse(c, folds, true)},
     })
 }
-
-/// The contract line in bold green on a terminal, unchanged when piped (the gate reads the plain form).
-pub fn verdict(line: &str, tty: bool) -> String {
-    if tty {
-        format!("\x1b[1;32m{line}\x1b[0m")
-    } else {
-        line.to_string()
-    }
-}

@@ -2,7 +2,7 @@
 //!
 //! Provable contract: ads-rust-p2-v1 (CV RMSE within 1e-6 of the golden file).
 use ads_rust::p1::{na_policy, read_penguins};
-use ads_rust::p2::{cols, cv_rmse, read_folds, verdict};
+use ads_rust::p2::{cols, cv_rmse, read_folds};
 
 fn main() {
     let root = std::env::var("ADS_ROOT")
@@ -36,14 +36,5 @@ fn main() {
                 .abs(),
         );
     assert!(d <= 1e-6, "diff {d}");
-    let line = format!(
-        "contract: ads-rust-p2-v1 cv max |diff| = {d:e} OK"
-    );
-    println!(
-        "{}",
-        verdict(
-            &line,
-            std::io::IsTerminal::is_terminal(&std::io::stdout())
-        )
-    );
+    println!("contract: ads-rust-p2-v1 cv max |diff| = {d:e} OK");
 }
