@@ -242,13 +242,8 @@ pub fn kmeans_fixed(
                     .into_iter()
                     .map(|c| (&r - &c).mapv(|v| v * v).sum())
                     .collect();
-                (0..d.len()).fold(0, |b, k| {
-                    if d[k] < d[b] {
-                        k
-                    } else {
-                        b
-                    }
-                })
+                (0..d.len())
+                    .fold(0, |b, k| if d[k] < d[b] { k } else { b })
             })
             .collect();
         if next == cluster {
