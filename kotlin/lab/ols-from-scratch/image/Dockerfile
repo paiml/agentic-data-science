@@ -4,8 +4,7 @@
 FROM debian@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl unzip && rm -rf /var/lib/apt/lists/*
 # JDK 25: Temurin 25.0.5 x64 linux. The sha256 below is the one measured on the tarball used for the recorded runs.
-# TODO before build: pin JDK_URL to the exact Adoptium release asset and confirm it hashes to JDK_SHA (build fails on mismatch).
-ARG JDK_URL
+ARG JDK_URL=https://github.com/adoptium/temurin25-binaries/releases/download/jdk-25.0.5%2B8/OpenJDK25U-jdk_x64_linux_hotspot_25.0.5_8.tar.gz
 ARG JDK_SHA=68982529869257d0ee6b824ec5aa270ff8b118bb438670da0b97ebdab178d7fb
 RUN curl -fsSL -o /tmp/jdk.tgz "$JDK_URL" && echo "$JDK_SHA  /tmp/jdk.tgz" | sha256sum -c - \
  && mkdir /opt/jdk && tar -xzf /tmp/jdk.tgz -C /opt/jdk --strip-components=1 && rm /tmp/jdk.tgz
