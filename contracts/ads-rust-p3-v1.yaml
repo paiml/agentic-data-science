@@ -1,0 +1,47 @@
+# ads-rust-p3-v1: Course A (Rust), Module 3, Problem P3 (classification and clustering)
+
+# Ticket: https://github.com/paiml/agentic-data-science/issues/39
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-15"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "fit_tree and kmeans_fixed reproduce datasets/golden/p3.json: a deterministic CART species tree (Gini, rpart stopping defaults) scored on the fixed test split (accuracy and confusion exact) and Lloyd k-means on z-scored features from the fixed initial centroids (objective within 1e-6)."
+  references:
+    - "rust/ads-rust/src/p3.rs"
+    - "rust/ads-rust/tests/p3.rs"
+    - "datasets/golden/p3.json"
+    - "datasets/fixtures/split.csv"
+    - "datasets/fixtures/centroids.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p3_models_match_golden:
+    formula: |
+      accuracy             = trace(C) / sum(C)                    C = confusion on the 85 test rows
+      objective            = sum_i |z_i - c_{a(i)}|^2             z = z-scored features, c from Lloyd iterations
+      confusion, accuracy  = golden exactly
+      |objective - golden| <= 1e-6
+    domain: "342 cleaned penguin rows, split.csv, centroids.csv"
+    codomain: "confusion matrix, accuracy, k-means objective and cluster sizes"
+    postconditions:
+      - "FIXED_INPUTS: the split and the initial centroids come from committed CSVs, never from an RNG"
+      - "NO_TEST_LEAKAGE: the tree is fitted on rows labelled train only"
+      - "EMPTY_CLUSTER: a cluster that loses all members keeps its previous centroid"
+      - "CAN_FAIL: a k-means that never updates its centroids fails the stats::kmeans Lloyd oracle"
+
+proof_obligations:
+  - type: invariant
+    property: "kmeans_fixed equals stats::kmeans(algorithm = Lloyd) from the same centroids"
+    formal: "cluster = oracle cluster and |objective - oracle| <= 1e-6"
+    applies_to: p3_models_match_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-P3-001
+    rule: "Lloyd iterations reproduce the reference implementation"
+    prediction: "make gate-rust passes"
+    test: "scripts/gate-rust.sh"
+    mutation: "Change the initial centroids or train on one class only: the kmeans and accuracy assertions fail (tests::can_fail_with_other_centroids, can_fail_when_the_tree_is_a_stump)"
+    discriminates: "A k-means without updates cannot match stats::kmeans"
+    if_fails: "Learners cluster with a broken objective"
