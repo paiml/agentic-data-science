@@ -5,7 +5,8 @@ end
 function kmeans_ok()
     lab, obj = V06.lloyd(scaled()...)
     n = [count(==(k), lab) for k = 1:3]
-    return obj ≈ GOLD.objective && n == GOLD.sizes
+    return isapprox(obj, GOLD.objective) &&
+           n == GOLD.sizes
 end
 function golden_line(g = GOLD)
     print("golden accuracy ", g.accuracy, ", ")

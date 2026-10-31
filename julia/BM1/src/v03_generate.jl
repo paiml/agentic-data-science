@@ -8,7 +8,9 @@ module Scratch
 hello(who) = "Hello, $(who)!"
 end
 """
-implement(f) = write(f, DONE)
+function implement(f)
+    write(f, DONE)
+end
 function main()
     ok = cd(mktempdir()) do
         Pkg.generate("Scratch")

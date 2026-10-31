@@ -1,7 +1,8 @@
 function check(m)
     x = collect(1.0:4.0)
     b = m.ols(x, 2 .* x .+ 1)
-    return (b.intercept ≈ 1.0) + (b.slope ≈ 2.0)
+    return isapprox(b.intercept, 1.0) +
+           isapprox(b.slope, 2.0)
 end
 
 function ols(x, y)

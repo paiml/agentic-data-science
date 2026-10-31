@@ -9,9 +9,10 @@ function mut(v, from, to)
 end
 function no_update()
     go = mut("v06_kmeans", "mean(A; dims = 1)", "o")
-    return !(
-        go(:lloyd, scaled()...)[2] ≈ GOLD.objective
-    )
+    return !(isapprox(
+        go(:lloyd, scaled()...)[2],
+        GOLD.objective,
+    ))
 end
 function later_tie()
     go = mut("v03_split", "gain > b", "gain >= b")
