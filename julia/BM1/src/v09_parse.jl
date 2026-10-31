@@ -11,7 +11,8 @@ function main()
     bad = joinpath(mktempdir(), "bad.csv")
     write(bad, join([HEAD; BAD], Char(10)))
     d = read_mass(bad)
-    display(d)
+    show(stdout, d; summary = false)
+    println()
     ok = eltype(d.mass) == Union{Missing,Float64}
     ok &=
         ismissing(d.mass[1]) &&
