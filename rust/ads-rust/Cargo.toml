@@ -35,3 +35,18 @@ path = "examples/a-m3-p3-tree/main.rs"
 [[example]]
 name = "a-m3-p3-kmeans"
 path = "examples/a-m3-p3-kmeans/main.rs"
+
+[[example]]
+name = "a-m4-p4-pipeline"
+path = "examples/a-m4-p4-pipeline/main.rs"
+
+[[example]]
+name = "a-m4-p4-bench"
+path = "examples/a-m4-p4-bench/main.rs"
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "p4"
+harness = false
