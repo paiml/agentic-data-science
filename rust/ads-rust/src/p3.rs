@@ -1,7 +1,7 @@
 //! P3: species classifier (CART, rpart defaults) and k-means from fixed initial centroids.
 use ndarray::{Array1, Array2, Axis};
 use polars::prelude::DataFrame;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::p1::MEASURES;
 
@@ -242,13 +242,8 @@ pub fn kmeans_fixed(
                     .into_iter()
                     .map(|c| (&r - &c).mapv(|v| v * v).sum())
                     .collect();
-                (0..d.len()).fold(0, |b, k| {
-                    if d[k] < d[b] {
-                        k
-                    } else {
-                        b
-                    }
-                })
+                (0..d.len())
+                    .fold(0, |b, k| if d[k] < d[b] { k } else { b })
             })
             .collect();
         if next == cluster {

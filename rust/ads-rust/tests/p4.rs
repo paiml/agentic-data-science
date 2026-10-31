@@ -2,7 +2,7 @@ use ads_rust::p4::*;
 use linfa::prelude::*;
 use linfa_linear::LinearRegression;
 use polars::prelude::*;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const ROOT: &str = "../..";
 
@@ -90,20 +90,24 @@ fn validate_rejects_each_defect() {
     nulled
         .replace("alcohol", Series::new("alcohol".into(), alc))
         .unwrap();
-    assert!(validate_wine(&nulled)
-        .unwrap_err()
-        .to_string()
-        .contains("missing"));
+    assert!(
+        validate_wine(&nulled)
+            .unwrap_err()
+            .to_string()
+            .contains("missing")
+    );
     let mut bad_q = df.clone();
     let q: Vec<i64> =
         (0..n).map(|i| if i == 0 { 11 } else { 5 }).collect();
     bad_q
         .replace("quality", Series::new("quality".into(), q))
         .unwrap();
-    assert!(validate_wine(&bad_q)
-        .unwrap_err()
-        .to_string()
-        .contains("quality"));
+    assert!(
+        validate_wine(&bad_q)
+            .unwrap_err()
+            .to_string()
+            .contains("quality")
+    );
     let mut bad_c = df.clone();
     let c: Vec<&str> = (0..n)
         .map(|i| if i == 0 { "rose" } else { "red" })
@@ -111,10 +115,12 @@ fn validate_rejects_each_defect() {
     bad_c
         .replace("color", Series::new("color".into(), c))
         .unwrap();
-    assert!(validate_wine(&bad_c)
-        .unwrap_err()
-        .to_string()
-        .contains("color"));
+    assert!(
+        validate_wine(&bad_c)
+            .unwrap_err()
+            .to_string()
+            .contains("color")
+    );
     // Range edges: -1 and 11 are out, 0 and 10 are in.
     for (q0, ok) in
         [(-1, false), (0, true), (10, true), (11, false)]
@@ -133,10 +139,12 @@ fn validate_rejects_each_defect() {
         .collect();
     inf.replace("alcohol", Series::new("alcohol".into(), a))
         .unwrap();
-    assert!(validate_wine(&inf)
-        .unwrap_err()
-        .to_string()
-        .contains("alcohol"));
+    assert!(
+        validate_wine(&inf)
+            .unwrap_err()
+            .to_string()
+            .contains("alcohol")
+    );
     assert!(validate_wine(&df.drop("alcohol").unwrap()).is_err());
     // Missing columns surface as errors, not panics.
     assert!(validate_wine(&df.drop("quality").unwrap()).is_err());

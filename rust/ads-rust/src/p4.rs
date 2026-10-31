@@ -7,7 +7,7 @@ use linfa::prelude::*;
 use linfa_linear::LinearRegression;
 use ndarray::{Array1, Array2};
 use polars::prelude::*;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 /// The eleven physico-chemical predictors, in file order.
 pub const FEATURES: [&str; 11] = [

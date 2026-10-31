@@ -5,8 +5,8 @@ use serde_json::Value;
 
 const ROOT: &str = "../..";
 
-fn load(
-) -> (polars::prelude::DataFrame, Vec<bool>, Array2<f64>, Value) {
+fn load()
+-> (polars::prelude::DataFrame, Vec<bool>, Array2<f64>, Value) {
     let df = na_policy(
         read_penguins(&format!(
             "{ROOT}/datasets/penguins/penguins.csv"

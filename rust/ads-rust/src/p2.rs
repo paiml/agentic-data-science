@@ -1,7 +1,7 @@
 //! P2: closed-form OLS (ndarray), species model (linfa-linear) and fixed-fold CV.
 use ndarray::{Array1, Array2, Axis};
 use polars::prelude::DataFrame;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use linfa::prelude::*;
 use linfa_linear::LinearRegression;
@@ -173,4 +173,13 @@ pub fn p2_json(c: &Cols, folds: &[usize]) -> Value {
         "metrics": {"ols": {"rmse": or, "r2": o2}, "species": {"rmse": sr, "r2": s2}},
         "cv_rmse": {"ols": cv_rmse(c, folds, false), "species": cv_rmse(c, folds, true)},
     })
+}
+
+/// The contract line in bold green on a terminal, unchanged when piped (the gate reads the plain form).
+pub fn verdict(line: &str, tty: bool) -> String {
+    if tty {
+        format!("\x1b[1;32m{line}\x1b[0m")
+    } else {
+        line.to_string()
+    }
 }

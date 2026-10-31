@@ -1,6 +1,6 @@
 //! Criterion benchmark of the two grouped-mean engines (timings are never part of parity).
 use ads_rust::p4::{aggregate_map, aggregate_polars, read_wine};
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 fn grouped_mean(c: &mut Criterion) {
     let root = std::env::var("ADS_ROOT")
