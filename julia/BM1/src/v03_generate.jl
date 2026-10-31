@@ -1,3 +1,5 @@
+# the test comes first
+const RED_FIRST = true
 const TEST = """
 @testset "hello" begin
     @test Scratch.hello("Julia") == "Hello, Julia!"
@@ -18,7 +20,9 @@ function main()
         write(file, replace(DONE, "!" => ""))
         red = runtests(file, TEST)
         implement(file)
-        return red == 1 && runtests(file, TEST) == 0
+        return RED_FIRST &&
+               red == 1 &&
+               runtests(file, TEST) == 0
     end
     verdict(ok, "failing test first, then green")
 end
