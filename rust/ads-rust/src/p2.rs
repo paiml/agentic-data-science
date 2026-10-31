@@ -86,19 +86,9 @@ pub fn regression_metrics(
 
 /// Fold id per cleaned row, from the committed fixture (`row,fold`).
 pub fn read_folds(path: &str) -> Vec<usize> {
-    std::fs::read_to_string(path)
-        .expect("folds file")
-        .lines()
-        .skip(1)
-        .map(|l| {
-            l.split(',')
-                .nth(1)
-                .expect("fold")
-                .trim()
-                .parse()
-                .expect("int")
-        })
-        .collect()
+    crate::csv_map(path, "folds file", |f| {
+        f[1].trim().parse().expect("int")
+    })
 }
 
 fn predict_species(tr: &Cols, te: &Cols) -> Array1<f64> {

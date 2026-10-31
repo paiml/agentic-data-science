@@ -1,5 +1,5 @@
 //! P3: species classifier (CART, rpart defaults) and k-means from fixed initial centroids.
-use ndarray::{Array1, Array2, Axis};
+use ndarray::{Array1, Array2, ArrayView1, Axis};
 use polars::prelude::DataFrame;
 use serde_json::{Value, json};
 
@@ -25,6 +25,23 @@ pub enum Tree {
 }
 
 /// Feature matrix (rows x four measurements) and class index per row of a cleaned frame.
+/// Class index of a species name.
+fn class_of(s: &str) -> usize {
+    CLASSES.iter().position(|c| *c == s).expect("known species")
+}
+
+/// Squared distance between two rows.
+fn sq_dist(a: &ArrayView1<f64>, b: &ArrayView1<f64>) -> f64 {
+    (a - b).mapv(|v| v * v).sum()
+}
+
+/// Index of the centroid row nearest to `r` (first wins ties).
+fn nearest(r: &ArrayView1<f64>, cen: &Array2<f64>) -> usize {
+    let d: Vec<f64> =
+        cen.rows().into_iter().map(|c| sq_dist(r, &c)).collect();
+    (0..d.len()).fold(0, |b, k| if d[k] < d[b] { k } else { b })
+}
+
 pub fn features(df: &DataFrame) -> (Array2<f64>, Vec<usize>) {
     let mut x = Array2::zeros((df.height(), MEASURES.len()));
     for (j, m) in MEASURES.iter().enumerate() {
@@ -45,41 +62,25 @@ pub fn features(df: &DataFrame) -> (Array2<f64>, Vec<usize>) {
         .str()
         .expect("str")
         .into_no_null_iter()
-        .map(|s| {
-            CLASSES
-                .iter()
-                .position(|c| *c == s)
-                .expect("known species")
-        })
+        .map(class_of)
         .collect();
     (x, y)
 }
 
 /// Train/test flag per cleaned row from the committed split file (true = train).
 pub fn read_split(path: &str) -> Vec<bool> {
-    std::fs::read_to_string(path)
-        .expect("split file")
-        .lines()
-        .skip(1)
-        .map(|l| {
-            l.split(',').nth(1).expect("set").trim() == "train"
-        })
-        .collect()
+    crate::csv_map(path, "split file", |f| f[1].trim() == "train")
 }
 
 /// Initial centroids (raw units), one row per cluster.
 pub fn read_centroids(path: &str) -> Array2<f64> {
-    let rows: Vec<Vec<f64>> = std::fs::read_to_string(path)
-        .expect("centroids file")
-        .lines()
-        .skip(1)
-        .map(|l| {
-            l.split(',')
-                .skip(1)
+    let rows: Vec<Vec<f64>> =
+        crate::csv_map(path, "centroids file", |f| {
+            f[1..]
+                .iter()
                 .map(|v| v.trim().parse().expect("number"))
                 .collect()
-        })
-        .collect();
+        });
     Array2::from_shape_fn((rows.len(), MEASURES.len()), |(i, j)| {
         rows[i][j]
     })
@@ -236,15 +237,7 @@ pub fn kmeans_fixed(
         let next: Vec<usize> = z
             .rows()
             .into_iter()
-            .map(|r| {
-                let d: Vec<f64> = cen
-                    .rows()
-                    .into_iter()
-                    .map(|c| (&r - &c).mapv(|v| v * v).sum())
-                    .collect();
-                (0..d.len())
-                    .fold(0, |b, k| if d[k] < d[b] { k } else { b })
-            })
+            .map(|r| nearest(&r, &cen))
             .collect();
         if next == cluster {
             break;
@@ -264,9 +257,7 @@ pub fn kmeans_fixed(
         }
     }
     let objective = (0..z.nrows())
-        .map(|i| {
-            (&z.row(i) - &cen.row(cluster[i])).mapv(|v| v * v).sum()
-        })
+        .map(|i| sq_dist(&z.row(i), &cen.row(cluster[i])))
         .sum();
     (cluster, objective)
 }
