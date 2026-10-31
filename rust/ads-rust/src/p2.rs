@@ -1,7 +1,7 @@
 //! P2: closed-form OLS (ndarray), species model (linfa-linear) and fixed-fold CV.
 use ndarray::{Array1, Array2, Axis};
 use polars::prelude::DataFrame;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 use linfa::prelude::*;
 use linfa_linear::LinearRegression;

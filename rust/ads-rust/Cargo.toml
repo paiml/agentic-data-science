@@ -1,7 +1,7 @@
 [package]
 name = "ads-rust"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 publish = false
 description = "Agentic Data Science, Course A (Rust): examples P1-P4"
 
@@ -27,3 +27,11 @@ path = "examples/a-m2-p2-ols/main.rs"
 [[example]]
 name = "a-m2-p2-cv"
 path = "examples/a-m2-p2-cv/main.rs"
+
+[[example]]
+name = "a-m3-p3-tree"
+path = "examples/a-m3-p3-tree/main.rs"
+
+[[example]]
+name = "a-m3-p3-kmeans"
+path = "examples/a-m3-p3-kmeans/main.rs"

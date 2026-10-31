@@ -48,14 +48,13 @@ fn can_fail_without_the_na_policy() {
 #[test]
 fn max_abs_diff_refuses_shape_mismatch() {
     let a: Value = serde_json::json!({"x": 1.0});
-    assert!(
-        max_abs_diff(&a, &serde_json::json!({"y": 1.0}))
-            .is_infinite()
-    );
-    assert!(
-        max_abs_diff(&a, &serde_json::json!({"x": 1.5, "z": 0}))
-            .is_infinite()
-    );
+    assert!(max_abs_diff(&a, &serde_json::json!({"y": 1.0}))
+        .is_infinite());
+    assert!(max_abs_diff(
+        &a,
+        &serde_json::json!({"x": 1.5, "z": 0})
+    )
+    .is_infinite());
     assert!(max_abs_diff(&a, &serde_json::json!(3)).is_infinite());
     assert_eq!(
         max_abs_diff(&a, &serde_json::json!({"x": 1.5})),
