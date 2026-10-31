@@ -1,3 +1,4 @@
+const ALL_EXIT_ZERO = true
 # The gates every package passes before a merge.
 # Typed at a shell prompt, each exits 0.
 const PKG = "julia --project=julia/BM3"
@@ -37,7 +38,7 @@ function main(gates = GATES)
     for (i, c) in enumerate(codes)
         println("gate ", i, " exit=", c)
     end
-    ok = all(==(0), codes)
+    ok = ALL_EXIT_ZERO && all(==(0), codes)
     verdict(ok, "gates exit 0")
     return ok
 end

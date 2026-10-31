@@ -1,3 +1,4 @@
+const ALL_EXIT_ZERO = true
 const SHACL = "make gate-shacl"
 const FMT = join(
     [
@@ -38,7 +39,7 @@ function main(gates = GATES)
     for (i, c) in enumerate(codes)
         println("gate ", i, " exit=", c)
     end
-    ok = all(==(0), codes)
+    ok = ALL_EXIT_ZERO && all(==(0), codes)
     verdict(ok, "gates")
     return ok
 end
