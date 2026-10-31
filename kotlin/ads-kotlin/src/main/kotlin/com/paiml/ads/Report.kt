@@ -75,5 +75,12 @@ fun verdict(
             red("VERDICT: $what FAIL")
         }
     term.println(line)
+    if (ok) {
+        term.println("contract: ${contractName(what)} (verdict PASS) OK")
+    }
     return line
 }
+
+/** Contract name for a verdict label: lowercase words joined by `-`. */
+internal fun contractName(what: String): String =
+    what.lowercase().split(Regex("[^a-z0-9]+")).filter { it.isNotEmpty() }.joinToString("-")

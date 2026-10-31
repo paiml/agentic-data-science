@@ -100,6 +100,7 @@ class OlsTest {
     fun verdictFailBranchIsRed() {
         assertTrue(verdict(false, "x").contains("FAIL"))
         assertTrue(verdict(true, "x").contains("PASS"))
+        assertEquals("simple-vs-qr", contractName("Simple vs QR"))
     }
 
     @Test
