@@ -19,7 +19,8 @@ pub struct Cols {
 /// Pull the P2 columns out of a cleaned penguins frame (NA policy already applied).
 pub fn cols(df: &DataFrame) -> Cols {
     let f64s = |name: &str| -> Array1<f64> {
-        let c = df.column(name).expect("column").f64().expect("f64");
+        let c =
+            df.column(name).expect("column").f64().expect("f64");
         c.into_no_null_iter().collect()
     };
     let species = df
@@ -39,7 +40,8 @@ pub fn cols(df: &DataFrame) -> Cols {
 
 /// Closed-form simple OLS: returns (intercept, slope).
 pub fn ols_ndarray(x: &Array1<f64>, y: &Array1<f64>) -> (f64, f64) {
-    let (mx, my) = (x.mean().unwrap_or(0.0), y.mean().unwrap_or(0.0));
+    let (mx, my) =
+        (x.mean().unwrap_or(0.0), y.mean().unwrap_or(0.0));
     let sxy = (x - mx).dot(&(y - my));
     let sxx = (x - mx).dot(&(x - mx));
     let slope = sxy / sxx;
@@ -47,7 +49,10 @@ pub fn ols_ndarray(x: &Array1<f64>, y: &Array1<f64>) -> (f64, f64) {
 }
 
 /// Design matrix [flipper, Chinstrap, Gentoo] for the species model.
-pub fn design_species(flipper: &Array1<f64>, species: &[String]) -> Array2<f64> {
+pub fn design_species(
+    flipper: &Array1<f64>,
+    species: &[String],
+) -> Array2<f64> {
     let mut x = Array2::zeros((flipper.len(), 1 + DUMMIES.len()));
     for (i, s) in species.iter().enumerate() {
         x[[i, 0]] = flipper[i];
@@ -59,7 +64,10 @@ pub fn design_species(flipper: &Array1<f64>, species: &[String]) -> Array2<f64> 
 }
 
 /// Species model through linfa-linear: returns (intercept, [flipper, Chinstrap, Gentoo]).
-pub fn fit_linfa(x: &Array2<f64>, y: &Array1<f64>) -> (f64, Array1<f64>) {
+pub fn fit_linfa(
+    x: &Array2<f64>,
+    y: &Array1<f64>,
+) -> (f64, Array1<f64>) {
     let m = LinearRegression::new()
         .fit(&Dataset::new(x.clone(), y.clone()))
         .expect("linfa fit");
@@ -67,7 +75,10 @@ pub fn fit_linfa(x: &Array2<f64>, y: &Array1<f64>) -> (f64, Array1<f64>) {
 }
 
 /// (rmse, r2) of predictions against observations.
-pub fn regression_metrics(y: &Array1<f64>, pred: &Array1<f64>) -> (f64, f64) {
+pub fn regression_metrics(
+    y: &Array1<f64>,
+    pred: &Array1<f64>,
+) -> (f64, f64) {
     let sse = (y - pred).mapv(|e| e * e).sum();
     let sst = (y - y.mean().unwrap_or(0.0)).mapv(|e| e * e).sum();
     ((sse / y.len() as f64).sqrt(), 1.0 - sse / sst)
@@ -91,7 +102,10 @@ pub fn read_folds(path: &str) -> Vec<usize> {
 }
 
 fn predict_species(tr: &Cols, te: &Cols) -> Array1<f64> {
-    let (b0, b) = fit_linfa(&design_species(&tr.flipper, &tr.species), &tr.mass);
+    let (b0, b) = fit_linfa(
+        &design_species(&tr.flipper, &tr.species),
+        &tr.mass,
+    );
     design_species(&te.flipper, &te.species).dot(&b) + b0
 }
 
@@ -103,20 +117,29 @@ fn predict_ols(tr: &Cols, te: &Cols) -> Array1<f64> {
 fn subset(c: &Cols, idx: &[usize]) -> Cols {
     Cols {
         flipper: c.flipper.select(Axis(0), idx),
-        species: idx.iter().map(|&i| c.species[i].clone()).collect(),
+        species: idx
+            .iter()
+            .map(|&i| c.species[i].clone())
+            .collect(),
         mass: c.mass.select(Axis(0), idx),
     }
 }
 
 /// Pooled out-of-fold RMSE over the fixed fold assignment.
-pub fn cv_rmse(c: &Cols, folds: &[usize], with_species: bool) -> f64 {
+pub fn cv_rmse(
+    c: &Cols,
+    folds: &[usize],
+    with_species: bool,
+) -> f64 {
     let mut pred = Array1::zeros(c.mass.len());
     let mut ids: Vec<usize> = folds.to_vec();
     ids.sort_unstable();
     ids.dedup();
     for k in ids {
-        let train: Vec<usize> = (0..folds.len()).filter(|&i| folds[i] != k).collect();
-        let test: Vec<usize> = (0..folds.len()).filter(|&i| folds[i] == k).collect();
+        let train: Vec<usize> =
+            (0..folds.len()).filter(|&i| folds[i] != k).collect();
+        let test: Vec<usize> =
+            (0..folds.len()).filter(|&i| folds[i] == k).collect();
         let (tr, te) = (subset(c, &train), subset(c, &test));
         let p = if with_species {
             predict_species(&tr, &te)

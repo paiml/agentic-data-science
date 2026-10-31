@@ -5,7 +5,8 @@ const CSV: &str = "../../datasets/penguins/penguins.csv";
 const GOLDEN: &str = "../../datasets/golden/p1.json";
 
 fn golden() -> Value {
-    serde_json::from_str(&std::fs::read_to_string(GOLDEN).unwrap()).unwrap()
+    serde_json::from_str(&std::fs::read_to_string(GOLDEN).unwrap())
+        .unwrap()
 }
 
 #[test]
@@ -29,24 +30,37 @@ fn na_policy_keeps_342_and_keeps_sex_only_na_rows() {
 
 #[test]
 fn summary_matches_golden_within_1e_9() {
-    let s = summary_by_species(na_policy(read_penguins(CSV).unwrap()).unwrap()).unwrap();
+    let s = summary_by_species(
+        na_policy(read_penguins(CSV).unwrap()).unwrap(),
+    )
+    .unwrap();
     assert!(max_abs_diff(&s, &golden()) <= 1e-9);
 }
 
 #[test]
 fn can_fail_without_the_na_policy() {
     // Mutant: skip the policy. Counts change (344 rows -> Adelie n=152), so the golden comparison must fail.
-    let s = summary_by_species(read_penguins(CSV).unwrap()).unwrap();
+    let s =
+        summary_by_species(read_penguins(CSV).unwrap()).unwrap();
     assert!(max_abs_diff(&s, &golden()) > 1e-9);
 }
 
 #[test]
 fn max_abs_diff_refuses_shape_mismatch() {
     let a: Value = serde_json::json!({"x": 1.0});
-    assert!(max_abs_diff(&a, &serde_json::json!({"y": 1.0})).is_infinite());
-    assert!(max_abs_diff(&a, &serde_json::json!({"x": 1.5, "z": 0})).is_infinite());
+    assert!(
+        max_abs_diff(&a, &serde_json::json!({"y": 1.0}))
+            .is_infinite()
+    );
+    assert!(
+        max_abs_diff(&a, &serde_json::json!({"x": 1.5, "z": 0}))
+            .is_infinite()
+    );
     assert!(max_abs_diff(&a, &serde_json::json!(3)).is_infinite());
-    assert_eq!(max_abs_diff(&a, &serde_json::json!({"x": 1.5})), 0.5);
+    assert_eq!(
+        max_abs_diff(&a, &serde_json::json!({"x": 1.5})),
+        0.5
+    );
 }
 
 #[test]

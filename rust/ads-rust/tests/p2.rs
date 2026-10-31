@@ -5,11 +5,20 @@ use serde_json::Value;
 const ROOT: &str = "../..";
 
 fn load() -> (Cols, Vec<usize>, Value) {
-    let df = na_policy(read_penguins(&format!("{ROOT}/datasets/penguins/penguins.csv")).unwrap())
-        .unwrap();
-    let folds = read_folds(&format!("{ROOT}/datasets/fixtures/folds.csv"));
+    let df = na_policy(
+        read_penguins(&format!(
+            "{ROOT}/datasets/penguins/penguins.csv"
+        ))
+        .unwrap(),
+    )
+    .unwrap();
+    let folds =
+        read_folds(&format!("{ROOT}/datasets/fixtures/folds.csv"));
     let g = serde_json::from_str(
-        &std::fs::read_to_string(format!("{ROOT}/datasets/golden/p2.json")).unwrap(),
+        &std::fs::read_to_string(format!(
+            "{ROOT}/datasets/golden/p2.json"
+        ))
+        .unwrap(),
     )
     .unwrap();
     (cols(&df), folds, g)
@@ -25,7 +34,9 @@ fn diff(got: &Value, want: &Value, section: &[&str]) -> f64 {
     w.as_object()
         .unwrap()
         .iter()
-        .map(|(k, v)| (g[k].as_f64().unwrap() - v.as_f64().unwrap()).abs())
+        .map(|(k, v)| {
+            (g[k].as_f64().unwrap() - v.as_f64().unwrap()).abs()
+        })
         .fold(0.0, f64::max)
 }
 
@@ -59,8 +70,20 @@ fn can_fail_when_species_are_ignored() {
     // Mutant: species model without dummies equals plain OLS, which is not the golden species model.
     let (c, _, want) = load();
     let (b0, b1) = ols_ndarray(&c.flipper, &c.mass);
-    assert!((b0 - want["species_model"]["(Intercept)"].as_f64().unwrap()).abs() > 1.0);
-    assert!((b1 - want["species_model"]["flipper_length_mm"].as_f64().unwrap()).abs() > 1.0);
+    assert!(
+        (b0 - want["species_model"]["(Intercept)"]
+            .as_f64()
+            .unwrap())
+        .abs()
+            > 1.0
+    );
+    assert!(
+        (b1 - want["species_model"]["flipper_length_mm"]
+            .as_f64()
+            .unwrap())
+        .abs()
+            > 1.0
+    );
 }
 
 #[test]
