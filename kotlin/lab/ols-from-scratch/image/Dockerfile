@@ -1,8 +1,7 @@
-# ADS Kotlin lab sandbox image (SPEC, not yet built; paiml/catalogue#707). Modelled on ads-julia-render:
-# base by digest, toolchain from official archives with verified sha256, offline dependency bake, run with --network none.
+# ADS Kotlin lab sandbox image (see SPEC.md). Pattern: base by digest, toolchain from official archives with verified sha256,
 # BUILD CONTEXT: a clean export, never the working tree:  git archive <sha> kotlin/lab/ols-from-scratch datasets/penguins | tar -x -C ctx
 #                 docker build -f ctx/kotlin/lab/ols-from-scratch/image/Dockerfile ctx
-# base: debian:bookworm-slim, same digest the Julia image pins (recorded 2026-10-27)
+# base: debian:bookworm-slim, digest recorded 2026-10-27
 FROM debian@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl unzip && rm -rf /var/lib/apt/lists/*
 # JDK 25: Temurin 25.0.5+8 x64 linux, official adoptium/temurin25-binaries asset; sha256 equals the checksum api.adoptium.net lists.
