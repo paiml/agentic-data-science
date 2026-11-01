@@ -1,0 +1,49 @@
+# ads-kotlin-anscombe-v1: Course D (Kotlin), Anscombe's quartet lesson (ADS-DEMO-001, ads#112)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-11-01"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Reads datasets/anscombe/anscombe.csv (4 sets of 11 points), fits an ordinary least squares line per set, prints n, mean_x, mean_y, slope, intercept and r2 to two decimals, and ends on the contract line only when all four sets agree to two decimals. The same run writes plot.svg, a 2x2 lets-plot facet figure of the four sets with their fits, with the library's random element ids renamed to ads-N so two runs are byte-identical."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/anscombe/Anscombe.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/AnscombeTest.kt"
+    - "datasets/anscombe/anscombe.csv"
+    - "datasets/anscombe/SHA256SUMS"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric agreement across four sets, no kani harness"
+
+equations:
+  anscombe_sets_agree:
+    formula: |
+      sets = 4; n = 11 each
+      mean_x = 9.00; mean_y = 7.50 (2 decimals); slope = 0.50; intercept = 3.00; r2 = 0.67
+      the contract line prints OK only when every set matches set I at two decimals
+    domain: "datasets/anscombe (44 rows, SHA256SUMS verified)"
+    codomain: "per-set summary rows, the contract line, stdout.txt, plot.svg, manifest.sha256"
+    postconditions:
+      - "FOUR_SETS_OF_ELEVEN: fewer or more sets, or a set that is not 11 rows, is FAILED"
+      - "CAN_FAIL: shifting one set's y values by 1.0 breaks the 2-decimal agreement and the verdict is FAILED, so main throws"
+      - "REPRODUCIBLE: two runs produce byte-identical stdout and plot.svg"
+
+proof_obligations:
+  - type: invariant
+    property: "Four sets share mean, slope, intercept and r2 to two decimals, and the run is reproducible byte for byte"
+    formal: "forall i in 1..4: round2(stat_i) = round2(stat_1) and stdout(run1) = stdout(run2) and svg(run1) = svg(run2)"
+    applies_to: anscombe_sets_agree
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-ANSCOMBE-001
+    rule: "The four sets agree at two decimals and the verdict can fail"
+    prediction: "AnscombeTest passes inside scripts/gate-kotlin.sh"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Add 1.0 to every y of set III: holds() turns false, the report ends FAILED and main throws (aShiftedSetBreaksTheContract, mainFailsLoudlyOnABrokenQuartet)"
+    discriminates: "A verdict that prints OK for any input cannot pass"
+    if_fails: "Learners are shown an agreement the data does not have"
+  - id: FALSIFY-ADS-KOTLIN-ANSCOMBE-002
+    rule: "plot.svg is reproducible"
+    prediction: "Two runs write identical plot.svg and stdout"
+    test: "scripts/anscombe-artifacts.sh"
+    mutation: "Drop stableIds: the random ids differ between runs and the double-run comparison fails (runIsDeterministicAndWritesAFixedSizeSvg)"
+    discriminates: "A figure whose bytes drift between runs cannot carry a manifest"
+    if_fails: "The manifest and any signature over it cannot be checked"

@@ -1,0 +1,2 @@
+Anscombe's quartet: F. J. Anscombe, "Graphs in Statistical Analysis", The American Statistician 27(1), 1973.
+Four sets of 11 (x, y) points. 44 numbers of published data; no copyright is claimed on the values (public domain, as in R's datasets::anscombe).

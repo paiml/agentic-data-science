@@ -6,7 +6,7 @@ SHELL := bash
 gate: gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
 gate-datasets:
-	@for d in penguins wine-quality; do (cd datasets/$$d && sha256sum -c SHA256SUMS >/dev/null && test -s LICENSE) || { echo "FAIL datasets/$$d"; exit 1; }; done; echo "datasets OK"
+	@for d in penguins wine-quality anscombe; do (cd datasets/$$d && sha256sum -c SHA256SUMS >/dev/null && test -s LICENSE) || { echo "FAIL datasets/$$d"; exit 1; }; done; echo "datasets OK"
 
 # SHACL via Apache Jena (no Python on the gate path); skip when no example.ttl exists yet.
 gate-shacl:

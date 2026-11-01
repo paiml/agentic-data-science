@@ -125,6 +125,14 @@ listOf(
     }
 }
 
+// Anscombe lesson (ADS-DEMO-001): ./gradlew -q anscombe --args="datasets/anscombe/anscombe.csv OUTDIR"
+tasks.register<JavaExec>("anscombe") {
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.paiml.ads.anscombe.AnscombeKt"
+    jvmArgs("-Djava.awt.headless=true")
+    workingDir = rootDir.parentFile
+}
+
 // Example entry point: build/install/ols/bin/ols,
 // run from the repo root.
 application {
