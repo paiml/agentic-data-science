@@ -14,13 +14,13 @@ cp "$TESTS" "$T/lab/tests/lab_tests.rs"
 sed -i "s#path = \"../../../rust/ads-rust\"#path = \"$REPO/rust/ads-rust\"#" "$T/lab/Cargo.toml"
 # env!(CARGO_MANIFEST_DIR) in the suite points at the temp crate; give it the repo's datasets via a symlink at the same depth.
 mkdir -p "$T/a/b"; mv "$T/lab" "$T/a/b/lab"; ln -s "$REPO/datasets" "$T/datasets"
-export CARGO_TARGET_DIR=${LAB_TARGET:-/mnt/nvme-raid0/tmp/wkzi-lab-target}
+export CARGO_TARGET_DIR=${LAB_TARGET:-$REPO/target-lab}
 # stubs left in: refuse before running anything.
 stub=0; if grep -nE 'todo!\(|unimplemented!\(' "$T/a/b/lab/src/lib.rs" >/dev/null; then stub=1; fi
-out=$(cd "$T/a/b/lab" && cargo test --offline --test lab_tests 2>&1); rc=$?
+out=$(cd "$T/a/b/lab" && ${LAB_CARGO:-cargo test} --test lab_tests 2>&1); rc=$?
 if ! echo "$out" | grep -qE '^test [A-Za-z0-9_]+ \.\.\. '; then
   if echo "$out" | grep -qE 'running 0 tests'; then echo "NOT MEASURED: zero tests ran (a zero-test suite never passes)"; exit 2; fi
-  echo "FAIL build (does not compile)"; echo "$out" | grep -E '^error' | head -5; echo "lab: 0 tasks pass"; exit 1
+  echo "FAIL build (does not compile)"; echo "$out" | grep -E '^error' | head -5; echo "$out" | tail -8; echo "lab: 0 tasks pass"; exit 1
 fi
 fail=0; n=0
 while read -r name res; do
