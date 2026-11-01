@@ -1,4 +1,5 @@
 import AgenticDS.Examples.M1Data
+import AgenticDS.Examples.Run
 /-! Why the gate counts the unfinished-proof word. -/
 
 -- The compiler only warns about an unfinished proof,
@@ -18,3 +19,4 @@ def m1v04 : IO Unit := do
     "Gate scan of the examples"
     "lines in the file" "banned words found" ps [] []
     [s!"scanned {fs.length} files", s!"{h} banned words"]
+  contract "ads-lean-m1v04-v1" (fs.length > 0 && h == 0)

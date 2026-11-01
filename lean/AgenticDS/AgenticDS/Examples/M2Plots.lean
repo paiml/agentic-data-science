@@ -5,6 +5,7 @@ Authors: Pragmatic AI Labs
 -/
 import AgenticDS.Cv
 import AgenticDS.Plot
+import AgenticDS.Examples.Run
 
 /-! # Module 2 plots: real penguins data
 
@@ -47,6 +48,7 @@ def m2Plot01 : IO Unit := do
   IO.println s!"sxx {sxx d}, sxy {sxy d}"
   fitScatter "plot-m2v01.svg" "Penguins: flipper and mass"
     "flipper length (mm)" "body mass (g)" d []
+  contract "ads-lean-m2v01-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-02: the sums and ols defs on bill length against mass. -/
 def m2Plot02 : IO Unit := do
@@ -55,6 +57,7 @@ def m2Plot02 : IO Unit := do
   IO.println s!"slope: {olsSlope d}"
   fitScatter "plot-m2v02.svg" "Penguins: bill and mass"
     "bill length (mm)" "body mass (g)" d []
+  contract "ads-lean-m2v02-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-04: the residual sum for intercepts around the fitted one
 (slope fixed at the fit): the identity of `resid_sum`. -/
@@ -75,6 +78,9 @@ def m2Plot04 : IO Unit := do
      (qf (a0 + 600), qf ((resid d (a0 + 600) b).sum))]
     [(qf a0, 0)]
     [s!"n = {d.length} penguins", "sum = 0 at fitted a"]
+  contract "ads-lean-m2v04-v1"
+    ((resid d a0 b).sum == 0 &&
+      sums == at_.map fun a => sy d - cnt d * a - b * sx d)
 
 /-- m2-05: residuals against fitted mass; they sum to 0. -/
 def m2Plot05 : IO Unit := do
@@ -90,6 +96,7 @@ def m2Plot05 : IO Unit := do
     ((d.zip r).map fun (p, e) => (qf (fit p.1), qf e))
     [(qf (fit lo), 0), (qf (fit hi), 0)] []
     [s!"n = {d.length} penguins", s!"sum = {r.sum}"]
+  contract "ads-lean-m2v05-v1" (d.length > 0 && r.sum == 0)
 
 /-- m2-07: bill length against flipper length. -/
 def m2Plot07 : IO Unit := do
@@ -97,6 +104,7 @@ def m2Plot07 : IO Unit := do
   IO.println s!"cnt {cnt d}, slope {olsSlope d}"
   fitScatter "plot-m2v07.svg" "Penguins: bill and flipper"
     "bill length (mm)" "flipper length (mm)" d []
+  contract "ads-lean-m2v07-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-09: the true slope passes its guard on the penguins. -/
 def m2Plot09 : IO Unit := do
@@ -106,6 +114,8 @@ def m2Plot09 : IO Unit := do
   IO.println s!"guard planted slope 2: {olsSlope d == 2}"
   fitScatter "plot-m2v09.svg" "Penguins: the guarded slope"
     "flipper length (mm)" "body mass (g)" d []
+  contract "ads-lean-m2v09-v1"
+    (olsSlope d == 1145743050 / 23059877 && olsSlope d != 2)
 
 /-- m2-10: bill depth against mass, the fit through the means. -/
 def m2Plot10 : IO Unit := do
@@ -117,4 +127,6 @@ def m2Plot10 : IO Unit := do
     olsIntercept d + olsSlope d * mx == my}"
   fitScatter "plot-m2v10.svg" "Penguins: depth and mass"
     "bill depth (mm)" "body mass (g)" d [(qf mx, qf my)]
+  contract "ads-lean-m2v10-v1"
+    (cnt d > 0 && olsIntercept d + olsSlope d * mx == my)
 

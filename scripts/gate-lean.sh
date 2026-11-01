@@ -35,6 +35,10 @@ for t in AgenticDSTest/ExamplesM*.lean; do
   out=$(lake env lean "${LEANOPTS[@]}" --run "$t" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
 done
+# Every demo that once printed nothing must end in its contract line (ads#132); the checker must refuse empty stdout.
+scripts/falsify-rerun-lean-demos.sh >/dev/null || { echo "FAIL rerun-lean-demos falsifier"; scripts/falsify-rerun-lean-demos.sh; exit 1; }
+out=$(scripts/rerun-lean-demos.sh 2 .lake/build/bin $(cat scripts/contract-demos.txt) 2>&1) || { echo "FAIL contract demos: $out"; exit 1; }
+
 # Example files lake does not build must still elaborate; the planted fault must still be refused.
 for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/Examples/M2V09.lean; do
   out=$(lake env lean "$f" 2>&1) || { echo "FAIL $f: $out"; exit 1; }
