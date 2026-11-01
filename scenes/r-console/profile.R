@@ -40,6 +40,8 @@
     suppressMessages(base::source(...))
     Sys.sleep(2.5)
     cat(cli::col_grey("# done"), "\n", sep = "")
+    # Hold the next prompt back: the capture polls for "# done" and the verdict screen must not already show ">" (m1-07 lost this race).
+    Sys.sleep(6)
     invisible(NULL)
   }, envir = globalenv())
   cat(cli::col_grey("# ready: ", R.version.string, ", agenticds loaded"), "\n", sep = "")
