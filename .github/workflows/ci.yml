@@ -161,6 +161,11 @@ jobs:
         run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe/rust"
       - name: Parity over every landed language (missing = RED)
         run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
+      - name: Hero image (generated from the landed plots; missing or stale = RED)
+        run: scripts/hero.sh check "$RUNNER_TEMP/anscombe"
+      - run: scripts/hero.sh build "$RUNNER_TEMP/anscombe" "$RUNNER_TEMP/hero"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-hero, path: "${{ runner.temp }}/hero" }
       - uses: actions/upload-artifact@v4
         with: { name: anscombe-rust, path: "${{ runner.temp }}/anscombe/rust" }
   gate:
