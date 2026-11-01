@@ -37,23 +37,16 @@ anscombe_summary <- function(d) {
   do.call(rbind, rows)
 }
 
-#' The stdout.txt text: one line per set, fixed decimals.
+#' The stdout.txt text: one line per set, 2 decimals (parity).
 #' @param s The tibble from anscombe_summary.
-#' @param digits Declared decimals (the parity contract).
 #' @return A character vector of lines.
 #' @export
-anscombe_lines <- function(s, digits = 3L) {
-  f <- function(z) formatC(z, format = "f", digits = digits)
-  c(
-    paste(
-      "anscombe quartet: n mean_x mean_y var_x var_y",
-      "cor slope intercept"
-    ),
-    sprintf(
-      "%s: %d %s %s %s %s %s %s %s",
-      s$set, s$n, f(s$mean_x), f(s$mean_y), f(s$var_x),
-      f(s$var_y), f(s$cor), f(s$slope), f(s$intercept)
-    )
+anscombe_lines <- function(s) {
+  f <- function(z) formatC(z, format = "f", digits = 2L)
+  sprintf(
+    "set %s: n=%d mean_x=%s mean_y=%s slope=%s intercept=%s r=%s",
+    s$set, s$n, f(s$mean_x), f(s$mean_y), f(s$slope),
+    f(s$intercept), f(s$cor)
   )
 }
 

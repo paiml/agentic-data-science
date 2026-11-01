@@ -6,6 +6,6 @@ RUN bash /w/scripts/r-deps.sh /opt/rlib
 ENV R_LIBS=/opt/rlib
 COPY r/agenticds /w/r/agenticds
 RUN R CMD INSTALL --no-docs /w/r/agenticds
-COPY data /w/data
+COPY data/anscombe /w/data/anscombe
 COPY lessons/anscombe /w/lessons/anscombe
 WORKDIR /w

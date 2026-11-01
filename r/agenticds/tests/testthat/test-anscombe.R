@@ -2,10 +2,10 @@ root <- Sys.getenv(
   "ADS_ROOT",
   unset = normalizePath(file.path("..", "..", "..", ".."))
 )
-csv <- file.path(root, "data", "anscombe.csv")
+csv <- file.path(root, "data", "anscombe", "anscombe.csv")
 
 test_that("the data file matches its pinned sha256", {
-  sums <- readLines(file.path(root, "data", "SHA256SUMS"))
+  sums <- readLines(file.path(root, "data", "anscombe", "SHA256SUMS"))
   pin <- sums[grepl("anscombe.csv$", sums)]
   expect_length(pin, 1L)
   got <- system2("sha256sum", csv, stdout = TRUE)
@@ -39,12 +39,18 @@ test_that("the four sets share their summary statistics", {
 test_that("lines are fixed-decimal and one per set", {
   s <- anscombe_summary(anscombe_read(csv))
   out <- anscombe_lines(s)
-  expect_length(out, 5L)
+  expect_length(out, 4L)
   expect_identical(
-    out[[2]],
-    "I: 11 9.000 7.501 11.000 4.127 0.816 0.500 3.000"
+    out[[1]],
+    paste(
+      "set I: n=11 mean_x=9.00 mean_y=7.50",
+      "slope=0.50 intercept=3.00 r=0.82"
+    )
   )
-  expect_match(anscombe_lines(s, 1L)[[3]], "^II: 11 9.0 7.5 ")
+  expect_identical(
+    sub("^set [IV]+: n=11 ", "", out),
+    rep(sub("^set I: n=11 ", "", out[[1]]), 4L)
+  )
 })
 
 test_that("the plot has four panels and writes an SVG", {
