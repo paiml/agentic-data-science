@@ -16,5 +16,7 @@ def m4v03 : IO Unit := do
     ⟨m4v03_f, some 6, "rose"⟩]
   for r in rs do IO.println s!"{(validate r).isSome}"
   IO.println s!"kept {(clean rs).length} of {rs.length}"
-  plot 20 [("kept   ", (clean rs).length),
+  let rows := [("kept   ", (clean rs).length),
     ("refused", rs.length - (clean rs).length)]
+  plot 20 rows
+  writeSvg "plot-m4v03.svg" "Rows kept and refused" 20 rows

@@ -18,6 +18,8 @@ def m4v06 : IO Unit := do
   IO.println s!"rows {l.length}"
   IO.println s!"leaky train {(m4v06_leak l).length}"
   IO.println s!"test {(testRows l).length}"
-  plot 20 [("rows       ", l.length),
+  let rows := [("rows       ", l.length),
     ("leaky train", (m4v06_leak l).length),
     ("test       ", (testRows l).length)]
+  plot 20 rows
+  writeSvg "plot-m4v06.svg" "The leak" 20 rows

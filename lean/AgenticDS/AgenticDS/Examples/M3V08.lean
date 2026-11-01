@@ -19,7 +19,9 @@ def m3v08 : IO Unit := do
   let sz ← IO.ofExcept
     (km.getObjValAs? (List Nat) "cluster_sizes")
   IO.println s!"cluster sizes: {sz}"
-  plot 30 (sz.zipIdx.map fun (n, i) => (s!"cluster {i}", n))
+  let rows := sz.zipIdx.map fun (n, i) => (s!"cluster {i}", n)
+  plot 30 rows
+  writeSvg "plot-m3v08.svg" "Cluster sizes" 30 rows
   let acc ← IO.ofExcept
     (j.getObjValAs? JsonNumber "accuracy")
   IO.println s!"accuracy: {m3v08_exact conf} golden {acc}"
