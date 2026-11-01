@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 # F5: removing the hero, making it stale, or dropping it from the README must turn the hero check RED; the clean tree GREEN.
+# usage: falsify-hero.sh <artifacts-dir> (or ANSCOMBE_ARTS). Stages EVERY language in parity/anscombe.landed: rust is built here;
+# every other landed language needs <artifacts-dir>/<lang>/plot.svg (CI downloads it). A missing one is RED, never skipped.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; t="$(mktemp -d)"; trap 'rm -rf "${t:?}"' EXIT
-mkdir -p "$t/rust"; bash "$root/scripts/lesson-artifacts.sh" anscombe rust "$t/rust" >/dev/null
+arts="${1:-${ANSCOMBE_ARTS:-}}"
+while read -r lang; do [ -n "$lang" ] || continue; mkdir -p "$t/$lang"
+  if [ "$lang" = rust ]; then bash "$root/scripts/lesson-artifacts.sh" anscombe rust "$t/rust" >/dev/null
+  else [ -s "$arts/$lang/plot.svg" ] || { echo "FAIL: landed language $lang has no plot.svg under \"$arts\" (pass the artifacts dir)"; exit 1; }
+    cp "$arts/$lang/plot.svg" "$t/$lang/plot.svg"; fi
+done < "$root/parity/anscombe.landed"
 bash "$root/scripts/hero.sh" check "$t" >/dev/null || { echo "FAIL: clean hero not green"; exit 1; }
 for f in assets/hero.svg assets/hero.sha256 README.md; do cp "$root/$f" "$t/save"
   case "$f" in
