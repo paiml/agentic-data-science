@@ -32,15 +32,15 @@
     })
   }
   assign("source", function(...) {
+    # Clear from R, never with a Ctrl-L keystroke: a Ctrl-L sent while the tty is still cooked echoes as a literal ^L, and
+    # one sent at the prompt makes readline redraw its prompt prefix (GH-2030). The call is echoed back after the clear.
+    cat("\033[2J\033[H")
+    cat("> ", paste(deparse(sys.call()), collapse = ""), "\n", sep = "")
     cat(cli::col_grey(R.version.string), "\n", sep = "")
     suppressMessages(base::source(...))
     Sys.sleep(2.5)
     cat(cli::col_grey("# done"), "\n", sep = "")
     invisible(NULL)
   }, envir = globalenv())
-  # "# ready" rides in the FIRST PROMPT, so it shows only once R is reading input: a Ctrl-L sent after it is handled
-  # by readline, not echoed by the cooked tty as a literal ^L (c03-r m3-06 HOLD, GH-2030). The prompt is restored after
-  # the first top-level call.
-  options(prompt = paste0("\n", cli::col_grey(paste0("# ready: ", R.version.string, ", agenticds loaded")), "\n> "))
-  addTaskCallback(function(...) { options(prompt = "> "); FALSE })
+  cat(cli::col_grey("# ready: ", R.version.string, ", agenticds loaded"), "\n", sep = "")
 }
