@@ -71,9 +71,8 @@ def main (_ : List String) : IO UInt32 := do
   let v8 := get "v08"
   let want8 := ["\"n_rows\": 6497", "\"n_train\": 5198",
     "\"n_test\": 1299", "n_rows 6497", "n_train 5198",
-    "n_test 1299", "test  █████████ 1299",
-    "contract: plot_bars_bounded OK",
-    "svg 2 bars plot-m4v08.svg", "rmse 0.7602",
+    "n_test 1299", "svg 200 points plot-m4v08.svg",
+    "contract: plot_scatter_bounded OK", "rmse 0.7602",
     "r2 0.2598", "red 5.636", "white 5.877"]
   for w in want8 do
     unless has v8 w do
