@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Grader entry point: grade.sh [LAB_DIR]  (default: ./starter). Exit 0 = every check passed.
 # Runs from the GRADER side (/grader/grade.sh in the sandbox image), never from the learner's /workspace.
-# GRADER_DIR (default /grader, no other fallback) holds run.jl (the runner) and solution/test/runtests.jl (the tests).
-# The learner's tree is graded against the grader's tests, and the counts are read from a result file only the
-# runner writes (run.jl). The learner's stdout and exit code are never parsed: learner code runs in the runner's
-# process and can print a pass line and call exit(0). No result file, or a wrong nonce, is a FAIL. Fewer than
-# MIN_TOTAL passes, or any fail/error, or a non-zero exit, is a FAIL.
-# Residual limit: the learner's code shares the runner's process, so it could in principle find and write the result
-# file; the nonce and path are only on the runner's stdin and in a directory the learner never names. The real boundary is
-# the sandbox (no network, no host mounts, learner tree writable, /grader read-only).
+# GRADER_DIR (default /grader, no other fallback) holds run.jl, serve.jl, wire.jl, shim/AgenticDS.jl and
+# solution/{Project.toml,Manifest.toml,test/runtests.jl,data}.
+# Two processes. The VERDICT process (run.jl) loads only the grader shim package and runs the grader's own runtests.jl
+# in place; it never loads learner code. The learner's package runs in a CHILD process (serve.jl) that answers the
+# shim's calls over a loopback socket with values only (a restricted JSON of DataFrames and strings, never
+# Serialization). Learner stdout, exit code, globals and __init__ cannot reach the verdict process. A child that
+# crashes, hangs or sends junk is an error in a testset, so a FAIL. The learner's stdout and exit code are never parsed.
+# MIN_TOTAL (73) passes, no fail/error, exit 0 and a result file with this run's nonce are all required.
+# Residual limit: the child still shares a machine with the verdict process (loopback, same uid); the sandbox
+# (no network beyond loopback, no host mounts, /grader read-only) is the outer boundary.
 set -uo pipefail
 dir=${1:-./starter}
 JULIA=${JULIA:-julia}
@@ -22,13 +24,18 @@ if [ -e "$dir/test/runtests.jl" ] && ! cmp -s "$dir/test/runtests.jl" "$tests"; 
 base=$(mktemp -d); trap 'rm -rf "${base:?}"' EXIT
 work=$base/work; res=$base/res; mkdir -p "$work" "$res"
 cp -R "$dir/." "$work/"
-mkdir -p "$work/test"; cp "$tests" "$work/test/runtests.jl"
-cd "$work" || exit 2
+# the verdict process's project: the solution's Project.toml and Manifest, with the grader shim as the AgenticDS source
+gp=$base/gproj; mkdir -p "$gp/src"
+cp "$G/solution/Project.toml" "$G/solution/Manifest.toml" "$gp/" 2>/dev/null
+cp "$G/shim/AgenticDS.jl" "$G/wire.jl" "$gp/src/"
+cd "$gp" || exit 2
 nonce=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 result=$res/result-$nonce
 export JULIA_PKG_OFFLINE=${JULIA_PKG_OFFLINE:-true}
 "$JULIA" --project=. -e 'using Pkg; Pkg.instantiate()' >/dev/null 2>&1
-out=$(printf '%s\t%s\n' "$result" "$nonce" | "$JULIA" --project=. "$runner" "$work/test/runtests.jl" 2>&1); rc=$?
+(cd "$work" && "$JULIA" --project=. -e 'using Pkg; Pkg.instantiate()' >/dev/null 2>&1)
+# the tests run IN PLACE from the grader dir, so their data path (../data) is the grader's, not the learner's copy
+out=$(printf '%s\t%s\n' "$result" "$nonce" | timeout "${GRADE_TIMEOUT:-600}" "$JULIA" --project=. "$runner" "$tests" "$work" "$G/serve.jl" "$G/wire.jl" 2>&1); rc=$?
 printf '%s\n' "$out" | tail -n 25
 [ -f "$result" ] || { echo "GRADE: FAIL (the runner wrote no result: the run ended early or crashed)"; exit 1; }
 read -r got_nonce pass fail error < "$result"

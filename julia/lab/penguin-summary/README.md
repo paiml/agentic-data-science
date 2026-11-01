@@ -24,7 +24,7 @@ You pass when the run exits 0.
 
 ## For the course team
 - `solution/` is the reference answer and never ships to learners.
-- `grade.sh` is the grader: it runs the learner tree against the grader's own `solution/test/runtests.jl` through the grader's `run.jl`, which writes the counts to a result file only it writes (learner stdout and exit code are never parsed). It is installed read-only at `/grader/` in the sandbox image, never in `/workspace`. `GRADER_DIR` has no fallback.
-- `run-lab-proof.sh` records both runs (`run-starter.log`, `run-solution.log`); `falsify-grade.sh` is the grader's falsifier (10 arms, 5 mutants, real Julia; `julia-docker.sh` runs the pinned image with the network off).
+- `grade.sh` is the grader. Two processes: the VERDICT process (`run.jl`) loads only a grader shim of `AgenticDS` (`shim/AgenticDS.jl`) and runs the grader's own `solution/test/runtests.jl` in place; it never loads learner code. The learner's package runs in a CHILD process (`serve.jl`) that answers the shim's calls over a loopback socket with values only (`wire.jl`: restricted JSON of DataFrames and strings, no `Serialization`). A learner's `__init__`, globals, printing and `exit` run in the child and cannot reach the verdict; a child that crashes, hangs or sends junk is a failed testset. Learner stdout and exit code are never parsed. It is installed read-only at `/grader/` in the sandbox image, never in `/workspace`. `GRADER_DIR` has no fallback.
+- `run-lab-proof.sh` records both runs (`run-starter.log`, `run-solution.log`); `falsify-grade.sh` is the grader's falsifier (14 arms, 5 mutants, real Julia; `julia-docker.sh` runs the pinned image with the network off).
 - The fixture is a hand-made subset in the shape of Palmer Penguins; the full dataset checks (344 rows, golden
   `p1.json`) stay in the course's own demo repo, which has passed its gates.

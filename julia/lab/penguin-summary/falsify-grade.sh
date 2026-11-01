@@ -6,8 +6,11 @@
 #   D solution + planted __init__ that calls exit(0) before any test              -> FAIL (no result file)
 #   E learner's test/runtests.jl emptied -> FAIL   F learner's test/runtests.jl deleted, solution code -> PASS (grader copy is used)
 #   G grader copy missing -> REFUSED rc 2    H suite with zero checks -> FAIL
-#   I solution + atexit(exit(3)): clean result file, non-zero exit -> FAIL (exit-code check)
+#   I grader runner that writes a clean result but exits 3 -> FAIL (exit-code check)   I2 learner atexit(exit(3)) runs in the child -> PASS (a learner exit code is not the verdict)
 #   J grader runner that always exits 0, starter code, MIN_TOTAL=0: fail/error counts in the result -> FAIL
+#   K starter + __init__ that reads Main.RESULT/Main.NONCE and writes a forged pass result -> FAIL (cop ads#142 blocker; globals are not in the verdict process)
+#   N grader runner that writes no result file -> FAIL (result gate)
+#   L starter + __init__ that prints a pass line and arms atexit(exit(0)) -> FAIL
 # Mutants: each defence line of grade.sh is removed in a scratch copy, and the arm that depends on it must flip.
 # An arm that cannot flip proves nothing.
 set -uo pipefail
@@ -42,12 +45,18 @@ mk early solution; plant early '__init__() = exit(0)'
 mk emptied solution; : > "$S/emptied/test/runtests.jl"
 mk deleted solution; rm -f "${S:?}/deleted/test/runtests.jl"
 mk exit3 solution; plant exit3 '__init__() = atexit(() -> exit(3))'
+mk forgeglobals starter
+plant forgeglobals '__init__() = (open(Main.RESULT, "w") do io; println(io, string(Main.NONCE, " pass=73 fail=0 error=0")); end; exit(0))'
+mk forgetcp starter
+plant forgetcp '__init__() = (println("GRADE: PASS (73 checks)"); atexit(() -> exit(0)))'
 mk zero solution; rm -f "${S:?}/zero/test/runtests.jl"
-# grader dirs: an empty suite, a runner that always exits 0, and an empty one
-mkdir -p "$S/g-zero/solution/test" "$S/g-exit0/solution/test" "$S/g-none"
-cp "$here/run.jl" "$S/g-zero/run.jl"; printf 'using Test\n@testset "none" begin end\n' > "$S/g-zero/solution/test/runtests.jl"
-sed 's/^exit(f + e == 0 ? 0 : 1)$/exit(0)/' "$here/run.jl" > "$S/g-exit0/run.jl"
-cp "$here/solution/test/runtests.jl" "$S/g-exit0/solution/test/"
+# grader dirs: a full copy each, with an empty suite, a runner that always exits 0, and an empty one
+mkdir -p "$S/g-none"
+gcopy() { rm -rf "${S:?}/$1"; mkdir -p "$S/$1"; (cd "$here" && cp -R run.jl serve.jl wire.jl shim solution "$S/$1/"); }
+gcopy g-zero; printf 'using Test\n@testset "none" begin end\n' > "$S/g-zero/solution/test/runtests.jl"
+gcopy g-exit0; sed 's/^exit(f + e == 0 ? 0 : 1)$/exit(0)/' "$here/run.jl" > "$S/g-exit0/run.jl"
+gcopy g-exit3; sed 's/^exit(f + e == 0 ? 0 : 1)$/exit(3)/' "$here/run.jl" > "$S/g-exit3/run.jl"
+gcopy g-nores; grep -v '^write(RESULT' "$here/run.jl" > "$S/g-nores/run.jl"
 cmp -s "$S/g-exit0/run.jl" "$here/run.jl" && { echo "FAIL: the exit-0 runner fixture equals the real runner (run.jl changed)"; exit 1; }
 
 echo "== shipped grade.sh"
@@ -59,9 +68,13 @@ check E "$(grade "$here/grade.sh" emptied)" nz
 check F "$(grade "$here/grade.sh" deleted)" 0
 check G "$(grade "$here/grade.sh" sol GRADER_DIR="$S/g-none")" 2
 check H "$(grade "$here/grade.sh" zero GRADER_DIR="$S/g-zero")" nz
-check I "$(grade "$here/grade.sh" exit3)" nz
+check I "$(grade "$here/grade.sh" sol GRADER_DIR="$S/g-exit3")" nz
+check I2 "$(grade "$here/grade.sh" exit3)" 0
 check J "$(grade "$here/grade.sh" sta GRADER_DIR="$S/g-exit0" MIN_TOTAL=0)" nz
 grep -q "(0 failed, 9 errored)" "$S/last.out" || { echo "FAIL arm J: counts were not read from the result file: $(tail -n 1 "$S/last.out")"; fail=1; }
+check N "$(grade "$here/grade.sh" sol GRADER_DIR="$S/g-nores")" nz
+check K "$(grade "$here/grade.sh" forgeglobals)" nz
+check L "$(grade "$here/grade.sh" forgetcp)" nz
 
 echo "== mutants (the dependent arm must flip)"
 mutant() { # name sed-expr learner flipped-rc(0|nz) [env...]
@@ -73,10 +86,10 @@ mutant() { # name sed-expr learner flipped-rc(0|nz) [env...]
     echo "mutant $name flips its arm (rc=$rc): the arm is sensitive"
   else echo "FAIL mutant $name: arm did not flip (rc=$rc)"; fail=1; fi
 }
-mutant no-copy-in       '/^mkdir -p "\$work\/test"; cp "\$tests"/d' deleted nz
-mutant no-exit-check    '/^if \[ "\$rc" -ne 0 \]; then echo "GRADE: FAIL (exit/d' exit3 0
+mutant no-cmp-check       '/^if \[ -e "\$dir\/test\/runtests.jl" \]/d' emptied 0
+mutant no-exit-check    '/^if \[ "\$rc" -ne 0 \]; then echo "GRADE: FAIL (exit/d' sol 0 GRADER_DIR="$S/g-exit3"
 mutant no-failerr-check '/^if \[ "\$fail" -ne 0 \] || \[ "\$error" -ne 0 \]/d' sta 0 GRADER_DIR="$S/g-exit0" MIN_TOTAL=0
 mutant no-min-total     '/^if \[ "\$pass" -lt "\$MIN_TOTAL" \]/d' zero 0 GRADER_DIR="$S/g-zero"
-mutant no-result-gate   '/^\[ -f "\$result" \] || /d;/^\[ "\$got_nonce" = /d;/^case "\$pass\$fail\$error" in/d;s|^read -r got_nonce pass fail error < "\$result"|got_nonce=x; pass=; fail=; error=|' early 0
-[ "$fail" -eq 0 ] && echo "falsifier OK (10 arms, 5 mutants, real Julia)"
+mutant no-result-gate   '/^\[ -f "\$result" \] || /d;/^\[ "\$got_nonce" = /d;/^case "\$pass\$fail\$error" in/d;s|^read -r got_nonce pass fail error < "\$result"|got_nonce=x; pass=; fail=; error=|' sol 0 GRADER_DIR="$S/g-nores"
+[ "$fail" -eq 0 ] && echo "falsifier OK (14 arms, 5 mutants, real Julia)"
 exit "$fail"
