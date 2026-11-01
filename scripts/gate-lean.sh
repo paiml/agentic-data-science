@@ -38,6 +38,8 @@ done
 # Example files lake does not build must still elaborate; the planted fault must still be refused.
 for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/Examples/M2V09.lean; do
   out=$(lake env lean "$f" 2>&1) || { echo "FAIL $f: $out"; exit 1; }
+  # Each also writes its plot from real data: the contract line must print.
+  echo "$out" | grep -q "contract: plot_scatter_bounded OK" || { echo "FAIL $f printed no plot contract: $out"; exit 1; }
 done
 if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
 # The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
