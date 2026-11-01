@@ -60,6 +60,7 @@ if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
 fi
+bash ../../scripts/gate-lean-anscombe.sh || exit 1
 rcp=$(mktemp); trap 'rm -f "${rcp:?}"' EXIT
 ../../labs/c05-final/tests/lab-verify.sh "$rcp" || { echo "FAIL lab c05-final"; exit 1; }
 echo "lean OK"

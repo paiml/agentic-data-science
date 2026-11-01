@@ -1,0 +1,51 @@
+# ads-lean-anscombe-v1: Course E (Lean 4), the Anscombe lesson (ADS-DEMO-001)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-11-01"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Anscombe's quartet in core Lean 4 (no Mathlib): parse data/anscombe/anscombe.csv, print one summary line per set, write plot.svg from the committed, tested Svg.lean, and agree byte for byte with the Rust stdout.txt (scripts/parity.sh)."
+  references:
+    - "lean/anscombe/Anscombe/Stats.lean"
+    - "lean/anscombe/Anscombe/Svg.lean"
+    - "lean/anscombe/Main.lean"
+    - "lean/anscombe/Test.lean"
+    - "scripts/gate-lean-anscombe.sh"
+    - "data/anscombe/anscombe.csv"
+    - "CLASSIFICATION (kind: pattern): text and SVG output compared with the Rust lesson, tolerances none (two decimals, exact text)"
+
+equations:
+  anscombe_lean_lesson:
+    formula: |
+      for each set S in {I, II, III, IV}: n=11, mean_x=9.00, mean_y=7.50, slope=0.50, intercept=3.00, r=0.82
+      stdout.txt (Lean) = stdout.txt (Rust), byte for byte
+    domain: "data/anscombe/anscombe.csv (sha256-pinned)"
+    codomain: "stdout.txt, plot.svg (960x720, four panels), manifest.sha256, the line contract: ads-lean-anscombe-v1 four sets, one summary OK"
+    postconditions:
+      - "AGREE: all four sets print one summary tail; otherwise the exe returns 1"
+      - "PARITY: scripts/parity.sh compares Lean and Rust stdout.txt, a missing one is RED"
+      - "SVG: plotSvg refuses a set count other than four and holds 44 circles and 4 fit lines"
+      - "REFUSE: parse names the line of a wrong field count, a bad x, a bad y or an unknown set"
+
+proof_obligations:
+  - type: invariant
+    property: "The Lean build is warnings-as-errors and holds no sorry, admit, native_decide or SATD marker"
+    formal: "scripts/gate-lean-anscombe.sh exits 0"
+    applies_to: anscombe_lean_lesson
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-ANSCOMBE-001
+    rule: "A changed data value breaks the quartet's agreement"
+    prediction: "lake exe anscombe on the shared data prints contract: ads-lean-anscombe-v1 four sets, one summary OK"
+    test: "scripts/gate-lean-anscombe.sh"
+    mutation: "Change the row IV,8,6.58 to IV,8,7.58 in a copy of the data: the exe prints FAIL the quartet must agree and exits 1 (measured 2026-11-01)"
+    discriminates: "A silent data edit cannot pass the lesson"
+    if_fails: "A learner sees four sets that no longer share a summary"
+  - id: FALSIFY-ADS-LEAN-ANSCOMBE-002
+    rule: "The test refuses a disagreeing summary"
+    prediction: "lake exe anscombe-test prints contract: ads-lean-anscombe-test-v1 OK"
+    test: "lean/anscombe/Test.lean"
+    mutation: "Add 1 to every y of set IV: agree returns false, the mutant check holds (a test that expected true fails)"
+    discriminates: "agree cannot be a constant true"
+    if_fails: "The agreement check passes whatever the data"
