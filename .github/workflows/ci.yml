@@ -50,9 +50,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        part: [AgenticDS, BM1, BM2, BM3, BM4, PenguinsOLS]
+        part: [AgenticDS, Anscombe, BM1, BM2, BM3, BM4, PenguinsOLS]
     env:
-      ADS_JULIA_PARTS: AgenticDS BM1 BM2 BM3 BM4 PenguinsOLS
+      ADS_JULIA_PARTS: AgenticDS Anscombe BM1 BM2 BM3 BM4 PenguinsOLS
     steps:
       - uses: actions/checkout@v4
       - name: Install Julia 1.13.3 (pinned, sha256-verified, into RUNNER_TEMP)
@@ -67,6 +67,18 @@ jobs:
           path: ~/.julia
           key: julia-quality-${{ matrix.part }}-${{ runner.os }}-1.13.3-${{ hashFiles('julia/**/Manifest.toml') }}
       - run: scripts/gate-julia.sh ${{ matrix.part }}
+  anscombe-julia:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the lesson twice in the digest-pinned container; the two manifests must be identical
+        run: |
+          scripts/anscombe-julia.sh "$RUNNER_TEMP/a" > /dev/null
+          scripts/anscombe-julia.sh "$RUNNER_TEMP/b" > /dev/null
+          diff "$RUNNER_TEMP/a/manifest.sha256" "$RUNNER_TEMP/b/manifest.sha256"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-julia, path: "${{ runner.temp }}/a" }
   r:
     timeout-minutes: 45
     runs-on: ubuntu-24.04

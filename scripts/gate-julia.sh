@@ -45,7 +45,16 @@ other_part() {
   local p="$root/julia/$1"
   [ -f "$p/Project.toml" ] || { echo "FAIL no julia package $1"; exit 1; }
   julia --project="$p" -e 'using Pkg; Pkg.instantiate()'
-  julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
+  if [ -f "$p/COVERAGE100" ]; then
+    # Opt-in: this package must hit 100% line coverage (ADS-DEMO-001 R-1).
+    find "$p" -name '*.cov' -delete
+    julia --project="$p" --inline=no -e 'using Pkg; Pkg.test(coverage = true)'
+    julia --project="$root/julia/gate" -e 'using Pkg; Pkg.instantiate()'
+    julia --project="$root/julia/gate" "$root/scripts/julia-coverage.jl" "$p"
+    find "$p" -name '*.cov' -delete
+  else
+    julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
+  fi
   scripts/julia-format.sh "$p"
 }
 
