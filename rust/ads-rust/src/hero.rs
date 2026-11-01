@@ -18,7 +18,7 @@ pub fn compose(
     }
     let (w, h) = (PANEL.0 * panels.len() as u32, PANEL.1 + LABEL);
     let mut out = format!(
-        "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">\n<rect width=\"{w}\" height=\"{h}\" fill=\"#ffffff\"/>\n"
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"{w}\" height=\"{h}\" viewBox=\"0 0 {w} {h}\">\n<rect width=\"{w}\" height=\"{h}\" fill=\"#ffffff\"/>\n"
     );
     for (i, (lang, svg)) in panels.iter().enumerate() {
         let body = inner(lang, svg)?;
@@ -35,7 +35,12 @@ pub fn compose(
 
 /// The content of a plain `<svg …>…</svg>` document.
 fn inner<'a>(lang: &str, svg: &'a str) -> Result<&'a str, String> {
+    // A writer may open with an `<?xml …?>` prolog (CairoMakie does); only the `<svg>` element is kept.
     let t = svg.trim();
+    let t = t
+        .strip_prefix("<?xml")
+        .and_then(|r| r.split_once("?>"))
+        .map_or(t, |(_, rest)| rest.trim_start());
     let open_end = t
         .starts_with("<svg")
         .then(|| t.find('>'))

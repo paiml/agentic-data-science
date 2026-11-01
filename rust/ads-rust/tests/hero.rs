@@ -44,3 +44,19 @@ fn from_dir_reads_each_landed_language_and_refuses_a_missing_one() {
     let e = from_dir(p, "rust\njulia\n").unwrap_err();
     assert!(e.contains("julia has no plot.svg"));
 }
+
+#[test]
+fn an_xml_prolog_is_skipped_and_xlink_is_declared() {
+    let cairo = format!(
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}",
+        plot()
+    );
+    let h = compose(&[("julia".into(), cairo)]).unwrap();
+    assert!(!h.contains("<?xml"));
+    assert!(h.starts_with(
+        "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink="
+    ));
+    assert_eq!(h, compose(&[("julia".into(), plot())]).unwrap());
+    let unclosed = "<?xml version=\"1.0\"";
+    assert!(compose(&[("j".into(), unclosed.into())]).is_err());
+}
