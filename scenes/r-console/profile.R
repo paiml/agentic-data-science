@@ -32,6 +32,10 @@
     })
   }
   assign("source", function(...) {
+    # Clear from R, never with a Ctrl-L keystroke: a Ctrl-L sent while the tty is still cooked echoes as a literal ^L, and
+    # one sent at the prompt makes readline redraw its prompt prefix (GH-2030). The call is echoed back after the clear.
+    cat("\033[2J\033[H")
+    cat("> ", paste(deparse(sys.call()), collapse = ""), "\n", sep = "")
     cat(cli::col_grey(R.version.string), "\n", sep = "")
     suppressMessages(base::source(...))
     Sys.sleep(2.5)
