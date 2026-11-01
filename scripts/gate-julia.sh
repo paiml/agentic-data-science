@@ -44,7 +44,8 @@ main_part() {
 other_part() {
   local p="$root/julia/$1"
   [ -f "$p/Project.toml" ] || { echo "FAIL no julia package $1"; exit 1; }
-  julia --project="$p" -e 'using Pkg; Pkg.instantiate()'
+  # Same flags as Pkg.test (--inline=no) so both share one precompile cache slot: measured, default flags precompiled the Makie stack twice (+232 s). Refs ads#137.
+  julia --project="$p" --inline=no -e 'using Pkg; Pkg.instantiate()'
   julia --project="$p" --inline=no -e 'using Pkg; Pkg.test()'
   scripts/julia-format.sh "$p"
 }
