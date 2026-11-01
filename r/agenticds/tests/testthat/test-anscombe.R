@@ -5,7 +5,9 @@ root <- Sys.getenv(
 csv <- file.path(root, "data", "anscombe", "anscombe.csv")
 
 test_that("the data file matches its pinned sha256", {
-  sums <- readLines(file.path(root, "data", "anscombe", "SHA256SUMS"))
+  sums <- readLines(
+    file.path(root, "data", "anscombe", "SHA256SUMS")
+  )
   pin <- sums[grepl("anscombe.csv$", sums)]
   expect_length(pin, 1L)
   got <- system2("sha256sum", csv, stdout = TRUE)
