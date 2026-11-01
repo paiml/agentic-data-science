@@ -14,7 +14,7 @@
   Sys.sleep(4)
   # The screen is cleared before the run, so the run prints the R version itself (the demo shows the tool version).
   # Cosmetics: package messages (the styler cache notice) are silenced, an empty covr zero_coverage table prints
-  # one honest line instead of "<0 rows>", and a "# done" line follows the run so the capture waits for the prompt.
+  # one honest line instead of "<0 rows>", and a "# done" line follows the run so the capture waits for the run to finish (the prompt is held 6 s after it).
   # covr returns a plain data.frame, so zero_coverage() is tagged with a class the print method below can see.
   if (requireNamespace("covr", quietly = TRUE)) {
     ns <- asNamespace("covr")
