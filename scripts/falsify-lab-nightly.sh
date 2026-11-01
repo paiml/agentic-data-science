@@ -52,7 +52,16 @@ else nr E-empty-proof-is-red "cargo absent"; fi
 copy f; want F-absent-toolchain-is-unmeasured f "$(lane f "$S/f" r PATH=/nonexistent)" 2
 # ---- workflow lint: LAB only, no hosted runner, no PR-path trigger
 w=$here/.github/workflows/lab-nightly.yml
-if grep -Eq '^\s*(pull_request|merge_group|push)\s*:' "$w"; then bad G-workflow-triggers "a PR-path trigger is present"; else grep -q 'schedule:' "$w" && ok G-workflow-triggers "schedule + workflow_dispatch only"; fi
+TRIG='pull_request_target|pull_request|merge_group|push|workflow_call'
+trig_bad() { grep -Eq "^\s*($TRIG)\s*:|^on:\s*\[.*($TRIG)" "$1"; }
+if trig_bad "$w"; then bad G-workflow-triggers "a PR-path or reusable trigger is present"; else grep -q 'schedule:' "$w" && ok G-workflow-triggers "schedule + workflow_dispatch only"; fi
+# mutants: each forbidden trigger planted into a scratch copy must turn the lint red (an arm that cannot flip proves nothing)
+for tr in pull_request_target workflow_call pull_request merge_group push; do
+  m="$S/wf-$tr.yml"; sed "s/^  workflow_dispatch: {}/  workflow_dispatch: {}\n  $tr: {}/" "$w" > "$m"
+  if cmp -s "$m" "$w"; then bad "G-mutant-$tr" "the plant changed nothing"; elif trig_bad "$m"; then ok "G-mutant-$tr" "lint goes red"; else bad "G-mutant-$tr" "lint stayed green with $tr planted"; fi
+done
+m="$S/wf-inline.yml"; sed 's/^on:$/on: [pull_request_target]/' "$w" > "$m"
+if cmp -s "$m" "$w"; then bad G-mutant-inline "the plant changed nothing"; elif trig_bad "$m"; then ok G-mutant-inline "inline on: [..] form goes red"; else bad G-mutant-inline "inline form stayed green"; fi
 if grep -Eq 'ubuntu|windows|macos' "$w"; then bad H-workflow-runner "a hosted runner label is present"; else ok H-workflow-runner "self-hosted pin"; fi
 if grep -Eq 'continue-on-error|sudo|apt-get' "$w"; then bad H2-workflow-states "continue-on-error or an install on the host"; else ok H2-workflow-states "none"; fi
 # ---- ticket keeper with a fake gh
