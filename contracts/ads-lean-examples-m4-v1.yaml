@@ -31,6 +31,7 @@ equations:
       - "SPLIT: 6497 clean rows give 5198 train and 1299 test rows"
       - "AXIOMS: every example and pipeline theorem depends only on propext, Classical.choice, Quot.sound"
       - "CAN_FAIL: the leaking trainRows makes split_partition fail to elaborate"
+      - "SCATTER: v01, v03, v06, v08 and v10 each write a native scatter SVG (Examples/Scat.lean) and print contract: plot_scatter_bounded OK"
 
 proof_obligations:
   - type: invariant
