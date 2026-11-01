@@ -21,7 +21,7 @@ cat(grep("^[-+][^-+]", d, value = TRUE), sep = "\n")
 
 Sys.setenv(ADS_ROOT = root)
 out <- tempfile(fileext = ".rds")
-# a child R process, so the broken code never loads into this session
+# a child R process: the broken code never loads into this session
 code <- sprintf(
   paste0(
     "r <- testthat::test_file(%s, reporter = 'silent',",
