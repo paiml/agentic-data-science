@@ -1,5 +1,6 @@
 import AgenticDS.Pipeline
 import AgenticDS.Plot
+import AgenticDS.Examples.Scat
 /-! validate refuses a bad row; clean keeps the somes. -/
 open AgenticDS
 def m4v03_f : List (Option ℚ) := List.replicate 11 (some 1)
@@ -20,3 +21,5 @@ def m4v03 : IO Unit := do
     ("refused", rs.length - (clean rs).length)]
   plot 20 rows
   writeSvg "plot-m4v03.svg" "Rows kept and refused" 20 rows
+  wineDemo "plot-m4v03b.svg" "Red wine: sulphates and quality"
+    "sulphates" 9 8

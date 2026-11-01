@@ -17,6 +17,9 @@ def m3v02 : IO Unit := do
   IO.println s!"later best: idx {nearestIdx [9, 4, 4]}"
   -- weights 1 / variance give the z-scored distance
   IO.println s!"wdist: {wdist [1 / 4] [0] [2]}"
-  writeSvg "plot-m3v02.svg" "Objective by centroid choice" 4
-    [("minCost 2", (minCost m3v02_d 2 0 [6]).num.toNat),
-     ("objective", (objective m3v02_d ps 0 [6]).num.toNat)]
+  let cost := fun (i : Nat) =>
+    (i.toFloat / 2, qf (objective m3v02_d ps (i / 2 : ℚ) []))
+  let cs := (List.range 13).map cost
+  writeScatter "plot-m3v02.svg" "Objective by centroid choice"
+    "centroid position" "sum of squared distances" cs cs []
+    [s!"best centroid 3: {objective m3v02_d ps 3 []}"]
