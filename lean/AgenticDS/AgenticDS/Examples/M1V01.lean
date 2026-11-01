@@ -17,3 +17,4 @@ def m1v01 : IO Unit := do
   IO.println s!"mean     = {mean m1v01_xs}"
   IO.println s!"variance = {variance m1v01_xs}"
   plot 24 m1v01_hist
+  writeSvg "plot-m1v01.svg" "Values in m1v01_xs" 24 m1v01_hist

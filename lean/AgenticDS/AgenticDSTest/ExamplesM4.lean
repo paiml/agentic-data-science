@@ -33,16 +33,21 @@ def exact : List (String × List String) := [
   ("v03", ["true", "false", "false", "false", "false",
     "kept 1 of 5", "kept    █████ 1",
     "refused ████████████████████ 4",
-    "contract: plot_bars_bounded OK"]),
+    "contract: plot_bars_bounded OK",
+    "svg 2 bars plot-m4v03.svg",
+    "contract: plot_svg_bounded OK"]),
   ("v04", ["clean_length_le", "clean_sub", "clean_complete",
     "clean_in_range"]),
   ("v05", ["test rows [4, 9, 14]", "clean 6497", "test 1299",
-    "train 5198"]),
+    "train 5198", "svg 3 bars plot-m4v05.svg",
+    "contract: plot_svg_bounded OK"]),
   ("v06", ["rows 5", "leaky train 5", "test 1",
     "rows        ████████████████████ 5",
     "leaky train ████████████████████ 5",
     "test        ████ 1",
-    "contract: plot_bars_bounded OK"]),
+    "contract: plot_bars_bounded OK",
+    "svg 3 bars plot-m4v06.svg",
+    "contract: plot_svg_bounded OK"]),
   ("v07", ["(some [4/5, 7/5])"])]
 
 def main (_ : List String) : IO UInt32 := do
@@ -67,7 +72,8 @@ def main (_ : List String) : IO UInt32 := do
   let want8 := ["\"n_rows\": 6497", "\"n_train\": 5198",
     "\"n_test\": 1299", "n_rows 6497", "n_train 5198",
     "n_test 1299", "test  █████████ 1299",
-    "contract: plot_bars_bounded OK", "rmse 0.7602",
+    "contract: plot_bars_bounded OK",
+    "svg 2 bars plot-m4v08.svg", "rmse 0.7602",
     "r2 0.2598", "red 5.636", "white 5.877"]
   for w in want8 do
     unless has v8 w do

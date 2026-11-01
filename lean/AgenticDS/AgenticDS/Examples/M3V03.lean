@@ -1,4 +1,5 @@
 import AgenticDS.Kmeans
+import AgenticDS.Plot
 /-! The assignment step never does worse. -/
 open AgenticDS
 -- Any assignment f costs at least the nearest-centroid
@@ -22,3 +23,5 @@ def m3v03 : IO Unit := do
   IO.println s!"nearest centroid: {best}"
   IO.println s!"everyone to 0:    {other}"
   IO.println s!"never beaten: {decide (best ≤ other)}"
+  writeSvg "plot-m3v03.svg" "Cost of an assignment" 62
+    [("nearest", best.num.toNat), ("all to 0", other.num.toNat)]
