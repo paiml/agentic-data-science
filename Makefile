@@ -34,3 +34,4 @@ gate-rust:
 gate-parity:
 	@scripts/falsify-parity.sh
 	@scripts/falsify-determinism.sh
+	@scripts/falsify-hero.sh

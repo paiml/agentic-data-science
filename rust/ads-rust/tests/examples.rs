@@ -55,3 +55,35 @@ fn anscombe_writes_stdout_and_plot_when_asked() {
             .starts_with("<svg")
     );
 }
+
+#[test]
+fn hero_draws_every_landed_language_and_ends_ok() {
+    let d = tempfile::tempdir().unwrap();
+    std::fs::create_dir(d.path().join("rust")).unwrap();
+    let plot = ads_rust::anscombe::plot_svg(
+        &ads_rust::anscombe::parse(
+            &std::fs::read_to_string(
+                "../../data/anscombe/anscombe.csv",
+            )
+            .unwrap(),
+        )
+        .unwrap(),
+    );
+    std::fs::write(d.path().join("rust/plot.svg"), plot).unwrap();
+    std::fs::write(d.path().join("landed"), "rust\n").unwrap();
+    let out = Command::new(env!("CARGO"))
+        .args(["run", "-q", "--locked", "--example", "hero", "--"])
+        .arg(d.path())
+        .arg(d.path().join("landed"))
+        .arg(d.path().join("hero.svg"))
+        .output()
+        .unwrap();
+    assert!(out.status.success());
+    let last = String::from_utf8(out.stdout).unwrap();
+    assert!(last.trim_end().ends_with(" OK"), "{last}");
+    assert!(
+        std::fs::read_to_string(d.path().join("hero.svg"))
+            .unwrap()
+            .contains(">rust<")
+    );
+}

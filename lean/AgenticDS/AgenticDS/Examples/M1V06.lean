@@ -1,4 +1,4 @@
-import AgenticDS.Profile
+import AgenticDS.Examples.M1Data
 /-! Golden parity against R, compared exactly in ℚ. -/
 open AgenticDS Lean
 
@@ -20,3 +20,23 @@ def m1v06 : IO Unit := do
   if |m - g| < 1 / 1000000000 then
     IO.println "contract: ads-lean-p1-v1 OK"
   else throw (IO.userError "FAIL parity")
+  -- All twelve species-by-column means against the golden R means.
+  let cols := ["bill_length_mm", "bill_depth_mm",
+    "flipper_length_mm", "body_mass_g"]
+  let mut pts : List (Float × Float) := []
+  let mut worst : ℚ := 0
+  for sp in ["Adelie", "Chinstrap", "Gentoo"] do
+    for (c, k) in cols.zipIdx do
+      let a := mean (column rows sp k)
+      let some b := goldMean j sp c
+        | throw (IO.userError s!"no gold for {sp} {c}")
+      pts := pts ++ [(qf b, qf a)]
+      worst := max worst |a - b|
+  IO.println s!"{pts.length} means, worst gap {Rat.toFloat worst}"
+  if worst < 1 / 1000000000 then
+    IO.println "all 12 means agree with R"
+  else throw (IO.userError "FAIL parity on all means")
+  writeScatter "plot-m1v06.svg" "Lean mean against R golden mean"
+    "golden mean from R (mm or g)" "mean computed in Lean" pts
+    [(18, 18), (5100, 5100)] []
+    [s!"{pts.length} means", "line: exact agreement"]

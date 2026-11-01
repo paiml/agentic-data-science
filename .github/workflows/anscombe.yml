@@ -1,0 +1,56 @@
+name: anscombe
+# ADS-DEMO-001 (ads#112): the Kotlin Anscombe lesson. Produces stdout.txt, plot.svg and manifest.sha256 from a
+# double run that must be byte-identical, then signs the manifest keylessly (sigstore) on main and dispatch.
+on:
+  pull_request:
+    paths:
+      - "data/anscombe/**"
+      - "kotlin/**"
+      - "scripts/anscombe-artifacts.sh"
+      - ".github/workflows/anscombe.yml"
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  artifacts:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    # JDK 25 comes from the image, pinned by digest (read from the registry 2026-11-01)
+    container: eclipse-temurin:25-jdk-noble@sha256:95e350ad1eb738f943e141640f7e3d797e483359a3b33c3864255bfd1ad71f8a
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the dataset
+        working-directory: data/anscombe
+        run: sha256sum --check SHA256SUMS
+      - name: Build the artifacts (two runs, byte-identical or red)
+        run: ./scripts/anscombe-artifacts.sh out
+      - name: Verify the manifest
+        working-directory: out
+        run: sha256sum --check manifest.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anscombe
+          path: out/
+          if-no-files-found: error
+  sign:
+    needs: artifacts
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe, path: out }
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign the manifest (keyless)
+        working-directory: out
+        run: cosign sign-blob --yes --bundle manifest.sha256.bundle manifest.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anscombe-signed
+          path: out/
+          if-no-files-found: error
