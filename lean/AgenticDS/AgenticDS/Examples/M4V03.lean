@@ -1,4 +1,5 @@
 import AgenticDS.Pipeline
+import AgenticDS.Plot
 /-! validate refuses a bad row; clean keeps the somes. -/
 open AgenticDS
 def m4v03_f : List (Option ℚ) := List.replicate 11 (some 1)
@@ -15,3 +16,5 @@ def m4v03 : IO Unit := do
     ⟨m4v03_f, some 6, "rose"⟩]
   for r in rs do IO.println s!"{(validate r).isSome}"
   IO.println s!"kept {(clean rs).length} of {rs.length}"
+  plot 20 [("kept   ", (clean rs).length),
+    ("refused", rs.length - (clean rs).length)]

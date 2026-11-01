@@ -1,6 +1,7 @@
 import Mathlib
+import AgenticDS.Plot
 /-! The P3 golden values copied from R. -/
-open Lean
+open Lean AgenticDS
 def m3v08_load : IO Json := do
   IO.ofExcept (Json.parse (← IO.FS.readFile
     "../../datasets/golden/p3.json"))
@@ -18,6 +19,7 @@ def m3v08 : IO Unit := do
   let sz ← IO.ofExcept
     (km.getObjValAs? (List Nat) "cluster_sizes")
   IO.println s!"cluster sizes: {sz}"
+  plot 30 (sz.zipIdx.map fun (n, i) => (s!"cluster {i}", n))
   let acc ← IO.ofExcept
     (j.getObjValAs? JsonNumber "accuracy")
   IO.println s!"accuracy: {m3v08_exact conf} golden {acc}"
