@@ -173,6 +173,8 @@ jobs:
         with: { name: anscombe-kotlin, path: "${{ runner.temp }}/anscombe/kotlin" }
       - name: Parity over every landed language (missing = RED)
         run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
+      - name: Hero F5 falsifier (stages every landed language's plot; clean GREEN, missing/stale/unreferenced RED)
+        run: scripts/falsify-hero.sh "$RUNNER_TEMP/anscombe"
       - name: Hero image (generated from the landed plots; missing or stale = RED)
         run: scripts/hero.sh check "$RUNNER_TEMP/anscombe"
       - run: scripts/hero.sh build "$RUNNER_TEMP/anscombe" "$RUNNER_TEMP/hero"
