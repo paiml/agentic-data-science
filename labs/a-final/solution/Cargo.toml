@@ -1,0 +1,12 @@
+[package]
+name = "lab-a-final"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+ads-rust = { path = "../../../rust/ads-rust" }
+ndarray = "0.16"
+serde_json = "1"

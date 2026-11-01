@@ -1,4 +1,4 @@
-import AgenticDS.Regression
+import AgenticDS.Examples.M2Plots
 /-! A guard that can fail: the true slope passes. -/
 open AgenticDS
 set_option linter.hashCommand false
@@ -10,3 +10,6 @@ def m2v09_data : Data ℚ := [(1, 2), (2, 4), (3, 7)]
 
 #guard olsSlope m2v09_data == 5 / 2
 #eval olsSlope m2v09_data
+
+-- Real data: the guarded slope on penguins.
+#eval m2Plot09

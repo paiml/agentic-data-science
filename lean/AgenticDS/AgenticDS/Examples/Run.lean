@@ -22,3 +22,13 @@ def runExample (examples : List (String × IO Unit))
   | _ =>
     IO.eprintln s!"usage: example <id>; ids: {examples.map (·.1)}"
     pure 1
+
+/-- The contract line of a demo: refuse (exit 1 through
+`runExample`) unless `ok`, else print `contract: NAME OK`. -/
+def contract (name : String) (ok : Bool) : IO Unit := do
+  unless ok do throw (IO.userError s!"contract {name} violated")
+  IO.println s!"contract: {name} OK"
+
+/-- `p.isInfixOf s`: the text `p` occurs inside `s`. -/
+def String.isInfixOf (p s : String) : Bool :=
+  (s.splitOn p).length > 1
