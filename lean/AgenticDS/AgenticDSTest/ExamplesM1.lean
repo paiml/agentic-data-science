@@ -13,11 +13,8 @@ open AgenticDS
 -- Lines each example must print.
 def m1Want : List (String × List String) := [
   ("v01", ["mean     = 5", "variance = 4",
-    "4 ████████████████████████ 3",
-    "5 ████████████████ 2", "9 ████████ 1",
-    "contract: plot_bars_bounded OK",
-    "svg 10 bars plot-m1v01.svg",
-    "contract: plot_svg_bounded OK"]),
+    "svg 8 points plot-m1v01.svg",
+    "contract: plot_scatter_bounded OK"]),
   ("v03", ["leanprover/lean4:v4.35.0"]),
   ("v07", ["AgenticDS.variance_shift depends on axioms: [",
     "AgenticDS.mean_const depends on axioms: ["])]
