@@ -30,6 +30,7 @@ equations:
       - "REGISTRY: examplesM3 lists exactly the example files, and each example runs"
       - "AXIOMS: every module 3 theorem depends only on propext, Classical.choice, Quot.sound"
       - "CAN_FAIL: changing one golden row changes the matrix the test compares"
+      - "SCATTER: v01, v05, v08, v09 and v10 each write a native scatter SVG (Examples/Scat.lean) and print contract: plot_scatter_bounded OK"
 
 proof_obligations:
   - type: invariant
