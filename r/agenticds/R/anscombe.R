@@ -62,19 +62,22 @@ anscombe_plot <- function(d) {
       method = "lm", formula = y ~ x, se = FALSE,
       colour = "#c0392b", linewidth = 0.7
     ) +
+    ggplot2::labs(x = "x", y = "y") +
     ggplot2::facet_wrap(~set, nrow = 2) +
     ggplot2::coord_cartesian(xlim = c(3, 20), ylim = c(2, 14)) +
-    ggplot2::theme_minimal(base_size = 11, base_family = "sans")
+    ggplot2::theme_minimal(base_size = 18, base_family = "sans")
 }
 
-#' Write the plot as an SVG file (fixed size).
+#' Write the plot as a plain <svg>, 960 x 720 (the hero panel).
 #' @param d The tibble from anscombe_read.
 #' @param file Output path.
 #' @return The path, invisibly.
 #' @export
 anscombe_svg <- function(d, file) {
-  svglite::svglite(file, width = 8, height = 6)
-  on.exit(grDevices::dev.off())
+  svglite::svglite(file, width = 960 / 72, height = 720 / 72)
   print(anscombe_plot(d))
+  grDevices::dev.off()
+  txt <- readLines(file)
+  writeLines(txt[!startsWith(txt, "<?xml")], file)
   invisible(file)
 }

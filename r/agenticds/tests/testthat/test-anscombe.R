@@ -62,7 +62,8 @@ test_that("the plot has four panels and writes an SVG", {
   f <- withr::local_tempfile(fileext = ".svg")
   expect_identical(anscombe_svg(d, f), f)
   txt <- paste(readLines(f), collapse = "\n")
-  expect_match(txt, "^<\\?xml")
+  expect_match(txt, "^<svg")
+  expect_match(txt, "viewBox=.0 0 960[.0]* 720")
   expect_match(txt, "</svg>")
 })
 
@@ -73,4 +74,10 @@ test_that("the same data gives byte-identical SVG twice", {
   anscombe_svg(d, a)
   anscombe_svg(d, b)
   expect_identical(readLines(a), readLines(b))
+})
+
+test_that("axes are labelled x and y, not the aes expression", {
+  p <- anscombe_plot(anscombe_read(csv))
+  expect_identical(p$labels$x, "x")
+  expect_identical(p$labels$y, "y")
 })
