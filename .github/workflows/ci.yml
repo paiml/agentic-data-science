@@ -146,10 +146,20 @@ jobs:
       - name: Install cargo-llvm-cov (pinned, locked)
         run: cargo install --locked --version 0.8.5 cargo-llvm-cov
       - run: make gate-rust
+  parity:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-parity
+      - name: Lesson artifacts (stdout.txt, plot.svg, manifest.sha256)
+        run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe-rust"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-rust, path: "${{ runner.temp }}/anscombe-rust" }
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean]
+    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean, parity]
     runs-on: ubuntu-24.04
     steps:
       - run: |
