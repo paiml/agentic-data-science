@@ -45,8 +45,15 @@ for p in tall empty; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_svg_bounded violated" || { echo "FAIL PlantedSvgOverflow $p failed for another reason: $out"; exit 1; }
 done
+# The scatter contract must fire on an empty plot and on a NaN point.
+for p in empty nan; do
+  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
+  echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
+done
 if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
 fi
+rcp=$(mktemp); trap 'rm -f "${rcp:?}"' EXIT
+../../labs/c05-final/tests/lab-verify.sh "$rcp" || { echo "FAIL lab c05-final"; exit 1; }
 echo "lean OK"
