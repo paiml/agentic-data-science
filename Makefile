@@ -3,10 +3,10 @@ SHELL := bash
 .DELETE_ON_ERROR:
 .PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
-gate: gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
+gate: gate-parity gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
 gate-datasets:
-	@for d in penguins wine-quality; do (cd datasets/$$d && sha256sum -c SHA256SUMS >/dev/null && test -s LICENSE) || { echo "FAIL datasets/$$d"; exit 1; }; done; echo "datasets OK"
+	@for d in datasets/penguins datasets/wine-quality data/anscombe; do (cd $$d && sha256sum -c SHA256SUMS >/dev/null && test -s LICENSE) || { echo "FAIL $$d"; exit 1; }; done; echo "datasets OK"
 
 # SHACL via Apache Jena (no Python on the gate path); skip when no example.ttl exists yet.
 gate-shacl:
@@ -29,3 +29,13 @@ gate-lean:
 
 gate-rust:
 	@scripts/gate-rust.sh
+
+.PHONY: gate-parity
+gate-parity:
+	@scripts/falsify-parity.sh
+	@scripts/falsify-determinism.sh
+
+.PHONY: gate-hero
+# usage: make gate-hero ARTS=<dir holding <lang>/plot.svg for every landed language except rust>
+gate-hero:
+	@scripts/falsify-hero.sh "$(ARTS)"
