@@ -45,7 +45,10 @@ anscombe_summary <- function(d) {
 anscombe_lines <- function(s, digits = 3L) {
   f <- function(z) formatC(z, format = "f", digits = digits)
   c(
-    "anscombe quartet: n mean_x mean_y var_x var_y cor slope intercept",
+    paste(
+      "anscombe quartet: n mean_x mean_y var_x var_y",
+      "cor slope intercept"
+    ),
     sprintf(
       "%s: %d %s %s %s %s %s %s %s",
       s$set, s$n, f(s$mean_x), f(s$mean_y), f(s$var_x),
@@ -60,7 +63,7 @@ anscombe_lines <- function(s, digits = 3L) {
 #' @export
 anscombe_plot <- function(d) {
   d$set <- factor(d$set, levels = anscombe_sets)
-  ggplot2::ggplot(d, ggplot2::aes(x = x, y = y)) +
+  ggplot2::ggplot(d, ggplot2::aes(x = d[["x"]], y = d[["y"]])) +
     ggplot2::geom_point(colour = "#1f4e79", size = 2) +
     ggplot2::geom_smooth(
       method = "lm", formula = y ~ x, se = FALSE,

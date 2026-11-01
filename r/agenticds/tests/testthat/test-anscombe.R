@@ -40,7 +40,10 @@ test_that("lines are fixed-decimal and one per set", {
   s <- anscombe_summary(anscombe_read(csv))
   out <- anscombe_lines(s)
   expect_length(out, 5L)
-  expect_identical(out[[2]], "I: 11 9.000 7.501 11.000 4.127 0.816 0.500 3.000")
+  expect_identical(
+    out[[2]],
+    "I: 11 9.000 7.501 11.000 4.127 0.816 0.500 3.000"
+  )
   expect_match(anscombe_lines(s, 1L)[[3]], "^II: 11 9.0 7.5 ")
 })
 
