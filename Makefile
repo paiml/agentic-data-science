@@ -34,4 +34,8 @@ gate-rust:
 gate-parity:
 	@scripts/falsify-parity.sh
 	@scripts/falsify-determinism.sh
-	@scripts/falsify-hero.sh
+
+.PHONY: gate-hero
+# usage: make gate-hero ARTS=<dir holding <lang>/plot.svg for every landed language except rust>
+gate-hero:
+	@scripts/falsify-hero.sh "$(ARTS)"

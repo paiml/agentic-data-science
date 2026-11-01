@@ -186,6 +186,8 @@ jobs:
           d="$RUNNER_TEMP/anscombe/rust"
           for f in stdout.txt plot.svg manifest.sha256; do cosign sign-blob --yes --bundle "$d/$f.sigstore.json" "$d/$f" >/dev/null; done
           scripts/verify-signed.sh "$d" "${{ github.repository }}"
+      - name: Hero F5 falsifier (stages every landed language's plot; clean GREEN, missing/stale/unreferenced RED)
+        run: scripts/falsify-hero.sh "$RUNNER_TEMP/anscombe"
       - name: Hero image (generated from the landed plots; missing or stale = RED)
         run: scripts/hero.sh check "$RUNNER_TEMP/anscombe"
       - run: scripts/hero.sh build "$RUNNER_TEMP/anscombe" "$RUNNER_TEMP/hero"
