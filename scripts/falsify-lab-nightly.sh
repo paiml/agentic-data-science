@@ -53,7 +53,7 @@ copy f; want F-absent-toolchain-is-unmeasured f "$(lane f "$S/f" r PATH=/nonexis
 # ---- workflow lint: LAB only, no hosted runner, no PR-path trigger
 w=$here/.github/workflows/lab-nightly.yml
 TRIG='pull_request_target|pull_request|merge_group|push|workflow_call'
-trig_bad() { grep -Eq "^\s*($TRIG)\s*:|^on:\s*\[.*($TRIG)" "$1"; }
+trig_bad() { grep -Eq "^\s*[\"']?($TRIG)[\"']?\s*:|^[\"']?on[\"']?\s*:.*\b($TRIG)\b" "$1"; }
 if trig_bad "$w"; then bad G-workflow-triggers "a PR-path or reusable trigger is present"; else grep -q 'schedule:' "$w" && ok G-workflow-triggers "schedule + workflow_dispatch only"; fi
 # mutants: each forbidden trigger planted into a scratch copy must turn the lint red (an arm that cannot flip proves nothing)
 for tr in pull_request_target workflow_call pull_request merge_group push; do
@@ -62,6 +62,17 @@ for tr in pull_request_target workflow_call pull_request merge_group push; do
 done
 m="$S/wf-inline.yml"; sed 's/^on:$/on: [pull_request_target]/' "$w" > "$m"
 if cmp -s "$m" "$w"; then bad G-mutant-inline "the plant changed nothing"; elif trig_bad "$m"; then ok G-mutant-inline "inline on: [..] form goes red"; else bad G-mutant-inline "inline form stayed green"; fi
+# quoted keys and the bare / flow / single-quoted `on:` forms (the YAML spellings the plain key regex missed)
+mutwf() { # name sed-expr
+  local m="$S/wf-$1.yml"; sed "$2" "$w" > "$m"
+  if cmp -s "$m" "$w"; then bad "G-mutant-$1" "the plant changed nothing"; elif trig_bad "$m"; then ok "G-mutant-$1" "lint goes red"; else bad "G-mutant-$1" "lint stayed green"; fi
+}
+mutwf quoted-key '/^  workflow_dispatch: {}/a\  "pull_request_target": {}'
+mutwf squoted-key "/^  workflow_dispatch: {}/a\\  'workflow_call': {}"
+mutwf on-push-plain 's/^on:$/on: push/'
+mutwf on-flow-list 's/^on:$/on: [workflow_dispatch, push]/'
+mutwf on-flow-map 's/^on:$/on: { pull_request_target: {} }/'
+mutwf on-quoted '0,/^on:$/s//"on": push/'
 if grep -Eq 'ubuntu|windows|macos' "$w"; then bad H-workflow-runner "a hosted runner label is present"; else ok H-workflow-runner "self-hosted pin"; fi
 if grep -Eq 'continue-on-error|sudo|apt-get' "$w"; then bad H2-workflow-states "continue-on-error or an install on the host"; else ok H2-workflow-states "none"; fi
 # ---- ticket keeper with a fake gh
