@@ -1,21 +1,24 @@
 module Anscombe
 
 using CairoMakie
+using Printf
 
 export load_quartet, ols, correlation, report, save_plot, main
+
+const SETS = ["I", "II", "III", "IV"]
 
 """
     load_quartet(path)
 
-Read the sha256-pinned `data/anscombe.csv` (columns `set,x,y`) into
-four `(x, y)` vectors, in set order 1 to 4.
+Read the sha256-pinned `data/anscombe/anscombe.csv` (columns `set,x,y`, sets
+I to IV) into four `(x, y)` vectors in that order.
 """
 function load_quartet(path)
     rows = split.(readlines(path)[2:end], ",")
     return [
         (
-            [parse(Float64, r[2]) for r in rows if r[1] == string(k)],
-            [parse(Float64, r[3]) for r in rows if r[1] == string(k)],
+            [parse(Float64, r[2]) for r in rows if r[1] == SETS[k]],
+            [parse(Float64, r[3]) for r in rows if r[1] == SETS[k]],
         ) for k = 1:4
     ]
 end
@@ -36,24 +39,38 @@ function correlation(x, y)
     return sxy / sqrt(sum((x .- mx) .^ 2) * sum((y .- my) .^ 2))
 end
 
-"One printed line per set: n, intercept, slope, r (two decimals)."
+"One printed line per set, the format of the Rust lesson (parity, R-4)."
 function report(quartet)
     lines = String[]
     for (k, (x, y)) in enumerate(quartet)
-        a, b = round.(ols(x, y); digits = 2)
-        r = round(correlation(x, y); digits = 3)
-        push!(lines, "set $k: n=$(length(x)) intercept=$a slope=$b r=$r")
+        a, b = ols(x, y)
+        mx = sum(x) / length(x)
+        my = sum(y) / length(y)
+        r = correlation(x, y)
+        push!(
+            lines,
+            @sprintf(
+                "set %s: n=%d mean_x=%.2f mean_y=%.2f slope=%.2f intercept=%.2f r=%.2f",
+                SETS[k],
+                length(x),
+                mx,
+                my,
+                b,
+                a,
+                r,
+            ),
+        )
     end
     return lines
 end
 
 "Write the four-panel scatter and fit-line plot as SVG to `path`."
 function save_plot(quartet, path)
-    fig = Figure(size = (1920, 1080), fontsize = 28)
+    fig = Figure(size = (960, 720), fontsize = 28)
     for (k, (x, y)) in enumerate(quartet)
         ax = Axis(
             fig[(k-1)÷2+1, (k-1)%2+1];
-            title = "Set $k",
+            title = "Set $(SETS[k])",
             xlabel = "x",
             ylabel = "y",
             limits = (2, 20, 2, 14),
@@ -67,7 +84,7 @@ function save_plot(quartet, path)
 end
 
 "Print the report, write `plot.svg` into `outdir`."
-function main(data = "data/anscombe.csv", outdir = ".")
+function main(data = "data/anscombe/anscombe.csv", outdir = ".")
     quartet = load_quartet(data)
     foreach(println, report(quartet))
     save_plot(quartet, joinpath(outdir, "plot.svg"))

@@ -163,6 +163,7 @@ jobs:
           cargo install --locked --version 0.8.5 cargo-llvm-cov
       - run: make gate-rust
   parity:
+    needs: [anscombe-julia]
     timeout-minutes: 30
     runs-on: ubuntu-24.04
     container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
@@ -171,6 +172,8 @@ jobs:
       - run: make gate-parity
       - name: Lesson artifacts (stdout.txt, plot.svg, manifest.sha256)
         run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe/rust"
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-julia, path: "${{ runner.temp }}/anscombe/julia" }
       - name: Parity over every landed language (missing = RED)
         run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
       - uses: actions/upload-artifact@v4

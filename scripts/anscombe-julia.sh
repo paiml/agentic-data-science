@@ -15,10 +15,10 @@ docker run "${common[@]}" -v "$root:/w:ro" -w /w/julia/Anscombe "$img" \
   julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.precompile()' > /dev/null
 # Step 2 (no network, read-only tree): run the lesson.
 docker run "${common[@]}" --network none -v "$root:/w:ro" -v "$out:/out" -w /w "$img" \
-  julia --project=julia/Anscombe -e 'using Anscombe; Anscombe.main("data/anscombe.csv", "/out")' > "$out/stdout.txt"
+  julia --project=julia/Anscombe -e 'using Anscombe; Anscombe.main("data/anscombe/anscombe.csv", "/out")' > "$out/stdout.txt"
 (
   cd "$root"
-  sha256sum data/anscombe.csv julia/Anscombe/Manifest.toml julia/Anscombe/Project.toml julia/Anscombe/src/Anscombe.jl
+  sha256sum data/anscombe/anscombe.csv julia/Anscombe/Manifest.toml julia/Anscombe/Project.toml julia/Anscombe/src/Anscombe.jl
   cd "$out"
   sha256sum stdout.txt plot.svg
   echo "container $img"

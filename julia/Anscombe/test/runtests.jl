@@ -2,7 +2,7 @@ using Anscombe
 using JET
 using Test
 
-const DATA = joinpath(@__DIR__, "..", "..", "..", "data", "anscombe.csv")
+const DATA = joinpath(@__DIR__, "..", "..", "..", "data", "anscombe", "anscombe.csv")
 
 @testset "JET" begin
     JET.test_package(Anscombe; target_modules = (Anscombe,))
@@ -29,7 +29,7 @@ end
     @testset "report" begin
         r = report(q)
         @test length(r) == 4
-        @test r[1] == "set 1: n=11 intercept=3.0 slope=0.5 r=0.816"
+        @test r[1] == "set I: n=11 mean_x=9.00 mean_y=7.50 slope=0.50 intercept=3.00 r=0.82"
     end
 
     @testset "plot and main write the same SVG" begin

@@ -2,7 +2,7 @@
 
 julia_version = "1.13.3"
 manifest_format = "2.1"
-project_hash = "c9577d4e10b0048c30bd38954c5e455085c87930"
+project_hash = "bd7352442b0a6a5ce60f032ffa05466e0fdd4b86"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -98,7 +98,7 @@ uuid = "27a7e980-b3e6-11e9-2bcd-0b925532e340"
 version = "0.4.2"
 
 [[deps.Anscombe]]
-deps = ["CairoMakie"]
+deps = ["CairoMakie", "Printf"]
 path = "."
 uuid = "7d1f3a52-4b8e-4c19-9a60-3e5b2c8d1f47"
 version = "0.1.0"
