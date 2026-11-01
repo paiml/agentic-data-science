@@ -80,10 +80,14 @@ def main (_ : List String) : IO UInt32 := do
     IO.eprintln s!"FAIL {files} files, {examplesM3.length} examples"
     ok := false
   for (id, act) in examplesM3 do
-    -- v09 is the planted mismatch: it must fail, the rest must not.
+    -- v09 plants a mismatch and prints its refusal; none fails.
     let failed ← try act; pure false catch _ => pure true
-    if failed != (id == "v09") then
+    if failed then
       IO.eprintln s!"FAIL {id}: wrong outcome"; ok := false
+  let (o9, _) ← IO.FS.withIsolatedStreams
+    ((examplesM3.lookup "v09").getD (pure ()))
+  unless (o9.splitOn "refused: confusion differs").length > 1 do
+    IO.eprintln "FAIL v09: refusal not printed"; ok := false
   -- the scatter demos print their native plot.
   for (id, act) in examplesM3 do
     if ["v01", "v05", "v08", "v09", "v10"].contains id then
