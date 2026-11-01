@@ -1,4 +1,5 @@
 import AgenticDS.Examples.M1Data
+import AgenticDS.Examples.Run
 /-! The three theorem statements. -/
 open AgenticDS
 
@@ -32,3 +33,5 @@ def m1v05 : IO Unit := do
     "shift added to every mass (g)" "variance (g^2)" pts
     [(0, qf (variance ad)), (20, qf (variance ad))] []
     [s!"Adelie n = {ad.length}", "T3 on real masses"]
+  contract "ads-lean-m1v05-v1"
+    (ad.length > 0 && decide (0 ≤ variance ad) && same)

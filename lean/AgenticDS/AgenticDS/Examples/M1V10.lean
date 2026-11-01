@@ -1,4 +1,5 @@
 import AgenticDS.Examples.M1Data
+import AgenticDS.Examples.Run
 /-! Recap: the two examples. -/
 
 -- Recap: the two examples this module ships.
@@ -20,3 +21,5 @@ def m1v10 : IO Unit := do
   AgenticDS.writeScatter "plot-m1v10.svg" "Penguins: bill and mass"
     "bill length (mm)" "body mass (g)" (rows.map at') [] marks
     [s!"n = {rows.length} penguins", "red: species mean"]
+  contract "ads-lean-m1v10-v1"
+    (rows.length > 0 && marks.length == 3)

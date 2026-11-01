@@ -1,4 +1,5 @@
 import AgenticDS.Examples.M1Data
+import AgenticDS.Examples.Run
 /-! The four gate checks. -/
 
 -- The gate runs four checks; each one can fail:
@@ -26,3 +27,6 @@ def m1v09 : IO Unit := do
     "check (1 build, 2 scan, 3 axioms, 4 golden)" "items"
     (ns.zipIdx.map fun (n, i) => ((i + 1).toFloat, n.toFloat))
     [] [] ["scan must find 0"]
+  contract "ads-lean-m1v09-v1"
+    (fs.length > 0 && (ts.map AgenticDS.hits).sum == 0 &&
+      thms > 0 && gold > 0)
