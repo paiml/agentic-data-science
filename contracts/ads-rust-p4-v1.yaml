@@ -1,0 +1,48 @@
+# ads-rust-p4-v1: Course A (Rust), Module 4, Problem P4 (Wine Quality pipeline, report and bench)
+
+# Ticket: https://github.com/paiml/agentic-data-science/issues/41
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-23"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "pipeline_wine validates, splits (every fifth row is test), fits a linear quality model (linfa-linear) and scores it on the held-out rows, reproducing datasets/golden/p4.json; report_ttl emits an ads:Artifact byte-identical to datasets/golden/p4-artifact.ttl; the polars and BTreeMap grouped means agree."
+  references:
+    - "rust/ads-rust/src/p4.rs"
+    - "rust/ads-rust/tests/p4.rs"
+    - "rust/ads-rust/benches/p4.rs"
+    - "datasets/golden/p4.json"
+    - "datasets/golden/p4-artifact.ttl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_pipeline_matches_golden:
+    formula: |
+      rows                 = 1599 + 4898 = 6497
+      test rows            = {i : i mod 5 = 0}  (1-based)           n_test = 1299
+      rmse, r2             = metrics of OLS(quality ~ predictors + white, train) on test
+      |rmse - golden|      <= 1e-6
+      aggregate_polars     = aggregate_map                         per colour, tol 1e-12
+    domain: "winequality-red.csv and winequality-white.csv (checksums are verified by make gate-datasets, not by this code)"
+    codomain: "row counts, RMSE, R squared, mean quality per colour, Turtle artifact, oracle JSON"
+    postconditions:
+      - "VALIDATE_FIRST: a missing value, a non-finite predictor, a missing predictor column, a quality outside 0..10 or an unknown colour stops the pipeline"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "NO_TIMINGS_IN_GOLDEN: timings are never part of a parity check (tests::report_and_oracle_round_trip asserts no timing keys)"
+      - "CAN_FAIL: fitting on all rows moves the held-out RMSE by more than 1e-4 (tests::can_fail_when_the_model_sees_the_test_rows)"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out RMSE equals the golden file within 1e-6"
+    formal: "|rmse - golden| <= 1e-6"
+    applies_to: p4_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-P4-001
+    rule: "The model never sees test rows"
+    prediction: "make gate-rust passes"
+    test: "scripts/gate-rust.sh"
+    mutation: "Fit on all rows: tests::can_fail_when_the_model_sees_the_test_rows shows the RMSE moves off the golden by more than 1e-4, so tests::pipeline_matches_golden (1e-6) refuses a leaking pipeline"
+    discriminates: "A leaking pipeline cannot match the held-out golden"
+    if_fails: "Learners report an optimistic wine-quality error"

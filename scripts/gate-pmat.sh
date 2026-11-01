@@ -10,6 +10,8 @@ cd "$(dirname "$0")/.." || exit 1
 ran=0
 if [ -d rust ]; then
   ran=1
-  pmat quality-gate -p rust/ads-rust --checks dead-code,complexity,satd,entropy,security,duplicates,provability -q || { echo "pmat FAIL rust"; exit 1; }
+  # dead-code needs Cargo.toml (crate dir); security must be pointed at src/ or pmat reads 0 files and says so
+  pmat quality-gate -p rust/ads-rust --checks dead-code,complexity,satd,entropy,duplicates,provability -q || { echo "pmat FAIL rust"; exit 1; }
+  pmat quality-gate -p rust/ads-rust/src --checks security -q || { echo "pmat FAIL rust security"; exit 1; }
 fi
 [ "$ran" = 1 ] && echo "pmat OK" || echo "pmat: no Rust/Lean package yet"

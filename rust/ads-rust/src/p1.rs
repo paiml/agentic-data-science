@@ -1,6 +1,6 @@
 //! P1: typed load, NA policy and per-species summary of Palmer Penguins.
 use polars::prelude::*;
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 
 /// The four numeric measurement columns, in golden-file order.
 pub const MEASURES: [&str; 4] = [

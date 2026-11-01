@@ -36,11 +36,13 @@ fun Layout.phoneStyle(title: String) {
 /** Print the toolchain and pinned library versions once. */
 fun showVersions() {
     val pins = Properties()
-    object {}.javaClass.getResourceAsStream(
-        "/versions.properties",
-    ).use {
-        pins.load(it)
-    }
+    object {}
+        .javaClass
+        .getResourceAsStream(
+            "/versions.properties",
+        ).use {
+            pins.load(it)
+        }
     val jvm = Runtime.version().feature()
     term.println(
         cyan("kotlin") + " ${KotlinVersion.CURRENT}  jvm $jvm",

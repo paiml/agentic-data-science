@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 # Kotlin gate: tests, shacl verify tasks (Jena), Kover LINE=100 + BRANCH>=95, ktlint,
-# detekt (maxIssues 0), pmat complexity/satd/duplicates.
+# detekt 2.x (any finding fails), pmat complexity/satd/duplicates.
 # pmat entropy reads only Rust/Ruchy, dead-code only Cargo
 # crates: not measured on Kotlin (measured 2026-10-22:
 # quality-gate -p kotlin fails entropy; duplicates counts
 # byte-identical files only).
 set -euo pipefail
 cd "$(dirname "$0")/../kotlin"
-gbin="$HOME/.local/opt/gradle-8.14.3/bin"
+gbin="$HOME/.local/opt/gradle-9.8.2/bin"
 command -v gradle >/dev/null || export PATH="$gbin:$PATH"
 command -v gradle >/dev/null || {
   echo "FAIL: gradle not on PATH (not_measured)"
   exit 1
 }
 # Toolchain autodetection misses the runners JDK: hand it
-# JAVA_HOME (the workflow pins JDK 17), else java on PATH.
+# JAVA_HOME (the workflow pins JDK 25), else java on PATH.
 java_home() {
   local j
   j=$(readlink -f "$(command -v java)")

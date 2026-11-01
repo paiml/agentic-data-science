@@ -26,7 +26,12 @@ private val SPECIES =
 
 /** Read the CSV and drop NA only in the two model columns. */
 fun loadClean(): AnyFrame {
-    val df = DataFrame.readCsv(PENGUINS).dropNulls(FLIPPER, MASS)
+    val df =
+        DataFrame
+            .readCsv(
+                PENGUINS,
+                parserOptions = CSV_PARSER,
+            ).dropNulls(FLIPPER, MASS)
     expectRows(df.rowsCount(), ROWS)
     return df
 }

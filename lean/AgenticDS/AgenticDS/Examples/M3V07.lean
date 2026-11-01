@@ -1,4 +1,5 @@
 import AgenticDS.Tree
+import AgenticDS.Plot
 /-! Pruning at cp, and fitTree. -/
 open AgenticDS
 -- Nine rows, one feature; the 48.5 adelie is an outlier.
@@ -18,3 +19,6 @@ def m3v07 : IO Unit := do
   let t := prune 2 rows (grow 1 5 rows)
   IO.println s!"cp 2:    {sh t}"
   IO.println s!"fitTree: {sh (fitTree 1 5 rows)}"
+  writeSvg "plot-m3v07.svg" "Leaves per tree" 4
+    [("grown", (grow 1 5 rows).leaves), ("cp 2", t.leaves),
+     ("fitTree", (fitTree 1 5 rows).leaves)]

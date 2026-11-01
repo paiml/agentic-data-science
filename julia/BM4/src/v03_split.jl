@@ -5,7 +5,7 @@ function want(df, s)
 end
 function naive(df)
     n = nrow(df)
-    return by_mask(df, (1:n) .> n - n ÷ 5)
+    return by_mask(df, (1:n) .> n - div(n, 5))
 end
 function split_wine(df)
     return by_mask(df, (1:nrow(df)) .% 5 .== 0)
