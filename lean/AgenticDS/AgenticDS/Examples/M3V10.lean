@@ -1,4 +1,5 @@
 import AgenticDS.Examples.M3V08
+import AgenticDS.Examples.Scat
 /-! The gate on the module commit; exact accuracy. -/
 open Lean
 -- You run make gate-lean: its four stages.
@@ -12,3 +13,5 @@ def m3v10 : IO Unit := do
   let tr := (List.range m.length).map fun i => (m[i]!)[i]!
   IO.println s!"trace {tr.sum} of {(m.map List.sum).sum}"
   IO.println s!"accuracy {m3v08_exact m}"
+  penguinDemo "plot-m3v10.svg" "Penguins: bill length and mass"
+    "bill_length_mm" "body_mass_g" 4
