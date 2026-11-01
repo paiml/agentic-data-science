@@ -86,21 +86,21 @@ def plotSvg (title : String) (w : Nat)
   "</svg>\n"
 
 /-- Write the SVG for `rows`, then check the contract
-`plot_svg_bounded`: one rect per row plus the background, and no
-bar leaves the picture. -/
+`plot_svg_bounded`: a non-empty chart, one rect per row plus
+the background, and no bar leaves the picture. -/
 def writeSvg (path : System.FilePath) (title : String) (w : Nat)
     (rows : List (String × Nat)) : IO Unit := do
   let s := plotSvg title w rows
   IO.FS.writeFile path s
   let m := (rows.map (·.2)).foldl max 0
   let n := (s.splitOn "<rect").length - 1
-  -- one background rect, one bar per row, and every bar is
-  -- a rect: the count is the rows, not just any number
-  assert! n == rows.length + 1
-  assert! (s.splitOn "<text").length - 1 == 2 * rows.length + 1
-  assert! 190 + 80 * rows.length - 32 ≤ 1080
-  assert! rows.all fun (_, c) =>
-    barX rows + barMax rows * width w m c / w ≤ 1700
+  let bad := rows.isEmpty || n != rows.length + 1 ||
+    (s.splitOn "<text").length - 1 != 2 * rows.length + 1 ||
+    190 + 80 * rows.length - 32 > 1080 ||
+    !(rows.all fun (_, c) =>
+      barX rows + barMax rows * width w m c / w ≤ 1700)
+  if bad then
+    throw (IO.userError "plot_svg_bounded violated")
   IO.println s!"svg {rows.length} bars {path}"
   IO.println "contract: plot_svg_bounded OK"
 

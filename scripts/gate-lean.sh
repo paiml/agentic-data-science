@@ -40,6 +40,11 @@ for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/E
   out=$(lake env lean "$f" 2>&1) || { echo "FAIL $f: $out"; exit 1; }
 done
 if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
+# The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
+for p in tall empty; do
+  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
+  echo "$out" | grep -q "plot_svg_bounded violated" || { echo "FAIL PlantedSvgOverflow $p failed for another reason: $out"; exit 1; }
+done
 if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
