@@ -1,0 +1,43 @@
+# ads-rust-lab-v1: Course A (Rust), end-of-course lab (starter fails, solution passes at 100% line coverage)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-11-01"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Three tasks (rows after the NA policy = 342, Adelie mean body mass = 3700.66225165563 g, closed-form OLS on y = 1 + 2x) graded by cargo test. The starter has todo!() bodies and must fail with every task named; the solution must pass with 100% line and function coverage."
+  references:
+    - "labs/a-final/starter/src/lib.rs"
+    - "labs/a-final/solution/src/lib.rs"
+    - "labs/a-final/tests/lab_tests.rs"
+    - "labs/a-final/tests/lab-run.sh"
+    - "datasets/golden/p1.json"
+    - "CLASSIFICATION (kind: pattern): grader exit codes over an autograder test suite, numeric parity against the committed golden"
+
+equations:
+  lab_grader:
+    formula: |
+      exit(lab-run starter)  = 1 with each failing task named
+      exit(lab-run solution) = 0
+      exit(lab-run D) = 2 when fewer than 3 tests ran or SHA256SUMS of the dataset mismatch
+    domain: "a crate directory with src/lib.rs and Cargo.toml"
+    codomain: "0 all tasks pass, 1 named failures, 2 not measured"
+    postconditions:
+      - "STUB_FAILS: a src/lib.rs that still holds todo!() or unimplemented!() is a FAIL even if its tests pass"
+      - "ZERO_TESTS: a suite that ran 0 tests exits 2, never 0"
+      - "WRONG_ANSWER: a wrong slope or row count fails its named task"
+
+proof_obligations:
+  - type: invariant
+    property: "The grader passes iff every named task passes and no stub remains"
+    formal: "exit = 0 iff forall t in tasks. result(t) = ok and not stub(src)"
+    applies_to: lab_grader
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-LAB-001
+    rule: "Starter fails with named tasks and the solution passes"
+    prediction: "labs/a-final/tests/lab-verify.sh prints lab-verify: GREEN"
+    test: "labs/a-final/tests/lab-verify.sh"
+    mutation: "Add 0.01 to the OLS slope in the solution: lab_t3_fit_line FAILs (labs/a-final/tests/lab-falsify.sh)"
+    discriminates: "A wrong answer, a left-in stub, a compile error and an empty suite are each refused"
+    if_fails: "Learners receive a lab whose grader accepts wrong or unfinished work"

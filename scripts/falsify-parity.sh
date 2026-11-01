@@ -3,10 +3,10 @@
 # stdout, or an unknown language must turn parity RED; the clean set must be GREEN.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; t="$(mktemp -d)"; trap 'rm -rf "${t:?}"' EXIT
-mkdir -p "$t/rust" "$t/julia"
+mkdir -p "$t/rust" "$t/julia" "$t/kotlin"
 bash "$root/scripts/lesson-artifacts.sh" anscombe rust "$t/rust" >/dev/null
 printf 'rust\njulia\n' > "$t/landed"
-cp "$t/rust/stdout.txt" "$t/julia/stdout.txt"
+cp "$t/rust/stdout.txt" "$t/julia/stdout.txt"; cp "$t/rust/stdout.txt" "$t/kotlin/stdout.txt"
 bash "$root/scripts/parity.sh" "$t" "$t/landed" >/dev/null || { echo "FAIL: clean set not green"; exit 1; }
 bash "$root/scripts/parity.sh" "$t" "$root/parity/anscombe.landed" >/dev/null || { echo "FAIL: committed landed list not green"; exit 1; }
 red() { if bash "$root/scripts/parity.sh" "$t" "$t/landed" >/dev/null 2>&1; then echo "FAIL: $1 stayed green"; exit 1; fi; }
