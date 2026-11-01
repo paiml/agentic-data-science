@@ -1,0 +1,10 @@
+starter_exit=1
+starter_FAIL lab_t1_clean_rows (FAILED)
+starter_FAIL lab_t2_adelie_mean_mass (FAILED)
+starter_FAIL lab_t3_fit_line (FAILED)
+starter_FAIL stub (todo!/unimplemented! left in src/lib.rs)
+solution_exit=0
+solution_PASS lab_t3_fit_line
+solution_PASS lab_t1_clean_rows
+solution_PASS lab_t2_adelie_mean_mass
+commit=3482889d7a1abdb61bbeb3a36df36780f0a324c4
