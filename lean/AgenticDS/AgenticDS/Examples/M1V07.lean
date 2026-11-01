@@ -1,5 +1,5 @@
-import Mathlib
 import AgenticDS.Stats
+import AgenticDS.Examples.M1Data
 /-! Axioms behind the theorems. -/
 open Lean Elab Term
 
@@ -17,3 +17,15 @@ def m1v07_axioms : List (String × List String) :=
 def m1v07 : IO Unit := do
   for (n, a) in m1v07_axioms do
     IO.println s!"{n} depends on axioms: {a}"
+  -- Real data: the kernel's axiom list for each theorem, read at
+  -- elaboration. Plotted: theorem number against axioms used.
+  let all := m1v07_axioms ++ [("AgenticDS.variance_nonneg",
+    axiomsOf% AgenticDS.variance_nonneg)]
+  for (n, a) in all.drop 2 do
+    IO.println s!"{n} depends on axioms: {a}"
+  AgenticDS.writeScatter "plot-m1v07.svg"
+    "Axioms under each theorem"
+    "theorem (1 mean_const, 2 variance_shift, 3 variance_nonneg)"
+    "axioms used"
+    (all.zipIdx.map fun ((_, a), i) =>
+      ((i + 1).toFloat, a.length.toFloat)) [] [] []

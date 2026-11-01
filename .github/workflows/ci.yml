@@ -165,10 +165,19 @@ jobs:
         run: scripts/lesson-artifacts.sh anscombe lean "$RUNNER_TEMP/anscombe/lean"
       - uses: actions/upload-artifact@v4
         with: { name: anscombe-lean, path: "${{ runner.temp }}/anscombe/lean" }
-  parity:
+  kotlin-anscombe:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
-    needs: [anscombe-lean]
+    container: eclipse-temurin:25-jdk-noble@sha256:95e350ad1eb738f943e141640f7e3d797e483359a3b33c3864255bfd1ad71f8a
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/anscombe-artifacts.sh "$RUNNER_TEMP/anscombe/kotlin"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-kotlin, path: "${{ runner.temp }}/anscombe/kotlin" }
+  parity:
+    needs: [anscombe-lean, kotlin-anscombe]
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
     container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
     steps:
       - uses: actions/checkout@v4
@@ -177,8 +186,12 @@ jobs:
         run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe/rust"
       - uses: actions/download-artifact@v4
         with: { name: anscombe-lean, path: "${{ runner.temp }}/anscombe/lean" }
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-kotlin, path: "${{ runner.temp }}/anscombe/kotlin" }
       - name: Parity over every landed language (missing = RED)
         run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
+      - name: Hero F5 falsifier (stages every landed language's plot; clean GREEN, missing/stale/unreferenced RED)
+        run: scripts/falsify-hero.sh "$RUNNER_TEMP/anscombe"
       - name: Hero image (generated from the landed plots; missing or stale = RED)
         run: scripts/hero.sh check "$RUNNER_TEMP/anscombe"
       - run: scripts/hero.sh build "$RUNNER_TEMP/anscombe" "$RUNNER_TEMP/hero"
@@ -189,7 +202,7 @@ jobs:
   gate:
     name: gate
     if: always()
-    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean, anscombe-lean, parity]
+    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean, anscombe-lean, kotlin-anscombe, parity]
     runs-on: ubuntu-24.04
     steps:
       - run: |
