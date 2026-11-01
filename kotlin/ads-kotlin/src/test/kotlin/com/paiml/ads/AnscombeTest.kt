@@ -3,6 +3,7 @@ package com.paiml.ads
 import com.paiml.ads.anscombe.Quartet
 import com.paiml.ads.anscombe.holds
 import com.paiml.ads.anscombe.main
+import com.paiml.ads.anscombe.parityText
 import com.paiml.ads.anscombe.readQuartets
 import com.paiml.ads.anscombe.report
 import com.paiml.ads.anscombe.run
@@ -21,7 +22,7 @@ import java.io.PrintStream
 private val CSV =
     File(
         System.getProperty("ads.root"),
-        "datasets/anscombe/anscombe.csv",
+        "data/anscombe/anscombe.csv",
     ).path
 
 private fun captured(block: () -> Unit): String {
@@ -51,6 +52,7 @@ class AnscombeTest {
             assertEquals(0.5, it.slope, 1e-2)
             assertEquals(3.0, it.intercept, 1e-2)
             assertEquals(0.67, it.r2, 1e-2)
+            assertEquals(0.82, it.r, 1e-2)
         }
         assertTrue(holds(sums))
     }
@@ -66,7 +68,7 @@ class AnscombeTest {
         )
         assertTrue(
             "set I: n=11 mean_x=9.00 mean_y=7.50 " +
-                "slope=0.50 intercept=3.00 r2=0.67" in
+                "slope=0.50 intercept=3.00 r=0.82" in
                 out,
         )
     }
@@ -104,6 +106,15 @@ class AnscombeTest {
         assertEquals(outA, outB)
         val svgA = File(a, "plot.svg").readText()
         assertEquals(svgA, File(b, "plot.svg").readText())
+        assertEquals(
+            parityText(readQuartets(CSV).map(::summarise)),
+            File(a, "stdout.txt").readText(),
+        )
+        assertTrue(
+            File(a, "stdout.txt").readText().lines().first() ==
+                "set I: n=11 mean_x=9.00 mean_y=7.50 " +
+                "slope=0.50 intercept=3.00 r=0.82",
+        )
         assertTrue("<svg" in svgA)
         assertTrue("1200" in svgA && "900" in svgA)
     }

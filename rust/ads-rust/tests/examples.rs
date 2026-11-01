@@ -30,3 +30,28 @@ fn a_m1_p1_last_line_is_the_ok_verdict() {
 fn a_m1_p1_profile_last_line_is_the_ok_verdict() {
     assert_verdict("a-m1-p1-profile");
 }
+
+#[test]
+fn anscombe_last_line_is_the_ok_verdict() {
+    assert_verdict("anscombe");
+}
+
+#[test]
+fn anscombe_writes_stdout_and_plot_when_asked() {
+    let d = tempfile::tempdir().unwrap();
+    let out = Command::new(env!("CARGO"))
+        .args(["run", "-q", "--locked", "--example", "anscombe"])
+        .env("ADS_ROOT", "../..")
+        .env("ADS_OUT", d.path())
+        .output()
+        .unwrap();
+    assert!(out.status.success());
+    let text = std::fs::read_to_string(d.path().join("stdout.txt"))
+        .unwrap();
+    assert_eq!(text.lines().count(), 4);
+    assert!(
+        std::fs::read_to_string(d.path().join("plot.svg"))
+            .unwrap()
+            .starts_with("<svg")
+    );
+}

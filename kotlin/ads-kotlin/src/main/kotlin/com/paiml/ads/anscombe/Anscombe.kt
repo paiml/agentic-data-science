@@ -34,6 +34,7 @@ data class Summary(
     val slope: Double,
     val intercept: Double,
     val r2: Double,
+    val r: Double,
 )
 
 /** Read `dataset,x,y` rows into quartets, in the order the sets first appear. */
@@ -70,29 +71,30 @@ fun summarise(q: Quartet): Summary {
         slope,
         my - slope * mx,
         sxy * sxy / (sxx * syy),
+        sxy / Math.sqrt(sxx * syy),
     )
 }
 
 private fun fmt(v: Double): String =
     String.format(Locale.ROOT, "%.${DECIMALS}f", v)
 
-/** The deterministic report: one line per set, then the contract line. */
+/** The parity text: one line per set, byte-equal across languages. */
+fun parityText(sums: List<Summary>): String =
+    sums.joinToString("") {
+        "set ${it.name}: n=${it.n} " +
+            "mean_x=${fmt(it.meanX)} mean_y=${fmt(it.meanY)} " +
+            "slope=${fmt(it.slope)} " +
+            "intercept=${fmt(it.intercept)} r=${fmt(it.r)}\n"
+    }
+
+/** The console report: the parity text, then the contract line. */
 fun report(sums: List<Summary>): String {
     val ok = holds(sums)
-    val lines =
-        sums.map {
-            "set ${it.name}: n=${it.n} mean_x=${fmt(
-                it.meanX,
-            )} mean_y=${fmt(it.meanY)} " +
-                "slope=${fmt(
-                    it.slope,
-                )} intercept=${fmt(it.intercept)} r2=${fmt(it.r2)}"
-        }
     val status = if (ok) "OK" else "FAILED"
     val verdict =
         "contract: ads-kotlin-anscombe-v1 $SETS sets " +
             "identical to $DECIMALS decimals $status"
-    return (lines + verdict).joinToString("\n", postfix = "\n")
+    return parityText(sums) + verdict + "\n"
 }
 
 /** The quartet's point: four different clouds, the same numbers to [DECIMALS] decimals. */
@@ -105,6 +107,7 @@ fun holds(sums: List<Summary>): Boolean =
             { it.slope },
             { it.intercept },
             { it.r2 },
+            { it.r },
         ).all { f -> sums.map { fmt(f(it)) }.toSet().size == 1 }
 
 /** Scatter and fitted line, one panel per set, at a fixed size, written as SVG to [dir]/plot.svg. */
@@ -160,6 +163,8 @@ fun run(args: Array<String>): Int {
     val quartets = readQuartets(args[0])
     val sums = quartets.map(::summarise)
     print(report(sums))
+    File(args[1]).mkdirs()
+    File(args[1], "stdout.txt").writeText(parityText(sums))
     writePlot(quartets, sums, args[1])
     return if (holds(sums)) 0 else 1
 }

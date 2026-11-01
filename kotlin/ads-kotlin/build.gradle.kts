@@ -125,7 +125,7 @@ listOf(
     }
 }
 
-// Anscombe lesson (ADS-DEMO-001): ./gradlew -q anscombe --args="datasets/anscombe/anscombe.csv OUTDIR"
+// Anscombe lesson (ADS-DEMO-001): ./gradlew -q anscombe --args="data/anscombe/anscombe.csv OUTDIR"
 tasks.register<JavaExec>("anscombe") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = "com.paiml.ads.anscombe.AnscombeKt"

@@ -5,12 +5,12 @@ metadata:
   created: "2026-11-01"
   kind: pattern
   author: "PAIML Engineering"
-  description: "Reads datasets/anscombe/anscombe.csv (4 sets of 11 points), fits an ordinary least squares line per set, prints n, mean_x, mean_y, slope, intercept and r2 to two decimals, and ends on the contract line only when all four sets agree to two decimals. The same run writes plot.svg, a 2x2 lets-plot facet figure of the four sets with their fits, with the library's random element ids renamed to ads-N so two runs are byte-identical."
+  description: "Reads data/anscombe/anscombe.csv (4 sets of 11 points), fits an ordinary least squares line per set, prints n, mean_x, mean_y, slope, intercept and r2 to two decimals, and ends on the contract line only when all four sets agree to two decimals. The same run writes plot.svg, a 2x2 lets-plot facet figure of the four sets with their fits, with the library's random element ids renamed to ads-N so two runs are byte-identical."
   references:
     - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/anscombe/Anscombe.kt"
     - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/AnscombeTest.kt"
-    - "datasets/anscombe/anscombe.csv"
-    - "datasets/anscombe/SHA256SUMS"
+    - "data/anscombe/anscombe.csv"
+    - "data/anscombe/SHA256SUMS"
     - "CLASSIFICATION (kind: pattern, not kernel): numeric agreement across four sets, no kani harness"
 
 equations:
@@ -19,7 +19,7 @@ equations:
       sets = 4; n = 11 each
       mean_x = 9.00; mean_y = 7.50 (2 decimals); slope = 0.50; intercept = 3.00; r2 = 0.67
       the contract line prints OK only when every set matches set I at two decimals
-    domain: "datasets/anscombe (44 rows, SHA256SUMS verified)"
+    domain: "data/anscombe (44 rows, SHA256SUMS verified)"
     codomain: "per-set summary rows, the contract line, stdout.txt, plot.svg, manifest.sha256"
     postconditions:
       - "FOUR_SETS_OF_ELEVEN: fewer or more sets, or a set that is not 11 rows, is FAILED"

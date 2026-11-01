@@ -4,7 +4,7 @@ name: anscombe
 on:
   pull_request:
     paths:
-      - "datasets/anscombe/**"
+      - "data/anscombe/**"
       - "kotlin/**"
       - "scripts/anscombe-artifacts.sh"
       - ".github/workflows/anscombe.yml"
@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify the dataset
-        working-directory: datasets/anscombe
+        working-directory: data/anscombe
         run: sha256sum --check SHA256SUMS
       - name: Build the artifacts (two runs, byte-identical or red)
         run: ./scripts/anscombe-artifacts.sh out
