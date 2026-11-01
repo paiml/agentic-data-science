@@ -1,5 +1,6 @@
 import AgenticDS.Pipeline
 import AgenticDS.Plot
+import AgenticDS.Examples.Scat
 /-! The leak: train on every row, test rows included. -/
 open AgenticDS
 def m4v06_leak (l : List ℕ) : List ℕ :=
@@ -23,3 +24,5 @@ def m4v06 : IO Unit := do
     ("test       ", (testRows l).length)]
   plot 20 rows
   writeSvg "plot-m4v06.svg" "The leak" 20 rows
+  wineDemo "plot-m4v06b.svg" "Red wine: density and quality"
+    "density" 7 8
