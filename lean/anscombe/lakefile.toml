@@ -1,0 +1,22 @@
+name = "anscombe"
+version = "0.1.0"
+defaultTargets = ["Anscombe", "anscombe", "anscombe-test"]
+
+[leanOptions]
+autoImplicit = false
+warningAsError = true
+weak.linter.style.longLine.maxLineLength = 68
+
+[[lean_lib]]
+name = "Anscombe"
+moreLeanArgs = ["--threads=4"]
+
+[[lean_exe]]
+name = "anscombe"
+root = "Main"
+moreLeanArgs = ["--threads=4"]
+
+[[lean_exe]]
+name = "anscombe-test"
+root = "Test"
+moreLeanArgs = ["--threads=4"]
