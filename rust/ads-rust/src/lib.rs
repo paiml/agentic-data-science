@@ -1,9 +1,11 @@
 //! Agentic Data Science, Course A (Rust).
 pub mod anscombe;
+pub mod hero;
 pub mod p1;
 pub mod p2;
 pub mod p3;
 pub mod p4;
+pub mod plot;
 
 /// Read a headed CSV file and map each data row's comma-split fields through `f`.
 /// `what` names the file in the panic message when it cannot be read.

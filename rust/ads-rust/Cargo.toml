@@ -56,3 +56,7 @@ harness = false
 [[example]]
 name = "anscombe"
 path = "examples/anscombe/main.rs"
+
+[[example]]
+name = "hero"
+path = "examples/hero/main.rs"
