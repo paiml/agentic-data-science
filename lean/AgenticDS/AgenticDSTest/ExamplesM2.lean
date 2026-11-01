@@ -63,7 +63,45 @@ def main (_ : List String) : IO UInt32 := do
   let m4 ← lines "AgenticDS/Examples/M2V04.lean"
   let m5 ← lines "AgenticDS/Examples/M2V05.lean"
   let sig := "(hden : cnt d * sxx d - sx d ^ 2 ≠ 0)"
-  let checks : List (String × Bool) := [
+  -- Every id's plot: printed line, contract line, and the
+  -- written SVG holds one circle per point and mark.
+  let plots : List (String × Nat × Nat) :=
+    [("v01", 342, 0), ("v02", 342, 0), ("v03", 3, 0),
+     ("v04", 7, 1), ("v05", 342, 0), ("v06", 342, 0),
+     ("v07", 342, 0), ("v08", 342, 0), ("v09", 342, 0),
+     ("v10", 342, 1)]
+  let mut plotChecks : List (String × Bool) := []
+  for (id, n, m) in plots do
+    let f := s!"plot-m2{id}.svg"
+    let svg ← IO.FS.readFile f
+    plotChecks := plotChecks ++ [
+      (s!"{id} prints its plot line",
+        has (out id) s!"svg {n} points {f}"),
+      (s!"{id} contract plot_scatter_bounded",
+        has (out id) "contract: plot_scatter_bounded OK"),
+      (s!"{id} svg has {n + m} circles and closes",
+        (svg.splitOn "<circle").length - 1 == n + m &&
+          has svg "</svg>" && has svg "<polyline")]
+  let checks : List (String × Bool) := plotChecks ++ [
+    ("v01 the five sums",
+      has (out "v01") "cnt 342, sx 68713, sy 1437000" &&
+        has (out "v01") "sxx 13872913, sxy 292065275"),
+    ("v02 bill length sums and slope",
+      has (out "v02") "cnt 342, sx 150213/10, sy 1437000" &&
+        has (out "v02") "slope: 3376326000/38623981"),
+    ("v04 residual sum is 0 at the fitted intercept",
+      has (out "v04") "sum at fitted intercept: 0" &&
+        has (out "v04") "identity holds: true"),
+    ("v05 residuals sum to 0",
+      has (out "v05") "residuals sum: 0"),
+    ("v07 bill against flipper slope",
+      has (out "v07") "slope 195830750/115871943"),
+    ("v09 true slope passes, planted 2 does not",
+      has (out "v09") "guard true slope: true" &&
+        has (out "v09") "guard planted slope 2: false"),
+    ("v10 the line passes through the means",
+      has (out "v10") "mean x 58657/3420, mean y 239500/57" &&
+        has (out "v10") "line passes the means: true"),
     ("v01 head shows field K and the five sums",
       has regT "variable {K : Type*} [Field K]" &&
         has regT "def sx " && has regT "def sy " &&

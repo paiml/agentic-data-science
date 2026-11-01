@@ -3,10 +3,10 @@
 # stdout, or an unknown language must turn parity RED; the clean set must be GREEN.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; t="$(mktemp -d)"; trap 'rm -rf "${t:?}"' EXIT
-mkdir -p "$t/rust" "$t/julia"
+mkdir -p "$t/rust" "$t/julia" "$t/kotlin"
 bash "$root/scripts/lesson-artifacts.sh" anscombe rust "$t/rust" >/dev/null
 printf 'rust\njulia\n' > "$t/landed"
-cp "$t/rust/stdout.txt" "$t/julia/stdout.txt"
+cp "$t/rust/stdout.txt" "$t/julia/stdout.txt"; cp "$t/rust/stdout.txt" "$t/kotlin/stdout.txt"
 bash "$root/scripts/parity.sh" "$t" "$t/landed" >/dev/null || { echo "FAIL: clean set not green"; exit 1; }
 # The committed list is checked for shape here (known languages) with the Rust bytes standing in for each
 # landed language; the real cross-language comparison runs in the CI parity job on real artifacts.
