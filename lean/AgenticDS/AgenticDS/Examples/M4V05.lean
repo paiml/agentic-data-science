@@ -1,4 +1,5 @@
 import AgenticDS.Pipeline
+import AgenticDS.Plot
 /-! Every fifth row is a test row; the parts add up. -/
 open AgenticDS
 -- The golden arithmetic: 6497 = 5198 + 1299.
@@ -12,3 +13,6 @@ def m4v05 : IO Unit := do
   IO.println s!"clean {l.length}"
   IO.println s!"test {(testRows l).length}"
   IO.println s!"train {(trainRows l).length}"
+  writeSvg "plot-m4v05.svg" "Wine rows by split" 6497
+    [("clean", l.length), ("train", (trainRows l).length),
+     ("test", (testRows l).length)]

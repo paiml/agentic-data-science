@@ -1,12 +1,14 @@
 package com.paiml.ads
 
+import java.util.Locale
 import kotlin.math.abs
 
 /** Mean quality per colour, colours sorted. */
 fun meanByColor(wine: Wine): Map<String, Double> =
-    wine.color.indices.groupBy { wine.color[it] }.toSortedMap()
-        .mapValues {
-                (_, i) ->
+    wine.color.indices
+        .groupBy { wine.color[it] }
+        .toSortedMap()
+        .mapValues { (_, i) ->
             i.sumOf { wine.quality[it] } / i.size
         }
 
@@ -39,6 +41,9 @@ fun reportTtl(
         "<https://paiml.com/ns/ads#wine-report> a ads:Artifact ;",
         "  ads:schemaVersion \"1\" ;",
         "  ads:generatedBy \"agenticds::pipeline_wine\" ;",
-        "  ads:rmse \"%.10f\"^^xsd:decimal ;".format(rmse),
+        "  ads:rmse \"%.10f\"^^xsd:decimal ;".format(
+            Locale.ROOT,
+            rmse,
+        ),
         "  ads:rows \"$rows\"^^xsd:integer .",
     ).joinToString("\n", postfix = "\n")

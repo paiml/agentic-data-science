@@ -11,7 +11,10 @@ class ArtifactShaclCanFailTest {
     @Test
     fun verifyShaclP4FailsOnAnArtifactWithoutASchemaVersion() {
         val onPath =
-            System.getenv("PATH").orEmpty().split(":")
+            System
+                .getenv("PATH")
+                .orEmpty()
+                .split(":")
                 .any { File(it, "shacl").canExecute() }
         assertTrue(onPath, "shacl (Jena) not on PATH")
         val ok = ShaclRepoCopy().gradle("verifyShaclP4")

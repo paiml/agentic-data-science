@@ -251,6 +251,14 @@ end
         @test !any(c -> occursin(".sh", c), g)
         @test g[2] ==
               "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+        _, out = capture(
+            () -> BM2.V07.main(["exit 0", "true"]),
+        )
+        @test occursin("gate 2 exit=0", out)
+        @test occursin("gates exit 0: true", out)
+        _, bad = capture(() -> BM2.V07.main(["exit 3"]))
+        @test occursin("gate 1 exit=3", bad)
+        @test occursin("gates exit 0: false", bad)
     end
 end
 

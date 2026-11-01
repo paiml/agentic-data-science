@@ -59,9 +59,15 @@ class Wine(
         )
 }
 
-data class Split(val train: Wine, val test: Wine)
+data class Split(
+    val train: Wine,
+    val test: Wine,
+)
 
-data class Score(val rmse: Double, val r2: Double)
+data class Score(
+    val rmse: Double,
+    val r2: Double,
+)
 
 private fun AnyFrame.column(name: String): List<Double> =
     this[name].values().map {
@@ -70,7 +76,7 @@ private fun AnyFrame.column(name: String): List<Double> =
 
 /** Read one colour table (predictors, quality, colour). */
 private fun readOne(path: String): Wine {
-    val df = DataFrame.readCsv(path)
+    val df = DataFrame.readCsv(path, parserOptions = CSV_PARSER)
     val cols = FEATURES.map { df.column(it) }
     return Wine(
         (0 until df.rowsCount()).map { i ->

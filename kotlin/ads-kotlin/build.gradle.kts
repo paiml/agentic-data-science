@@ -8,7 +8,7 @@ plugins {
     application
 }
 
-kotlin { jvmToolchain(17) }
+kotlin { jvmToolchain(25) }
 
 dependencies {
     implementation(libs.dataframe)
@@ -18,7 +18,7 @@ dependencies {
     runtimeOnly(libs.slf4j.nop)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.jackson)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {
@@ -31,21 +31,28 @@ tasks.test {
     )
     systemProperty(
         "ads.csv",
-        rootDir.parentFile.resolve(
-            "datasets/penguins/penguins.csv",
-        ).absolutePath,
+        rootDir.parentFile
+            .resolve(
+                "datasets/penguins/penguins.csv",
+            ).absolutePath,
     )
     systemProperty(
         "ads.plot",
-        layout.buildDirectory.file(
-            "test-plot.png",
-        ).get().asFile.absolutePath,
+        layout.buildDirectory
+            .file(
+                "test-plot.png",
+            ).get()
+            .asFile.absolutePath,
     )
 }
 
 detekt {
     config.setFrom(file("detekt.yml"))
     buildUponDefaultConfig = true
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports { checkstyle.required.set(true) }
 }
 
 val lineBound = 100
@@ -90,8 +97,7 @@ kover {
 listOf(
     "Ingest" to "IngestMain",
     "Profile" to "ProfileMain",
-).forEach {
-        (name, cls) ->
+).forEach { (name, cls) ->
     tasks.register<JavaExec>("run$name") {
         classpath = sourceSets["main"].runtimeClasspath
         mainClass = "com.paiml.ads.$cls"
@@ -139,7 +145,9 @@ tasks.processResources {
             "dataframe" to libs.versions.dataframe.get(),
             "kandy" to libs.versions.kandy.get(),
             "mordant" to libs.versions.mordant.get(),
-            "commonsMath" to libs.versions.commons.math.get(),
+            "commonsMath" to
+                libs.versions.commons.math
+                    .get(),
         )
     inputs.properties(pins)
     filesMatching("versions.properties") { expand(pins) }
@@ -153,12 +161,16 @@ tasks.named<JavaExec>("run") {
 }
 
 // Gate tools run for real every time, never from a cached result.
-tasks.matching {
-    it.name.startsWith("kover") ||
-        it.name.startsWith("detekt") ||
-        it.name.contains("ktlint", ignoreCase = true)
-}.configureEach { outputs.upToDateWhen { false } }
+tasks
+    .matching {
+        it.name.startsWith("kover") ||
+            it.name.startsWith("detekt") ||
+            it.name.contains("ktlint", ignoreCase = true)
+    }.configureEach { outputs.upToDateWhen { false } }
 tasks.test { outputs.upToDateWhen { false } }
 
 // The wired shacl gate tasks (verifyShacl*).
 apply(from = "shacl.gradle.kts")
+
+// Contract line for the gradle scene entry points.
+apply(from = "contract.gradle.kts")

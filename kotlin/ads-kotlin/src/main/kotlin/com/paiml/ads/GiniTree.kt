@@ -7,7 +7,9 @@ private const val CP = 0.01
 /** A decision tree: a leaf class or a split x[col] < cut. */
 sealed interface Tree
 
-data class Leaf(val label: Int) : Tree
+data class Leaf(
+    val label: Int,
+) : Tree
 
 data class Cut(
     val col: Int,
@@ -85,7 +87,9 @@ private fun bestSplit(
     if (rows.size < MIN_SPLIT || errors(counts) == 0) {
         null
     } else {
-        x[0].indices.mapNotNull { bestOnColumn(x, y, rows, it) }
+        x[0]
+            .indices
+            .mapNotNull { bestOnColumn(x, y, rows, it) }
             .maxByOrNull { it.gain }
     }
 

@@ -1,0 +1,45 @@
+# ads-rust-p2-v1: Course A (Rust), Module 2, Problem P2 (regression and fixed-fold cross-validation)
+
+# Ticket: https://github.com/paiml/agentic-data-science/issues/29
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-15"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "ols_ndarray, fit_linfa and cv_rmse reproduce datasets/golden/p2.json: closed-form OLS of body mass on flipper length, the species model, RMSE, R squared, and pooled 5-fold CV RMSE over datasets/fixtures/folds.csv."
+  references:
+    - "rust/ads-rust/src/p2.rs"
+    - "rust/ads-rust/tests/p2.rs"
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_regression_matches_golden:
+    formula: |
+      beta                 = solve(X'X, X'y)                       X = [1, flipper_length_mm]
+      cv_rmse              = sqrt(sum_k sum_{i in fold k} (y_i - f_{-k}(x_i))^2 / n)
+      |coef - golden|      <= 1e-8
+      |cv_rmse - golden|   <= 1e-6
+    domain: "342 cleaned penguin rows and the fixed fold file"
+    codomain: "coefficients, RMSE, R squared, CV RMSE"
+    postconditions:
+      - "FIXED_FOLDS: fold ids come from datasets/fixtures/folds.csv, never from an RNG"
+      - "NO_LEAKAGE: each fold is predicted by a model fitted without that fold"
+      - "CAN_FAIL: a different fold assignment changes the pooled CV RMSE and fails the golden test"
+
+proof_obligations:
+  - type: invariant
+    property: "CV RMSE equals the golden within 1e-6"
+    formal: "|cv_rmse - golden| <= 1e-6"
+    applies_to: p2_regression_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-RUST-P2-001
+    rule: "Out-of-fold predictions only"
+    prediction: "make gate-rust passes"
+    test: "scripts/gate-rust.sh"
+    mutation: "Use two folds by row parity: pooled CV RMSE leaves the golden by more than 1e-6 (tests::can_fail_when_folds_differ)"
+    discriminates: "A different fold file cannot match the golden CV RMSE"
+    if_fails: "Learners report an optimistic CV error"

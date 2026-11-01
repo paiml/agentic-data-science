@@ -1,4 +1,5 @@
 import AgenticDS.Kmeans
+import AgenticDS.Plot
 /-! The k-means objective and nearest centroid. -/
 open AgenticDS
 -- Squared distance, one dimension.
@@ -16,3 +17,6 @@ def m3v02 : IO Unit := do
   IO.println s!"later best: idx {nearestIdx [9, 4, 4]}"
   -- weights 1 / variance give the z-scored distance
   IO.println s!"wdist: {wdist [1 / 4] [0] [2]}"
+  writeSvg "plot-m3v02.svg" "Objective by centroid choice" 4
+    [("minCost 2", (minCost m3v02_d 2 0 [6]).num.toNat),
+     ("objective", (objective m3v02_d ps 0 [6]).num.toNat)]

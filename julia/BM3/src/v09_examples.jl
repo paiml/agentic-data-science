@@ -15,7 +15,8 @@ function kmeans_part()
     n = [count(==(k), lab) for k = 1:3]
     println("objective: ", obj)
     println("cluster sizes: ", n)
-    return obj ≈ GOLD.objective && n == GOLD.sizes
+    return isapprox(obj, GOLD.objective) &&
+           n == GOLD.sizes
 end
 function main()
     a = tree_part()

@@ -13,14 +13,19 @@ private fun run(
     vararg cmd: String,
 ): Pair<Int, String> {
     val p =
-        ProcessBuilder(*cmd).directory(dir)
-            .redirectErrorStream(true).start()
+        ProcessBuilder(*cmd)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
     val out = p.inputStream.bufferedReader().readText()
     return p.waitFor() to out
 }
 
 private fun onPath(tool: String) =
-    System.getenv("PATH").orEmpty().split(":")
+    System
+        .getenv("PATH")
+        .orEmpty()
+        .split(":")
         .any { File(it, tool).canExecute() }
 
 private fun has(
