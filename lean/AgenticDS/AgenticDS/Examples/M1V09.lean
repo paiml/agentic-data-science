@@ -1,4 +1,4 @@
-import Mathlib
+import AgenticDS.Examples.M1Data
 import AgenticDS.Examples.Run
 /-! The four gate checks. -/
 
@@ -9,7 +9,24 @@ import AgenticDS.Examples.Run
 --   4 golden parity against the R numbers
 -- The real gate: make gate-lean.
 def m1v09 : IO Unit := do
-  let g ← IO.FS.readFile "../../scripts/gate-lean.sh"
+  -- Real data: how many items each check looks at. 1 build: the
+  -- example sources; 2 scan: banned words found; 3 axioms: the
+  -- theorems listed in scripts/Axioms.lean; 4 golden: the means
+  -- held in datasets/golden/p1.json.
+  let fs ← AgenticDS.leanFiles "AgenticDS/Examples"
+  let ts ← fs.mapM fun f => IO.FS.readFile f
+  let thms := ((← IO.FS.readFile "scripts/Axioms.lean").splitOn
+    "#print axioms").length - 1
+  let gold := ((← IO.FS.readFile
+    "../../datasets/golden/p1.json").splitOn "\"mean\"").length - 1
+  let ns := [fs.length, (ts.map AgenticDS.hits).sum, thms, gold]
+  for (c, n) in ["build", "scan", "axioms", "golden"].zip ns do
+    IO.println s!"check {c}: {n} items"
+  AgenticDS.writeScatter "plot-m1v09.svg"
+    "What each gate check reads"
+    "check (1 build, 2 scan, 3 axioms, 4 golden)" "items"
+    (ns.zipIdx.map fun (n, i) => ((i + 1).toFloat, n.toFloat))
+    [] [] ["scan must find 0"]
   contract "ads-lean-m1v09-v1"
-    (["lake build", "SATD", "depends on axioms",
-      "contract: ads-lean-p1-v1 OK"].all (·.isInfixOf g))
+    (fs.length > 0 && (ts.map AgenticDS.hits).sum == 0 &&
+      thms > 0 && gold > 0)

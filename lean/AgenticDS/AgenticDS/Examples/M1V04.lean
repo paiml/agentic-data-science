@@ -1,4 +1,4 @@
-import Mathlib
+import AgenticDS.Examples.M1Data
 import AgenticDS.Examples.Run
 /-! Why the gate counts the unfinished-proof word. -/
 
@@ -7,5 +7,16 @@ import AgenticDS.Examples.Run
 -- for native-code proofs and for unfinished-work markers.
 -- The gate runs that scan: make gate-lean.
 def m1v04 : IO Unit := do
-  let g ← IO.FS.readFile "../../scripts/gate-lean.sh"
-  contract "ads-lean-m1v04-v1" ("SATD".isInfixOf g)
+  -- Real data: the gate scan run over every example source.
+  -- Plotted: lines in the file (x) against banned words found (y).
+  let fs ← AgenticDS.leanFiles "AgenticDS/Examples"
+  let ts ← fs.mapM fun f => IO.FS.readFile f
+  let ps := ts.map fun t =>
+    ((AgenticDS.nLines t).toFloat, (AgenticDS.hits t).toFloat)
+  let h := (ts.map AgenticDS.hits).sum
+  IO.println s!"scanned {fs.length} files, {h} markers"
+  AgenticDS.writeScatter "plot-m1v04.svg"
+    "Gate scan of the examples"
+    "lines in the file" "banned words found" ps [] []
+    [s!"scanned {fs.length} files", s!"{h} banned words"]
+  contract "ads-lean-m1v04-v1" (fs.length > 0 && h == 0)

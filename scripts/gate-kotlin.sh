@@ -33,4 +33,10 @@ gradle "$opt=$jhome" --console=plain "${args[@]}"
 checks=complexity,satd,duplicates
 flags=(--fail-on-violation -q)
 pmat quality-gate -p . --checks "$checks" "${flags[@]}"
+rcp=$(mktemp); trap 'rm -f "${rcp:?}"' EXIT
+# end-of-course lab: starter must fail with named tasks, solution must pass (LAB_GRADLE_OPTS= : CI has network)
+LAB_GRADLE_OPTS= ../labs/d-final/tests/lab-verify.sh "$rcp" || {
+  echo "FAIL lab d-final"
+  exit 1
+}
 echo "gate-kotlin OK"
