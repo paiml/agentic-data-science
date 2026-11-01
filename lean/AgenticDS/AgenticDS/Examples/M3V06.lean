@@ -1,4 +1,5 @@
 import AgenticDS.Tree
+import AgenticDS.Plot
 /-! Gini deviance and the best split. -/
 open AgenticDS
 -- dev = n - (sum of squared class counts) / n.
@@ -19,3 +20,11 @@ def m3v06 : IO Unit := do
   IO.println s!"dev all:   {dev rows}"
   IO.println s!"split, minbucket 1: {bestSplit 1 rows}"
   IO.println s!"split, minbucket 4: {bestSplit 4 rows}"
+  let gain := fun (t : Nat) =>
+    let l := rows.filter fun r => r.x.headD 0 ≤ (t : ℚ)
+    let r := rows.filter fun r => (t : ℚ) < r.x.headD 0
+    (t.toFloat, qf (dev l + dev r))
+  let cs := (List.range 12).map fun i => gain (37 + i)
+  writeScatter "plot-m3v06.svg" "Deviance after a split"
+    "threshold (mm)" "left plus right deviance" cs cs []
+    [s!"dev all = {dev rows}"]

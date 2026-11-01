@@ -1,5 +1,6 @@
 import Mathlib
 import AgenticDS.Plot
+import AgenticDS.Examples.Scat
 /-! The P3 golden values copied from R. -/
 open Lean AgenticDS
 def m3v08_load : IO Json := do
@@ -25,3 +26,5 @@ def m3v08 : IO Unit := do
   let acc ← IO.ofExcept
     (j.getObjValAs? JsonNumber "accuracy")
   IO.println s!"accuracy: {m3v08_exact conf} golden {acc}"
+  penguinDemo "plot-m3v08b.svg" "Penguins: bill length and flipper"
+    "bill_length_mm" "flipper_length_mm" 4
