@@ -38,7 +38,7 @@ for (d in ex) {
     expect_gt(length(out), 0L)
     expect_match(
       out[[length(out)]],
-      "^contract: ads-r-(p[1-4]) .* OK$"
+      "^contract: ads-r-p[1-4] .* OK$"
     )
   })
 }
