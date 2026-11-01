@@ -38,5 +38,9 @@
     cat(cli::col_grey("# done"), "\n", sep = "")
     invisible(NULL)
   }, envir = globalenv())
-  cat(cli::col_grey("# ready: ", R.version.string, ", agenticds loaded"), "\n", sep = "")
+  # "# ready" rides in the FIRST PROMPT, so it shows only once R is reading input: a Ctrl-L sent after it is handled
+  # by readline, not echoed by the cooked tty as a literal ^L (c03-r m3-06 HOLD, GH-2030). The prompt is restored after
+  # the first top-level call.
+  options(prompt = paste0("\n", cli::col_grey(paste0("# ready: ", R.version.string, ", agenticds loaded")), "\n> "))
+  addTaskCallback(function(...) { options(prompt = "> "); FALSE })
 }
