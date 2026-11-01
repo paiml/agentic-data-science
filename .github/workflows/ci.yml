@@ -153,6 +153,7 @@ jobs:
   parity:
     timeout-minutes: 30
     runs-on: ubuntu-24.04
+    permissions: { contents: read, id-token: write }
     container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
     steps:
       - uses: actions/checkout@v4
@@ -161,6 +162,18 @@ jobs:
         run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe/rust"
       - name: Parity over every landed language (missing = RED)
         run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
+      - name: Determinism (two runs, same hashes)
+        run: scripts/determinism.sh scripts/lesson-artifacts.sh anscombe rust
+      - name: Install cosign v3.1.4 (pinned, sha256-verified)
+        run: |
+          curl -fsSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+          echo "424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa  /usr/local/bin/cosign" | sha256sum -c -
+          chmod +x /usr/local/bin/cosign
+      - name: Sign (keyless sigstore) and verify
+        run: |
+          d="$RUNNER_TEMP/anscombe/rust"
+          for f in stdout.txt plot.svg manifest.sha256; do cosign sign-blob --yes --bundle "$d/$f.sigstore.json" "$d/$f" >/dev/null; done
+          scripts/verify-signed.sh "$d" "${{ github.repository }}"
       - uses: actions/upload-artifact@v4
         with: { name: anscombe-rust, path: "${{ runner.temp }}/anscombe/rust" }
   gate:

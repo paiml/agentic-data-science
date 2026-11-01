@@ -33,3 +33,4 @@ gate-rust:
 .PHONY: gate-parity
 gate-parity:
 	@scripts/falsify-parity.sh
+	@scripts/falsify-determinism.sh
