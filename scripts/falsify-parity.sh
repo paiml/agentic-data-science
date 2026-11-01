@@ -8,9 +8,11 @@ bash "$root/scripts/lesson-artifacts.sh" anscombe rust "$t/rust" >/dev/null
 printf 'rust\njulia\n' > "$t/landed"
 cp "$t/rust/stdout.txt" "$t/julia/stdout.txt"; cp "$t/rust/stdout.txt" "$t/kotlin/stdout.txt"
 bash "$root/scripts/parity.sh" "$t" "$t/landed" >/dev/null || { echo "FAIL: clean set not green"; exit 1; }
-# the container has no Lean: stand in rust's stdout for every other committed language (the parity job compares the real ones)
-while read -r l; do [ -z "$l" ] || [ "$l" = rust ] || { mkdir -p "$t/$l"; cp "$t/rust/stdout.txt" "$t/$l/stdout.txt"; }; done < "$root/parity/anscombe.landed"
-bash "$root/scripts/parity.sh" "$t" "$root/parity/anscombe.landed" >/dev/null || { echo "FAIL: committed landed list not green"; exit 1; }
+# The committed list is checked for shape here (known languages) with the Rust bytes standing in for each
+# landed language; the real cross-language comparison runs in the CI parity job on real artifacts.
+mkdir -p "$t/c"
+while read -r l; do [ -n "$l" ] || continue; mkdir -p "$t/c/$l"; cp "$t/rust/stdout.txt" "$t/c/$l/stdout.txt"; done < "$root/parity/anscombe.landed"
+bash "$root/scripts/parity.sh" "$t/c" "$root/parity/anscombe.landed" >/dev/null || { echo "FAIL: committed landed list not green"; exit 1; }
 red() { if bash "$root/scripts/parity.sh" "$t" "$t/landed" >/dev/null 2>&1; then echo "FAIL: $1 stayed green"; exit 1; fi; }
 tac "$t/rust/stdout.txt" > "$t/julia/stdout.txt"; red "F1 reordered rows"
 : > "$t/julia/stdout.txt"; red "empty stdout"

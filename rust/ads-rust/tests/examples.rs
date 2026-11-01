@@ -87,3 +87,31 @@ fn hero_draws_every_landed_language_and_ends_ok() {
             .contains(">rust<")
     );
 }
+
+#[test]
+fn p4_bench_stdout_is_deterministic_and_timings_go_to_stderr() {
+    let run = || {
+        let o = Command::new(env!("CARGO"))
+            .args([
+                "run",
+                "-q",
+                "--locked",
+                "--example",
+                "a-m4-p4-bench",
+            ])
+            .env("ADS_ROOT", "../..")
+            .output()
+            .unwrap();
+        assert!(o.status.success());
+        (
+            String::from_utf8(o.stdout).unwrap(),
+            String::from_utf8(o.stderr).unwrap(),
+        )
+    };
+    let (a, ea) = run();
+    let (b, _) = run();
+    assert_eq!(a, b, "stdout differs between runs");
+    assert!(!a.contains(" ms"), "timings leaked to stdout");
+    assert!(ea.contains(" ms"), "timings missing from stderr");
+    assert!(a.lines().last().unwrap().ends_with(" OK"));
+}
