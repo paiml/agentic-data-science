@@ -57,7 +57,7 @@ trig_flat() { grep -Eq "^\s*[\"']?($TRIG)[\"']?\s*:|^[\"']?on[\"']?\s*:.*\b($TRI
 # block-list form (`on:` then `- pull_request` lines): no YAML parser is on the fleet (no yq), so awk walks the top-level `on:` block
 trig_list() { awk -v t="^[[:space:]]*-[[:space:]]*[\"']?($TRIG)[\"']?[[:space:]]*(#.*)?$" '
   /^["'"'"']?on["'"'"']?:[[:space:]]*(#.*)?$/ { inon = 1; next }
-  /^[^[:space:]#]/ { inon = 0 }
+  /^[^[:space:]#]/ && !/^-[[:space:]]/ { inon = 0 }
   inon && $0 ~ t { bad = 1 }
   END { exit !bad }' "$1"; }
 trig_bad() { trig_flat "$1" || trig_list "$1"; }
@@ -85,6 +85,12 @@ mutwf list-pr '/^on:$/a\  - pull_request'
 mutwf list-prt "/^on:\$/a\\  - 'pull_request_target'"
 mutwf list-quoted-comment '/^on:$/a\  - "push"  # sneaky'
 mutwf list-after-schedule '/^  workflow_dispatch: {}/a\  - workflow_call'
+# indent-0 block list: `on:` then `- push` flush left (a valid YAML sequence under a mapping key)
+mutwf list-indent0 '/^on:$/a\- push'
+mutwf list-indent0-quoted "/^on:\$/a\\- 'pull_request_target'"
+# stop-rule control: a `- pull_request` list item under jobs: is not a trigger and must stay GREEN (the walk ends at the next top-level key)
+ctl="$S/wf-ctl-jobs.yml"; { cat "$w"; printf '      - pull_request\n'; } > "$ctl"; sed -i 's/^jobs:$/jobs:\n  note:\n    steps:\n      - pull_request/' "$ctl"
+if cmp -s "$ctl" "$w"; then bad G-control-jobs-list "the control plant changed nothing"; elif trig_bad "$ctl"; then bad G-control-jobs-list "a list item under jobs: was flagged as a trigger"; else ok G-control-jobs-list "stays green"; fi
 if grep -Eq 'ubuntu|windows|macos' "$w"; then bad H-workflow-runner "a hosted runner label is present"; else ok H-workflow-runner "self-hosted pin"; fi
 if grep -Eq 'continue-on-error|sudo|apt-get' "$w"; then bad H2-workflow-states "continue-on-error or an install on the host"; else ok H2-workflow-states "none"; fi
 # ---- ticket keeper with a fake gh
