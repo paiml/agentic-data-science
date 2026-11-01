@@ -64,6 +64,7 @@ fun readPenguins(path: String): List<Penguin> {
         DataFrame
             .readCsv(
                 path,
+                parserOptions = CSV_PARSER,
             ).cast(verify = true)
     return df.rows().map { r ->
         Penguin(

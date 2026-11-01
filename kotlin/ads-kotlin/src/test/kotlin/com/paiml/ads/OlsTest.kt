@@ -26,6 +26,7 @@ class OlsTest {
         DataFrame
             .readCsv(
                 PENGUINS,
+                parserOptions = com.paiml.ads.CSV_PARSER,
             ).dropNulls("flipper_length_mm", "body_mass_g")
     private val x = df.doubles("flipper_length_mm")
     private val y = df.doubles("body_mass_g")

@@ -1,6 +1,7 @@
 package com.paiml.ads
 
 import java.io.File
+import java.util.Locale
 import kotlin.math.abs
 
 /** Rows in the raw CSV, and the golden tolerance. */
@@ -61,6 +62,7 @@ fun showSpecies(s: SpeciesSummary) =
     show(
         s.species,
         "n=%d  mass %.1f g  flipper %.1f mm".format(
+            Locale.ROOT,
             s.n,
             s.mean.getValue("body_mass_g"),
             s.mean.getValue("flipper_length_mm"),

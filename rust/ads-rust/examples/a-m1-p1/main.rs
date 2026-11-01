@@ -1,12 +1,11 @@
-//! A-M1-P1: ingest Palmer Penguins, apply the NA policy, print the row counts before and after.
+//! A-M1-P1: ingest Palmer Penguins, apply the NA policy, print the per-species counts.
 //!
-//! Provable contract: ads-rust-p1-v1 (344 rows loaded, 342 kept).
+//! Provable contract: ads-rust-p1-v1 (344 rows loaded, 342 kept, counts 151/68/123).
 use ads_rust::p1::{na_policy, read_penguins};
 
 fn main() {
-    let root = std::env::var("ADS_ROOT").unwrap_or_else(|_| {
-        format!("{}/../..", env!("CARGO_MANIFEST_DIR"))
-    });
+    let root = std::env::var("ADS_ROOT")
+        .unwrap_or_else(|_| "../..".into());
     let raw = read_penguins(&format!(
         "{root}/datasets/penguins/penguins.csv"
     ))
