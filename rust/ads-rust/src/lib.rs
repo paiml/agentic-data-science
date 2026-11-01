@@ -1,5 +1,6 @@
 //! Agentic Data Science, Course A (Rust).
 pub mod anscombe;
+pub mod hero;
 pub mod p1;
 pub mod p2;
 pub mod p3;
