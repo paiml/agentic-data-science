@@ -1,0 +1,40 @@
+name: lab-nightly
+# LAB lane (#143): not a gate. Never on pull_request, merge_group, push or a release job. Red or unmeasured opens/updates ONE ticket.
+on:
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  lab:
+    # Runner pin: capability labels, never hosted (the no-hosted-runners rule). No job here installs onto the host: toolchains go to RUNNER_TEMP.
+    runs-on: [self-hosted, clean-room, X64, ffmpeg]
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      LAB_OWNER: ${{ vars.LAB_OWNER || 'noahgift' }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stopped? (red or unmeasured for 7 days, ticket open and labelled lab-stopped)
+        id: stop
+        run: scripts/lab-report.sh stopcheck && echo "stopped=0" >> "$GITHUB_OUTPUT" || { rc=$?; [ "$rc" = 3 ] && echo "stopped=1" >> "$GITHUB_OUTPUT" || exit "$rc"; }
+      - name: Provision toolchains (user space)
+        if: steps.stop.outputs.stopped == '0'
+        run: scripts/lab-toolchains.sh
+      - name: Run every lab falsifier
+        id: lab
+        if: steps.stop.outputs.stopped == '0'
+        env:
+          LAB_OUT: ${{ runner.temp }}/lab-out
+        run: |
+          rc=0; scripts/lab-nightly.sh || rc=$?
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+      - name: One ticket (open or update on red; close on green)
+        if: steps.stop.outputs.stopped == '0'
+        run: scripts/lab-report.sh report "${{ steps.lab.outputs.rc }}" "$RUNNER_TEMP/lab-out/summary.txt"
