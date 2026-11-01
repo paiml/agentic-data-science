@@ -84,6 +84,13 @@ def main (_ : List String) : IO UInt32 := do
     let failed ← try act; pure false catch _ => pure true
     if failed != (id == "v09") then
       IO.eprintln s!"FAIL {id}: wrong outcome"; ok := false
+  -- the scatter demos print their native plot.
+  for (id, act) in examplesM3 do
+    if ["v01", "v05", "v08", "v09", "v10"].contains id then
+      let (o, _) ← IO.FS.withIsolatedStreams
+        (try act catch _ => pure ())
+      unless (o.splitOn "plot_scatter_bounded OK").length > 1 do
+        IO.eprintln s!"FAIL {id}: no scatter"; ok := false
   for f in (← runtimeFaults) do
     IO.eprintln s!"FAIL {f}"
     ok := false
