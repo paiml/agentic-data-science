@@ -107,11 +107,13 @@ def main (_ : List String) : IO UInt32 := do
     | _ => none
   if decls != want1 then
     IO.eprintln s!"FAIL v01 decls: {decls}"; ok := false
-  -- v09: the timing line, and four tolerance lines in the test.
+  -- v09: three fixed count lines first (the clock is on
+  -- stderr), and four tolerance lines in the test.
   let t4 ← IO.FS.readFile "AgenticDSTest/P4.lean"
   let tol := (lines t4).filter (has · "1000000")
-  let head9 := (lines (get "v09")).headD ""
-  unless tol.length == 4 && head9.startsWith "pipeline ms " do
+  unless tol.length == 4 &&
+      (lines (get "v09")).take 3 ==
+        ["n_rows 6497", "n_train 5198", "n_test 1299"] do
     IO.eprintln s!"FAIL v09 output: {get "v09"}"; ok := false
   if ok then IO.println "contract: ads-lean-examples-m4-v1 OK"
   pure (if ok then 0 else 1)
