@@ -11,3 +11,4 @@ kotlin/ads-kotlin/build/
 lean/AgenticDS/plot.*
 .pv/
 contracts/.pv/
+target-lab/
