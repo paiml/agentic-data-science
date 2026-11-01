@@ -23,9 +23,15 @@ fn main() {
     });
     let d = d.fold(0.0, f64::max);
     assert!(d <= 1e-12, "diff {d}");
-    for (engine, secs) in bench_wine(&df, 20) {
-        println!("{engine:>9}: {:.6} ms", secs * 1e3);
+    // Timings are wall-clock, so they go to stderr; stdout stays deterministic.
+    let timings = bench_wine(&df, 20);
+    assert_eq!(timings.len(), 2, "both engines timed");
+    for (engine, secs) in &timings {
+        assert!(secs.is_finite() && *secs >= 0.0, "{engine} time");
+        eprintln!("{engine:>9}: {:.6} ms", secs * 1e3);
+        println!("engine timed: {engine}");
     }
+    println!("groups: {}", a.len());
     println!(
         "contract: ads-rust-p4-v1 aggregates max |diff| = {d:e} OK"
     );
