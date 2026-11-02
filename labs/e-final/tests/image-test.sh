@@ -3,11 +3,11 @@
 # Each run is a new container (docker run --rm). seccomp, apparmor and systempaths are relaxed, SYS_ADMIN added, only so the grader's bwrap can create its namespaces.
 set -uo pipefail
 repo=$(cd "$(dirname "$0")/../../.." && pwd); tag="${1:?tag}"; fail=0
-g() { docker run --rm --network none --entrypoint "" --user coder -e HOME=/home/coder --cap-add SYS_ADMIN --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$repo:/work:ro" "$tag" bash /work/labs/e-final/tests/run.sh "$1"; }
+g() { docker run --rm -e GRADER_DEBUG=1 --network none --entrypoint "" --user coder -e HOME=/home/coder --cap-add SYS_ADMIN --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined -v "$repo:/work:ro" "$tag" bash /work/labs/e-final/tests/run.sh "$1"; }
 t0=$(date +%s)
 g /work/labs/e-final/solution >/tmp/img-sol.out 2>&1; rc=$?
 t1=$(date +%s)
-[ "$rc" -eq 0 ] && echo "PASS 1 solution passes (rc=0)" || { echo "FAIL 1 solution rc=$rc: $(tail -n 2 /tmp/img-sol.out)"; fail=1; }
+[ "$rc" -eq 0 ] && echo "PASS 1 solution passes (rc=0)" || { echo "FAIL 1 solution rc=$rc: $(tail -n 2 /tmp/img-sol.out)"; sed "s/^/  sol| /" /tmp/img-sol.out | tail -n 40; fail=1; }
 [ $((t1-t0)) -le 300 ] && echo "PASS 2 first demo took $((t1-t0)) s (<= 300)" || { echo "FAIL 2 first demo took $((t1-t0)) s"; fail=1; }
 g /work/labs/e-final/starter >/tmp/img-st.out 2>&1; rc=$?
 [ "$rc" -eq 1 ] && echo "PASS 3 starter fails (rc=1)" || { echo "FAIL 3 starter rc=$rc, want 1"; fail=1; }

@@ -16,8 +16,10 @@ jobs:
       - name: Pin check (toolchain from lean-toolchain, installer verified)
         run: bash labs/e-final/tests/image-pin.sh
       - name: Build (LEAN_TOOLCHAIN read from lean-toolchain)
+        shell: bash
         run: bash labs/e-final/tests/build-image.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/build.txt"
       - name: Fresh-container test (starter fails, solution passes, 5 plants refused, first demo <= 300 s)
+        shell: bash
         run: bash labs/e-final/tests/image-test.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/test.txt"
       - name: Report size, build time and test results
         if: always()
