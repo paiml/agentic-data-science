@@ -35,9 +35,10 @@ T="no unsafe/unsafeBaseIO/include_str/macro/syntax/elab/structure/inductive/clas
 t bash -c '! grep -nE "unsafe|include_str|\b(macro|macro_rules|syntax|elab|structure|inductive|class|abbrev|mutual|universe|declare_syntax_cat)\b" "$0"' "$g/stripped.lean"
 # Keyword layer first: if ANY check above tripped, Learner is never compiled (compiling Lean is executing it: elaborators run).
 if [ "$rc" -ne 0 ]; then echo "tests run: $n"; echo "grader: keyword layer refused Mean.lean; it was not compiled"; exit 1; fi
-# Model (honest): compiling Lean IS execution. Learner.lean compiles from a comment-stripped grader copy (no import, so no meta code
-# can be written) in a throwaway dir holding nothing of the grader's, under bwrap (read-only /, no network, private /tmp, only that
-# dir writable) where bwrap works. The VERDICT never comes from elaborating commands in an environment holding learner code: Grade.lean
+# Model (honest): compiling Lean IS execution. Learner.lean is the exact file the parser validated plus a grader probe, compiled in a
+# throwaway dir holding nothing of the grader's, under bwrap: only /usr, the Lean toolchain dir and the Ref build dir are mounted
+# read-only, no network, private /tmp, only that dir writable. Without bwrap the grade fails. The VERDICT never comes from elaborating
+# commands in an environment holding learner code: Grade.lean
 # (grader-owned, written and sha256-checked after the compile) imports Ref and Learner without running initializers and reads the
 # environment: kernel replay of the learner's constants, kernel defeq of sumL and of the sum_shift statement to Ref's, axioms.
 mkdir -p "$g/ref" "$g/lrn" "$g/grade"
@@ -51,10 +52,12 @@ REF
 lean_c() { # dir module [-o]
   (cd "$1" && LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
 }
-lean_sandbox() { # learner compile: ONLY under bwrap; without it the grade FAILS (compiling Lean is executing it)
-  if bwrap --ro-bind / / --dev /dev --proc /proc true 2>/dev/null; then
-    (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
-      env LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
+lean_sandbox() { # learner compile: ONLY under bwrap with a minimal mount set; without bwrap the grade FAILS
+  local P; P=$(lean "+$tc" --print-prefix) || return 1
+  local BW=(bwrap --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 --symlink usr/bin /bin --ro-bind "$P" "$P" --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp)
+  if "${BW[@]}" true 2>/dev/null; then
+    (cd "$g/lrn" && "${BW[@]}" --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
+      env LEAN_PATH="$g/ref" timeout "$TMO" "$P/bin/lean" -M "${GRADER_COMPILE_MEM_MB:-$MEM_MB}" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
   else echo "grader: FAIL bwrap is unavailable here; learner code is never compiled unsandboxed"; return 1; fi
 }
 e=0; out=""

@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Falsifier for the toolchain pin in run.sh. Each planted arm must make the grader exit 1; the control must exit 0.
-#   A control: lab + reference toolchain agree            -> rc 0
-#   B reference lean/AgenticDS/lean-toolchain ABSENT      -> rc 1 (a missing file is a failure, not a pass)
-#   C reference differs from the lab lean-toolchain       -> rc 1
-#   D theorem sum_shift ... : True := trivial             -> rc 1 (statement is pinned by the grader)
-#   E sumL redefined (foldr, propositionally equal)       -> rc 1 (sumL is pinned to the exact fold)
-#   F instance : Add Int := ⟨fun _ _ => 0⟩ + fake checkContract -> rc 1 (keyword layer)
-#   F2 `instance (priority := high) : Add Int` -> rc 1 (pinned in prelude, before the instance)
-#   G the same attack with the keyword layer deleted from a copy of the grader -> rc 1 (root layer: prelude-elaborated reference)
+# Falsifier for the lab grader (run.sh). Run it from anywhere; it builds scratch copies and never touches the lab files.
+#   A, B, C  control passes; missing or mismatched toolchain pin is refused
+#   S        the starter (with its sorry) is refused
+#   cheats   each fixture in cheats/ is refused by the FULL grader (rc 1 plus a refusal line)
+#   H, H2, H3  harmless comments, nested comments and a comment-hidden command still pass (rc 0)
+#   M, M2    a tiny memory limit is refused (whole grader; learner compile alone must report the memory refusal)
+#   P        parser-only copy (other pre-compile layers deleted): each refusal names the command kind or token
+#   G        root-layer copy (every pre-compile layer deleted): the sandbox, timeout, kernel replay, defeq and axiom checks still refuse
 export PATH="$HOME/.elan/bin:$PATH"
 set -uo pipefail
 repo=$(cd "$(dirname "$0")/../../.." && pwd)
@@ -46,6 +45,8 @@ mk H2; printf "\n/- outer /- inner -/ still a comment -/\n" >> "$S/H2/labs/e-fin
 mk H3; printf "\n/- a /- b -/\n #guard true -- -/\n" >> "$S/H3/labs/e-final/solution/Mean.lean"; chk H3 0
 # M: a tiny GRADER_MEM_MB is refused (parse, compile and grade all run under lean -M).
 mk M; GRADER_MEM_MB=20 bash "$S/M/labs/e-final/tests/run.sh" "$S/M/labs/e-final/solution" >"$S/M.out" 2>&1; mrc=$?; if [ "$mrc" -eq 1 ] && grep -qiE "memory|REFUSED|FAIL" "$S/M.out"; then echo "arm M ok (rc=1 under GRADER_MEM_MB=20)"; else echo "FAIL arm M: rc=$mrc"; fail=1; fi
+# M2: the learner compile alone, under a tiny -M, must report the memory refusal (parse and Ref compile stay at the default).
+GRADER_DEBUG=1 GRADER_COMPILE_MEM_MB=20 bash "$S/M/labs/e-final/tests/run.sh" "$S/M/labs/e-final/solution" >"$S/M2.out" 2>&1; m2=$?; if [ "$m2" -eq 1 ] && grep -q "^Learner.lean:.*excessive memory" "$S/M2.out"; then echo "arm M2 ok (learner compile refused for memory)"; else echo "FAIL arm M2: rc=$m2"; fail=1; fi
 
 # P: the parser classifier alone (every other layer deleted): each refusal names the command kind.
 mk P; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" -e "/top-level commands are an ALLOWLIST/,+1d" -e "\#no unsafe/unsafeBaseIO#,+1d" -e "/token in the RAW file/,+1d" "$S/P/labs/e-final/tests/run.sh"
@@ -91,11 +92,11 @@ garm custom-axiom "forbidden axiom"
 garm timeout-decide "timed out" GRADER_TIMEOUT=10
 garm timeout-decide "memory" GRADER_MEM_MB=64
 # Root layer, compile-time execution: the #guard really runs (under bwrap), writes into the learner build dir (Lean.olean forged,
-# e76-guard-ran), but Grade reads only the sysroot plus a fresh dir with copies of Ref/Learner oleans: the forged Lean.olean is never
+# probe-guard-ran), but Grade reads only the sysroot plus a fresh dir with copies of Ref/Learner oleans: the forged Lean.olean is never
 # on its path, and nothing is written to the host cwd.
 for c in guard-exec guard-forge-olean; do
   GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$c" >"$S/G-$c.out" 2>&1; rc=$?
-  if grep -q "^lrn dir:.*\(e76-guard-ran\|Lean.olean\)" "$S/G-$c.out" && grep -q "^mods dir: Learner.olean Ref.olean *$" "$S/G-$c.out" && [ "$rc" -eq 0 ] && [ ! -e "$PWD/e76-guard-ran" ] && [ ! -e "$PWD/Lean.olean" ]; then echo "arm G-$c ok (ran under bwrap, forged file never on Grade's path)"; else echo "FAIL arm G-$c: rc=$rc"; fail=1; fi
+  if grep -q "^lrn dir:.*\(probe-guard-ran\|Lean.olean\)" "$S/G-$c.out" && grep -q "^mods dir: Learner.olean Ref.olean *$" "$S/G-$c.out" && [ "$rc" -eq 0 ] && [ ! -e "$PWD/probe-guard-ran" ] && [ ! -e "$PWD/Lean.olean" ]; then echo "arm G-$c ok (ran under bwrap, forged file never on Grade's path)"; else echo "FAIL arm G-$c: rc=$rc"; fail=1; fi
   groot=$((groot+1))
 done
 [ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $parms parser-only arms, $groot root-layer arms)"; exit "$fail"

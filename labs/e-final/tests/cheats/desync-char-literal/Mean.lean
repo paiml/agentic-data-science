@@ -33,6 +33,6 @@ end AgenticDS
 
 def q : Char := '"'
 def s1 : String := "/-"
-def hidden : Nat := (unsafe unsafeBaseIO (do IO.FS.writeFile "/tmp/e76-desync-ran" "x"; pure 1))
+def hidden : Nat := (unsafe unsafeBaseIO (do IO.FS.writeFile "/tmp/probe-desync-ran" "x"; pure 1))
 example : (List.replicate 10 1).length = 10 := by decide +native
 def u : String := "-/"

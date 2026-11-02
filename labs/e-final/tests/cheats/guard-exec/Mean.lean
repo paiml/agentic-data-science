@@ -31,4 +31,4 @@ def checkContract (xs : List Int) (c : Int) : IO Unit := do
 end AgenticDS
 
 
-#guard (unsafe unsafeBaseIO ((IO.FS.writeFile "e76-guard-ran" "ran at compile time\n").toBaseIO >>= fun _ => pure true))
+#guard (unsafe unsafeBaseIO ((IO.FS.writeFile "probe-guard-ran" "ran at compile time\n").toBaseIO >>= fun _ => pure true))
