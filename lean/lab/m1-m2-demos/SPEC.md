@@ -8,4 +8,6 @@ Code only: the import closure of the two mains (31 Lean sources) under `tree/lea
 ## Receipts
 - `image-id.txt`: image built from a `git archive` export of this directory (build context, not the working tree).
 - `proof-run-network-none.txt`: `docker run --rm --network none IMAGE proof.sh`, 20/20 demos 2/2, exit 0.
-- `receipt-pv-lint.txt`: `pv lint contracts` PASS (0 errors, 0 warnings). `receipt-pv-sigma.txt`: `pv lint --gate sigma contracts` declines `NoCheckable`: this repo has no Σ ontology file, so there is nothing for the sigma gate or `pv ontology tbox` to read (exit 2 / "cannot read contracts/ontology.yaml").
+- `receipt-pv-lint.txt`: `pv lint tree/contracts` (the lab tree's own contract) PASS. The sigma gate and `pv ontology tbox` have no Σ file to read in this repo, so they are not applicable.
+- `tree/lean/AgenticDS/scripts/Axioms.lean` imports only shipped modules and lists the five theorems that resolve in this tree (demo m1v09 counts them).
+- apt packages are pinned to the versions in the base-image digest's archive snapshot.
