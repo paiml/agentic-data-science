@@ -95,6 +95,21 @@ def main (_ : List String) : IO UInt32 := do
         (try act catch _ => pure ())
       unless (o.splitOn "plot_scatter_bounded OK").length > 1 do
         IO.eprintln s!"FAIL {id}: no scatter"; ok := false
+  -- every demo ends in its own contract line; v04 and v10
+  -- also state their numbers.
+  for (id, act) in examplesM3 do
+    let (o, _) ← IO.FS.withIsolatedStreams
+      (try act catch _ => pure ())
+    let ls := (o.splitOn "\n").filter (· ≠ "")
+    unless ls.getLast? ==
+        some s!"contract: ads-lean-m3{id}-v1 OK" do
+      IO.eprintln s!"FAIL {id}: no own contract line"; ok := false
+    let want := match id with
+      | "v04" => "sum 5, length 5"
+      | "v10" => "trace 83 of 85"
+      | _ => ""
+    unless want == "" || (o.splitOn want).length > 1 do
+      IO.eprintln s!"FAIL {id}: lacks {want}"; ok := false
   for f in (← runtimeFaults) do
     IO.eprintln s!"FAIL {f}"
     ok := false
