@@ -8,6 +8,15 @@ def okTop : List Name := [`Lean.Parser.Command.namespace, `Lean.Parser.Command.s
   `Lean.Parser.Command.open, `Lean.Parser.Command.variable]
 def okDecl : List Name := [`Lean.Parser.Command.definition, `Lean.Parser.Command.theorem, `Lean.Parser.Command.example]
 
+def bannedWords : List String := ["unsafe", "native", "unif_hint", "by_elab", "run_cmd", "run_tac", "run_elab", "run_meta", "initialize"]
+
+/-- Any atom or identifier component that mentions a banned word, anywhere in a command (term level included). -/
+partial def bannedIn : Syntax → Option String
+  | .atom _ v => bannedWords.find? (fun w => (v.splitOn w).length > 1)
+  | .ident _ _ n _ => bannedWords.find? (fun w => ((n.toString).splitOn w).length > 1)
+  | .node _ _ args => args.findSome? bannedIn
+  | _ => none
+
 def refuse (msg : String) : IO UInt32 := do
   IO.println s!"parse: REFUSED {msg}"
   return 1
@@ -33,6 +42,7 @@ unsafe def main (args : List String) : IO UInt32 := do
     let pos := ictx.fileMap.toPosition (stx.getPos?.getD 0)
     let at_ := s!"{pos.line}:{pos.column}"
     let k := stx.getKind
+    if let some w := bannedIn stx then return (← refuse s!"banned token \"{w}\" at {at_}")
     if k == `Lean.Parser.Command.declaration then
       -- declModifiers: only an (optional) doc comment; no attributes, visibility, noncomputable, unsafe, partial
       let mods := stx[0]

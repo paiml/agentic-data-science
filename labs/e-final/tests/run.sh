@@ -29,6 +29,8 @@ T="no attribute (@[ ... ], attribute), by_elab, unif_hint, command_elab, term_el
 t bash -c '! grep -nE "@\[|\b(by_elab|unif_hint|command_elab|term_elab|tactic_elab|register_option|register_builtin_option|builtin_init|init)\b" "$0"' "$g/stripped.lean"
 T="top-level commands are an ALLOWLIST (column-0 pre-filter; the real classifier is the parser test above)"
 t bash -c '! perl -ne "print qq{\$.:\$_} if /^\\S/ && !/^(def|theorem|lemma|example|namespace|section|end|open|variable)\\b/" "$0" | grep -n .' "$g/stripped.lean"
+T="no unsafe/native token in the RAW file (a char literal such as '\"' desyncs the comment stripper, so this layer reads the raw bytes; the parser also bans them in every term)"
+t bash -c '! grep -nE "unsafe|native" "$0"' "$f"
 T="no unsafe/unsafeBaseIO/include_str/macro/syntax/elab/structure/inductive/class/abbrev/mutual/universe token anywhere, strings included"
 t bash -c '! grep -nE "unsafe|include_str|\b(macro|macro_rules|syntax|elab|structure|inductive|class|abbrev|mutual|universe|declare_syntax_cat)\b" "$0"' "$g/stripped.lean"
 # Keyword layer first: if ANY check above tripped, Learner is never compiled (compiling Lean is executing it: elaborators run).
