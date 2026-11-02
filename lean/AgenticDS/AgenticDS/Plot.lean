@@ -171,10 +171,13 @@ def writeScatter (path : System.FilePath) (title xl yl : String)
   IO.println "contract: plot_scatter_bounded OK"
 
 
-/-- A tick value: whole numbers without decimals. -/
-def fmtTick (x : Float) : String :=
-  if (x - x.round).abs < 0.05 then s!"{x.round.toUInt64.toNat}"
-  else fmt1 x
+/-- Smallest 1, 2 or 5 times a power of ten that is at least a
+quarter of `m`: the whole-number tick step of the count axis. -/
+def niceStep (m : Nat) : Nat :=
+  let need := max 1 ((m + 3) / 4)
+  let cands := (List.range 12).flatMap fun k =>
+    [1, 2, 5].map (· * 10 ^ k)
+  (cands.find? (· ≥ need)).getD need
 
 /-- Plot box of the bar chart: left, right, top, bottom. -/
 def cx0 : Float := 1130
@@ -188,7 +191,7 @@ def slotChars (n : Nat) : Nat := (720 / (max n 1)) / 16
 
 /-- Height of the bar of count `c` when the tallest is `m`. -/
 def barH (m c : Nat) : Float :=
-  (cy1 - cy0) * c.toFloat / (max m 1).toFloat
+  (cy1 - cy0) * c.toFloat / (4 * niceStep m).toFloat
 
 /-- One bar: rect, centred label under the axis, centred count
 above the bar. -/
@@ -213,7 +216,7 @@ def barTick (m : Nat) (i : Nat) : String :=
   "stroke-width=\"1\" fill=\"none\"/>\n" ++
   s!"<text x=\"{cx0 - 20}\" y=\"{gy + 10}\" text-anchor=\"end\" " ++
   s!"{mono}font-size=\"28\" fill=\"#cbd5e1\">" ++
-  s!"{fmtTick (f * m.toFloat)}</text>\n"
+  s!"{i * niceStep m}</text>\n"
 
 /-- The rows as a bar chart with real axes, 1920 by 1080: a frame, a
 count axis from zero with five ticks and gridlines, one bar per row
