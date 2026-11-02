@@ -13,3 +13,6 @@ lean/AgenticDS/plot.*
 contracts/.pv/
 target-lab/
 *.profraw
+
+# pmat writes this; a tracked copy makes lean-coverage-report.sh refuse (rmedia T12p)
+.pmat-metrics/
