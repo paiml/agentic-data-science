@@ -9,7 +9,10 @@ val variant: String = (findProperty("variant") as String?) ?: "starter"
 require(variant in setOf("starter", "solution") || variant.startsWith("cheat-")) {
     "variant must be starter, solution or cheat-<name>"
 }
+require(Regex("[a-z0-9-]+").matches(variant)) { "variant name must match [a-z0-9-]+" }
 val variantDir = if (variant.startsWith("cheat-")) "cheats/${variant.removePrefix("cheat-")}" else variant
+
+require(file(variantDir).isDirectory) { "no such variant directory: $variantDir" }
 
 kotlin { jvmToolchain(25) }
 
