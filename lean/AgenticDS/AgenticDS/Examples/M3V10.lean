@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Examples.M3V08
 import AgenticDS.Examples.Scat
 /-! The gate on the module commit; exact accuracy. -/
@@ -15,3 +16,6 @@ def m3v10 : IO Unit := do
   IO.println s!"accuracy {m3v08_exact m}"
   penguinDemo "plot-m3v10.svg" "Penguins: bill length and mass"
     "bill_length_mm" "body_mass_g" 4
+  contract "ads-lean-m3v10-v1"
+    (decide (tr.sum ≤ (m.map List.sum).sum) &&
+      (← plotOk "plot-m3v10.svg"))

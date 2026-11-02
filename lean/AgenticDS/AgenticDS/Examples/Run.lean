@@ -32,3 +32,10 @@ def contract (name : String) (ok : Bool) : IO Unit := do
 /-- `p.isInfixOf s`: the text `p` occurs inside `s`. -/
 def String.isInfixOf (p s : String) : Bool :=
   (s.splitOn p).length > 1
+
+/-- True when the SVG at `path` is a plot: at least two points
+(circles or bars) and at least eight text labels. -/
+def plotOk (path : String) : IO Bool := do
+  let s ← IO.FS.readFile path
+  let n := fun (p : String) => (s.splitOn p).length - 1
+  pure (n "<circle" + n "<rect x=" ≥ 2 && n "<text" ≥ 8)

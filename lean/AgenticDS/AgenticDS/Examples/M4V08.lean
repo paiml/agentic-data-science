@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.P4
 import AgenticDS.Regression
 import AgenticDS.Plot
@@ -30,3 +31,5 @@ def m4v08 : IO Unit := do
   IO.println s!"r2 {r.r2.toFloat}"
   IO.println s!"red {r.red.toFloat}"
   IO.println s!"white {r.white.toFloat}"
+  contract "ads-lean-m4v08-v1"
+    (r.nRows == r.nTrain + r.nTest && (← plotOk "plot-m4v08.svg"))

@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Confusion
 import AgenticDS.Plot
 /-! Species and the confusion total. -/
@@ -22,3 +23,5 @@ def m3v04 : IO Unit := do
   writeSvg "plot-m3v04.svg" "Correct per species" 2
     (Species.all.zipIdx.map fun (a, i) =>
       (s!"species {i}", confusion ps a a))
+  contract "ads-lean-m3v04-v1"
+    (sum == ps.length && (← plotOk "plot-m3v04.svg"))

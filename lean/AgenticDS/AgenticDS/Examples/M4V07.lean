@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 /-! gaussSolve: exact Gauss-Jordan elimination over ℚ. -/
 open AgenticDS
@@ -9,3 +10,5 @@ theorem m4v07_exact : m4v07_sol = some [4 / 5, 7 / 5] := by
   decide +kernel
 def m4v07 : IO Unit := do
   IO.println s!"{m4v07_sol}"
+  contract "ads-lean-m4v07-v1"
+    (decide (m4v07_sol = some [4 / 5, 7 / 5]))

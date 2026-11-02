@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 /-! A ValidRow is built only from both proofs. -/
 open AgenticDS
@@ -15,3 +16,6 @@ def m4v02 : IO Unit := do
   IO.println s!"features {m4v02_row.features.length}"
   IO.println s!"quality {m4v02_row.quality}"
   IO.println s!"white {m4v02_row.white}"
+  contract "ads-lean-m4v02-v1"
+    (m4v02_row.features.length == 11 &&
+      m4v02_row.quality == 6 && !m4v02_row.white)

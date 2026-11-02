@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Kmeans
 import AgenticDS.Plot
 /-! The assignment step never does worse. -/
@@ -30,3 +31,5 @@ def m3v03 : IO Unit := do
     "point position" "squared distance" cs cs
     (ps.map fun p => (qf p, qf (minCost m3v03_d p 0 [6])))
     [s!"centroids 0 and 6, total {best}"]
+  contract "ads-lean-m3v03-v1"
+    (decide (best ≤ other) && (← plotOk "plot-m3v03.svg"))

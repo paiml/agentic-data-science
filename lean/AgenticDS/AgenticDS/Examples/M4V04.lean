@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 /-! clean_sub and clean_complete pin clean down exactly. -/
 open AgenticDS
@@ -10,3 +11,5 @@ def m4v04 : IO Unit := do
   let names := [``clean_length_le, ``clean_sub,
     ``clean_complete, ``clean_in_range]
   for n in names do IO.println n.getString!
+  contract "ads-lean-m4v04-v1"
+    (names.length == 4)

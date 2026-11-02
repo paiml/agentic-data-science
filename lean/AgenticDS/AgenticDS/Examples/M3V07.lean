@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Tree
 import AgenticDS.Plot
 /-! Pruning at cp, and fitTree. -/
@@ -25,3 +26,6 @@ def m3v07 : IO Unit := do
     "bill length (mm)" "species: 0 adelie, 1 gentoo"
     (rows.map cls) [] [cls (rows.getD 4 ⟨[0], .adelie⟩)]
     [s!"fitTree: {sh (fitTree 1 5 rows)}"]
+  contract "ads-lean-m3v07-v1"
+    (decide ((fitTree 1 5 rows).leaves ≤ (grow 1 5 rows).leaves) &&
+      (← plotOk "plot-m3v07.svg"))
