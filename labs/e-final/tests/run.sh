@@ -56,7 +56,12 @@ lean_c() { # dir module [-o]
 lean_sandbox() { # learner compile: ONLY under bwrap with a minimal mount set; without bwrap the grade FAILS
   local P; P=$(lean "+$tc" --print-prefix) || return 1
   local BW=(bwrap --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 --symlink usr/bin /bin --ro-bind "$P" "$P" --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp --unshare-ipc --new-session --clearenv --setenv PATH /usr/bin:/bin --setenv HOME /tmp)
-  if "${BW[@]}" true 2>/dev/null; then
+  # Container-is-the-sandbox mode: honoured ONLY when GRADER_SANDBOX=container AND the root-owned marker the lab image writes exists
+  # (a bare env var elsewhere still refuses). Coursera labs are unprivileged, so bwrap's user namespaces are unavailable there; the
+  # container is the isolation boundary. The Ref.olean and Grade.lean sha checks, the parser allowlist and the cheat plants still apply.
+  if [ "${GRADER_SANDBOX:-}" = container ] && [ -f /etc/ads-lab-container-sandbox ]; then
+    (cd "$g/lrn" && env -i PATH=/usr/bin:/bin HOME="$g/lrn" LEAN_PATH="$g/ref" timeout "$TMO" "$P/bin/lean" -M "${GRADER_COMPILE_MEM_MB:-$MEM_MB}" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
+  elif "${BW[@]}" true 2>/dev/null; then
     (cd "$g/lrn" && "${BW[@]}" --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
       env LEAN_PATH="$g/ref" timeout "$TMO" "$P/bin/lean" -M "${GRADER_COMPILE_MEM_MB:-$MEM_MB}" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
   else echo "grader: FAIL bwrap is unavailable here; learner code is never compiled unsandboxed"; return 1; fi
