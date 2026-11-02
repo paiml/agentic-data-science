@@ -1,10 +1,22 @@
-# media are NAS symlinks, never committed
+# media are external-storage symlinks, never committed
 *.mp4
 *.mov
 *.wav
 *.mp3
 *.m4a
 *.webm
+*.mkv
+*.avi
+*.m4v
+*.flac
+*.aac
+*.ogg
+*.mpg
 *.png
 *.jpg
+*.jpeg
+*.gif
+*.webp
+*.tif
+*.tiff
 rendered/
