@@ -41,6 +41,8 @@ if has r; then
 fi
 if has julia; then
   jl=${JULIA:-julia}
+  # A fresh user-space julia has an empty depot: grade.sh defaults to JULIA_PKG_OFFLINE=true (sandbox image) and cannot instantiate, so the lane lets pkg fetch (ads#159).
+  export JULIA_PKG_OFFLINE=false
   j=$root/julia/lab/penguin-summary
   lane julia "$jl" 'PROOF OK' 'falsifier OK \(14 arms, 5 mutants' -- \
     bash -c 'cd "$1" && JULIA="$2" bash run-lab-proof.sh && JULIA="$2" bash falsify-grade.sh' _ "$j" "$jl"
