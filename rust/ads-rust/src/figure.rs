@@ -230,7 +230,12 @@ pub fn wine_points(
 
 /// Write `svg` as `plot.svg` into `$ADS_OUT` when it is set; no-op otherwise.
 pub fn write_if_out(svg: &str) {
-    if let Ok(dir) = std::env::var("ADS_OUT") {
+    write_to(std::env::var("ADS_OUT").ok().as_deref(), svg);
+}
+
+/// Write `svg` as `plot.svg` into `dir` when there is one.
+fn write_to(dir: Option<&str>, svg: &str) {
+    if let Some(dir) = dir {
         std::fs::write(format!("{dir}/plot.svg"), svg)
             .expect("plot.svg");
     }
@@ -279,6 +284,23 @@ mod tests {
         assert_eq!((g[0].0.as_str(), g[0].1.len()), ("b", 2));
         let svg = scatter_groups(("t", "x (u)", "y (u)"), &g);
         assert!(figure_has_axes(&svg, "x (u)", "y (u)"));
+    }
+
+    #[test]
+    fn write_to_writes_only_with_a_dir() {
+        let d = std::env::temp_dir()
+            .join(format!("ads-fig-{}", std::process::id()));
+        std::fs::create_dir_all(&d).expect("mkdir");
+        write_to(None, "<svg/>");
+        assert!(!d.join("plot.svg").exists());
+        write_to(d.to_str(), "<svg/>");
+        assert_eq!(
+            std::fs::read_to_string(d.join("plot.svg"))
+                .expect("read"),
+            "<svg/>"
+        );
+        std::fs::remove_dir_all(&d).expect("rm");
+        write_if_out("<svg/>"); // ADS_OUT unset in the unit-test process: no-op
     }
 
     #[test]
