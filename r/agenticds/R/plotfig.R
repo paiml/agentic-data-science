@@ -28,7 +28,8 @@ figure_scatter <- function(d, x, y, title, xlab, ylab,
   p <- ggplot2::ggplot(d, aes) + dots
   if (fit) {
     p <- p + ggplot2::geom_smooth(
-      ggplot2::aes(colour = NULL), method = "lm",
+      ggplot2::aes(colour = NULL),
+      method = "lm",
       formula = y ~ x, se = FALSE, colour = "#c0392b",
       linewidth = 1
     )
@@ -96,23 +97,31 @@ figure_demo <- function(id) {
     )
     return(figure_svg(figure_scatter(
       w, "alcohol", "quality", "Wine quality on alcohol",
-      "alcohol (% vol)", "quality score (0-10)", fit = TRUE
+      "alcohol (% vol)", "quality score (0-10)",
+      fit = TRUE
     )))
   }
   csv <- file.path("datasets", "penguins", "penguins.csv")
   d <- agenticds::na_policy(agenticds::read_penguins(csv))
   pairs <- list(
-    c("bill_length_mm", "bill_depth_mm",
-      "bill length (mm)", "bill depth (mm)"),
-    c("flipper_length_mm", "body_mass_g",
-      "flipper length (mm)", "body mass (g)"),
-    c("bill_length_mm", "flipper_length_mm",
-      "bill length (mm)", "flipper length (mm)")
+    c(
+      "bill_length_mm", "bill_depth_mm",
+      "bill length (mm)", "bill depth (mm)"
+    ),
+    c(
+      "flipper_length_mm", "body_mass_g",
+      "flipper length (mm)", "body mass (g)"
+    ),
+    c(
+      "bill_length_mm", "flipper_length_mm",
+      "bill length (mm)", "flipper length (mm)"
+    )
   )
   pr <- pairs[[(v + m) %% length(pairs) + 1L]]
   nm <- function(s) sub(" \\(.*", "", s)
   figure_svg(figure_scatter(
     d, pr[1], pr[2], paste(nm(pr[4]), "on", nm(pr[3])),
-    pr[3], pr[4], group = "species", fit = (m == 2L)
+    pr[3], pr[4],
+    group = "species", fit = (m == 2L)
   ))
 }
