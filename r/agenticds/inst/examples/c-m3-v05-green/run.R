@@ -21,3 +21,6 @@ stopifnot(
   sum(res$skipped) == 0
 )
 verdict("contract: ads-r-p3 tests green OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m3-v05-green"))

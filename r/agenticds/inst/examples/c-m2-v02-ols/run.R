@@ -15,3 +15,6 @@ stopifnot(
   isTRUE(all.equal(m$r2, g$metrics$ols$r2, tolerance = 1e-9))
 )
 verdict("contract: ads-r-p2 slope and R2 match golden OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v02-ols"))

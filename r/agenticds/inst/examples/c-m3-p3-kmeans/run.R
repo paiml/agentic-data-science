@@ -22,3 +22,6 @@ stopifnot(identical(
   as.integer(g$kmeans$cluster_sizes)
 ))
 cat("contract: ads-r-p3 kmeans matches golden/p3.json OK\n")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m3-p3-kmeans"))

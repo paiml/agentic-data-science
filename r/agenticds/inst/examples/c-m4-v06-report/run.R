@@ -24,3 +24,6 @@ stopifnot(conforms(x), !conforms(no_by), !conforms(num))
 agenticds::verdict(
   "contract: ads-r-p4 artifact ok, broken copies refused OK"
 )
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m4-v06-report"))

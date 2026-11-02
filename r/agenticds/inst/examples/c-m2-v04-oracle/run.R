@@ -20,3 +20,6 @@ stopifnot(isTRUE(ok))
 verdict(
   "contract: ads-r-p2 solve() closed form == parsnip linear_reg OK"
 )
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v04-oracle"))

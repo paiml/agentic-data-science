@@ -20,3 +20,6 @@ stopifnot(!identical(o[1, ], o[2, ]), r[["C"]] == r[["en_US"]])
 agenticds::verdict(
   "contract: ads-r-p4 rmse identical in two locales OK"
 )
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m4-v09-repro"))

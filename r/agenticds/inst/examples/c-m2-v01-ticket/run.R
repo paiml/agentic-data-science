@@ -19,3 +19,6 @@ stopifnot(
   abs(g$cv_rmse$ols - 394.3) < 0.05
 )
 verdict("contract: ads-r-p2 ticket oracle present OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v01-ticket"))

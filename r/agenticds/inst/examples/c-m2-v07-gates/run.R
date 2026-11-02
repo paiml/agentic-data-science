@@ -24,3 +24,6 @@ stopifnot(pct == 100, lints == 0, sum(sty$changed) == 0)
 agenticds::verdict(
   "contract: ads-r-p2 coverage, lint, style gates green OK"
 )
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v07-gates"))

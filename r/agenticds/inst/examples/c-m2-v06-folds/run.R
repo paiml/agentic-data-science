@@ -14,3 +14,6 @@ stopifnot(
   identical(as.integer(table(f)), c(69L, 69L, 68L, 68L, 68L))
 )
 verdict("contract: ads-r-p2 fixed folds repeatable OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v06-folds"))

@@ -11,3 +11,6 @@ stopifnot(isTRUE(all.equal(
 )))
 print(bench_wine(df))
 cat("contract: ads-r-p4 dplyr == data.table OK\n")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m4-p4-bench"))

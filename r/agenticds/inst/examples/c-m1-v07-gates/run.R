@@ -21,3 +21,6 @@ invisible(utils::capture.output(
 cat("styler: changed", sum(changed), "files\n")
 stopifnot(pct == 100, length(lints) == 0, !any(changed))
 verdict("contract: ads-r-p1 coverage, lint, style green OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m1-v07-gates"))

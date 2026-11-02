@@ -20,3 +20,6 @@ stopifnot(
   isTRUE(all.equal(cv_species, g$cv_rmse$species, tolerance = 1e-9))
 )
 verdict("contract: ads-r-p2 cv above in-sample, species better OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m2-v08-result"))

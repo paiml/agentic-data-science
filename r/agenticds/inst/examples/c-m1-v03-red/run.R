@@ -56,3 +56,6 @@ if (!ok) {
   stop("the red run was not caught as expected")
 }
 verdict("contract: ads-r-p1 a no-op NA policy is caught OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m1-v03-red"))

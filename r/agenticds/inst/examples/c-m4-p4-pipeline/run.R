@@ -20,3 +20,6 @@ stopifnot(
   isTRUE(all.equal(res$rmse, g$rmse, tolerance = 1e-9))
 )
 cat("contract: ads-r-p4 pipeline matches golden/p4.json OK\n")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m4-p4-pipeline"))

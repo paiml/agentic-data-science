@@ -19,3 +19,6 @@ stopifnot(s$n == c(151L, 68L, 123L))
 stopifnot(isTRUE(all.equal(gentoo, hand, tolerance = 1e-12)))
 stopifnot(abs(hand - pop) > 1e-3)
 verdict("contract: ads-r-p1 counts 151/68/123, sd uses n-1 OK")
+
+# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+invisible(agenticds::figure_demo("c-m1-v04-profile"))
