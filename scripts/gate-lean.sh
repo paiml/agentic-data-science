@@ -19,22 +19,25 @@ for f in scripts/Axioms.lean scripts/AxiomsM*.lean; do
   bad=$(echo "$ax" | grep "depends on axioms" | grep -vE "depends on axioms: \[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$")
   [ -z "$bad" ] || { echo "FAIL $f: $bad"; exit 1; }
 done
-out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/Main.lean ../.. 2>&1) || { echo "FAIL golden parity: $out"; exit 1; }
-echo "$out" | grep -q "contract: ads-lean-p1-v1 OK$" || { echo "FAIL golden parity: $out"; exit 1; }
-out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/OlsTest.lean ../.. 2>&1) || { echo "FAIL ols test: $out"; exit 1; }
-echo "$out" | grep -q "contract: ads-lean-p2-v1 OK$" || { echo "FAIL ols test: $out"; exit 1; }
+# Every Lean test run in scripts/run-list.tsv (the coverage check takes its entry points from the same list).
+while IFS=$'\t' read -r id mode file arg needle; do
+  case "$id" in ''|'#'*) continue;; esac
+  case "$mode" in
+    ok)
+      out=$(lake env lean "${LEANOPTS[@]}" --run "$file" "$arg" 2>&1) || { echo "FAIL $id: $out"; exit 1; }
+      echo "$out" | grep -q "$needle\$" || { echo "FAIL $id: $out"; exit 1; } ;;
+    refuse)
+      if out=$(lake env lean "${LEANOPTS[@]}" --run "$file" "$arg" 2>&1); then echo "FAIL $id no longer fails: $out"; exit 1; fi
+      echo "$out" | grep -qF -- "$needle" || { echo "FAIL $id failed for another reason: $out"; exit 1; } ;;
+    stub) ;;
+    *) echo "FAIL run-list: unknown mode '$mode' for $id"; exit 1;;
+  esac
+done < scripts/run-list.tsv
 # The ols-demo exe ends with its proved verdict: a wrong residual sum must fail the gate, not only the p2 test.
 out=$(lake exe ols-demo ../.. 2>&1) || { echo "FAIL ols-demo: $out"; exit 1; }
 last=$(echo "$out" | tail -n 1 | sed 's/\x1b\[[0-9;]*m//g')
 [ "$last" = "residuals sum to 0: proved (theorem residuals_sum)" ] || { echo "FAIL ols-demo last line: $last"; exit 1; }
 
-# One test per module of examples, each ending in its own contract line.
-for t in AgenticDSTest/ExamplesM*.lean; do
-  [ -e "$t" ] || continue
-  m=$(basename "$t" .lean); m=${m#ExamplesM}
-  out=$(lake env lean "${LEANOPTS[@]}" --run "$t" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
-  echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
-done
 # Every demo that once printed nothing must end in its contract line (ads#132); the checker must refuse empty stdout.
 scripts/falsify-rerun-lean-demos.sh >/dev/null || { echo "FAIL rerun-lean-demos falsifier"; scripts/falsify-rerun-lean-demos.sh; exit 1; }
 out=$(scripts/rerun-lean-demos.sh 2 .lake/build/bin $(cat scripts/contract-demos.txt) 2>&1) || { echo "FAIL contract demos: $out"; exit 1; }
@@ -46,23 +49,6 @@ for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/E
   echo "$out" | grep -q "contract: plot_scatter_bounded OK" || { echo "FAIL $f printed no plot contract: $out"; exit 1; }
 done
 if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
-# The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
-for p in tall empty; do
-  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
-  echo "$out" | grep -q "plot_svg_bounded violated" || { echo "FAIL PlantedSvgOverflow $p failed for another reason: $out"; exit 1; }
-done
-# The scatter contract must fire on an empty plot and on a NaN point.
-for p in empty nan; do
-  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
-  echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
-done
-if [ -e AgenticDSTest/P4.lean ]; then
-  out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
-  echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
-fi
-# Refusal paths and small helpers (ads#130): each none/throw path carries a test.
-out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/Refusals.lean ../.. 2>&1) || { echo "FAIL refusals test: $out"; exit 1; }
-echo "$out" | grep -q "contract: ads-lean-refusals-v1 OK$" || { echo "FAIL refusals test: $out"; exit 1; }
 # savePlot must surface a failing ImageMagick convert (stub convert: answers -version, then fails).
 cstub=$(mktemp -d)
 printf '#!/bin/sh\n[ "$1" = "-version" ] && exit 0\necho stub-convert-failed >&2\nexit 1\n' > "$cstub/convert"; chmod +x "$cstub/convert"

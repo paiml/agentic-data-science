@@ -1,17 +1,17 @@
 # Every refusal path (a throw of IO.userError, or a none built by an Option-returning def) in the compiled library, with its test.
-# Columns, tab separated: module, enclosing def, kind, test file, label the test carries.
-# A test file is relative to lean/AgenticDS or to the repo root. The check is scripts/check-lean-fn-coverage.sh (ads#130).
+# Columns, tab separated: module, enclosing def, kind, run id (scripts/run-list.tsv), label the run prints (or, for a refusing run, the text it fails with).
+# The check is scripts/check-lean-fn-coverage.sh (ads#130).
 #pin ndef=188 nsites=10
-Csv	parseRat	none	AgenticDSTest/Refusals.lean	refusal Csv.parseRat none
-Csv	toRawRow	none	AgenticDSTest/Refusals.lean	refusal Csv.toRawRow none
-Pipeline	validate	none	AgenticDSTest/Refusals.lean	refusal Pipeline.validate none
-Pipeline	gaussSolve	none	AgenticDSTest/Refusals.lean	refusal Pipeline.gaussSolve none
-Tree	bestSplit	none	AgenticDSTest/Refusals.lean	refusal Tree.bestSplit none
-Examples.Run	refuseUnless	throw	AgenticDSTest/Refusals.lean	refusal Examples.Run.refuseUnless throw
-Examples.Run	orRefuse	throw	AgenticDSTest/Refusals.lean	refusal Examples.Run.orRefuse throw
-Ols	savePlot	throw	scripts/gate-lean.sh	convert failed
-Plot	writeScatter	throw	scripts/gate-lean.sh	plot_scatter_bounded violated
-Plot	writeSvg	throw	scripts/gate-lean.sh	plot_svg_bounded violated
+Csv	parseRat	none	refusals	refusal Csv.parseRat none
+Csv	toRawRow	none	refusals	refusal Csv.toRawRow none
+Pipeline	validate	none	refusals	refusal Pipeline.validate none
+Pipeline	gaussSolve	none	refusals	refusal Pipeline.gaussSolve none
+Tree	bestSplit	none	refusals	refusal Tree.bestSplit none
+Examples.Run	refuseUnless	throw	refusals	refusal Examples.Run.refuseUnless throw
+Examples.Run	orRefuse	throw	refusals	refusal Examples.Run.orRefuse throw
+Ols	savePlot	throw	ols-demo-convert	convert failed
+Plot	writeScatter	throw	scatter-empty	plot_scatter_bounded violated
+Plot	writeSvg	throw	svg-empty	plot_svg_bounded violated
 lean-plot.sh	missing or empty	scripts/falsify-lean-plot.sh	01-empty
 lean-plot.sh	fewer than 2 points or bars	scripts/falsify-lean-plot.sh	03-no-points
 lean-plot.sh	has no axes and gridlines	scripts/falsify-lean-plot.sh	04-no-axes

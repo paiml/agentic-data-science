@@ -38,69 +38,74 @@ def refuses {α : Type} (act : IO α) (msg : String) : IO Bool := do
     pure false
   catch e => pure (toString e == msg)
 
+/-- A pure check as an action. -/
+def t (b : Bool) : IO Bool := pure b
+
 def main (args : List String) : IO UInt32 := do
   let root := args.headD "../.."
   let csv ← readCsv root
-  let r1 ← refuses (refuseUnless false "boom") "boom"
-  let r2 ← refuses (refuseUnless true "boom") "boom"
-  let r3 ← refuses (orRefuse (none : Option Nat) "none") "none"
-  let r4 ← orRefuse (some 3) "none"
-  let r5 ← refuses (contract "x" false) "contract x violated"
   let rows : List Row := [⟨[0], .adelie⟩, ⟨[1], .gentoo⟩]
-  let checks : List (String × Bool) := [
+  let checks : List (String × IO Bool) := [
     ("refusal Csv.parseRat none: a letter after the point",
-      (parseRat "1.x").isNone),
+      t (parseRat "1.x").isNone),
     ("refusal Csv.parseRat none: two points",
-      (parseRat "1.2.3").isNone),
+      t (parseRat "1.2.3").isNone),
     ("refusal Csv.parseRat none: not a number",
-      (parseRat "abc").isNone),
+      t (parseRat "abc").isNone),
     ("Csv.parseRat accepts 38.7",
-      parseRat "38.7" == some (387 / 10)),
+      t (parseRat "38.7" == some (387 / 10))),
     ("refusal Csv.toRawRow none: a short row",
-      (toRawRow ["Adelie", "Torgersen", "39.1"]).isNone),
+      t (toRawRow ["Adelie", "Torgersen", "39.1"]).isNone),
     ("Csv.toRawRow marks NA as none",
-      (toRawRow ["A", "T", "NA", "1", "2", "3"]).map (·.measures)
-        == some [none, some 1, some 2, some 3]),
+      t ((toRawRow ["A", "T", "NA", "1", "2", "3"]).map
+        (·.measures) == some [none, some 1, some 2, some 3])),
     ("Ols.pairsOf: unknown column gives no pairs",
-      (pairsOf csv "no_such" "body_mass_g").isEmpty),
+      t (pairsOf csv "no_such" "body_mass_g").isEmpty),
     ("Ols.pairsOf: a row with NA is dropped",
-      (pairsOf "a,b\n1,NA\n2,3\n" "a" "b") == [(2, 3)]),
+      t (pairsOf "a,b\n1,NA\n2,3\n" "a" "b" == [(2, 3)])),
     ("refusal Pipeline.validate none: wrong feature count",
-      (validate (raw [some 1] (some 5) "red")).isNone),
+      t (validate (raw [some 1] (some 5) "red")).isNone),
     ("refusal Pipeline.validate none: a missing feature",
-      (validate
+      t (validate
         (raw (none :: elevenOnes.tail!) (some 5) "red")).isNone),
     ("refusal Pipeline.validate none: quality above 10",
-      (validate (raw elevenOnes (some 11) "red")).isNone),
+      t (validate (raw elevenOnes (some 11) "red")).isNone),
     ("refusal Pipeline.validate none: quality below 0",
-      (validate (raw elevenOnes (some (-1)) "red")).isNone),
+      t (validate (raw elevenOnes (some (-1)) "red")).isNone),
     ("refusal Pipeline.validate none: unknown colour",
-      (validate (raw elevenOnes (some 5) "rose")).isNone),
+      t (validate (raw elevenOnes (some 5) "rose")).isNone),
     ("Pipeline.validate accepts a good white row",
-      (validate (raw elevenOnes (some 5) "white")).map (·.white)
-        == some true),
+      t ((validate (raw elevenOnes (some 5) "white")).map
+        (·.white) == some true)),
     ("refusal Pipeline.gaussSolve none: singular matrix",
-      (gaussSolve [[1, 2], [2, 4]] [1, 2]).isNone),
+      t (gaussSolve [[1, 2], [2, 4]] [1, 2]).isNone),
     ("Pipeline.gaussSolve solves x + y = 3, x - y = 1",
-      gaussSolve [[1, 1], [1, -1]] [3, 1] == some [2, 1]),
+      t (gaussSolve [[1, 1], [1, -1]] [3, 1] == some [2, 1])),
     ("refusal Examples.Run.refuseUnless throw: a false guard",
-      r1),
-    ("Examples.Run.refuseUnless lets a true guard pass", !r2),
-    ("refusal Examples.Run.orRefuse throw: no value", r3),
-    ("Examples.Run.orRefuse returns the value", r4 == 3),
-    ("Examples.Run.contract refuses a false contract", r5),
+      refuses (refuseUnless false "boom") "boom"),
+    ("Examples.Run.refuseUnless lets a true guard pass",
+      do pure !(← refuses (refuseUnless true "boom") "boom")),
+    ("refusal Examples.Run.orRefuse throw: no value",
+      refuses (orRefuse (none : Option Nat) "none") "none"),
+    ("Examples.Run.orRefuse returns the value",
+      do pure ((← orRefuse (some 3) "none") == 3)),
+    ("Examples.Run.contract refuses a false contract",
+      refuses (contract "x" false) "contract x violated"),
     ("refusal Tree.bestSplit none: no rows",
-      (bestSplit 1 []).isNone),
+      t (bestSplit 1 []).isNone),
     ("refusal Tree.bestSplit none: min rows too big",
-      (bestSplit 2 rows).isNone),
+      t (bestSplit 2 rows).isNone),
     ("Tree.bestSplit splits two classes",
-      (bestSplit 1 rows).isSome),
+      t (bestSplit 1 rows).isSome),
     ("Plot.qf converts 3/2 to 1.5",
-      qf (3 / 2) == 1.5)]
+      t (qf (3 / 2) == 1.5))]
   let mut ok := true
   let mut passed := 0
-  for (w, b) in checks do
-    if ← check w b then passed := passed + 1 else ok := false
+  for (w, act) in checks do
+    if ← check w (← act) then
+      passed := passed + 1
+      IO.println s!"ok {w}"
+    else ok := false
   IO.println s!"{passed}/{checks.length} refusal checks"
   if ok then
     assert! passed == checks.length

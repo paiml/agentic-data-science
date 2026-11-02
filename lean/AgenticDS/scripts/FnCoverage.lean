@@ -25,6 +25,7 @@ structure CMod where
   isTest : Bool
   consts : Std.HashMap Name ConstantInfo
   ranged : Std.HashSet Name
+  insts : Std.HashSet Name
   deriving Inhabited
 
 unsafe def rangedNames (entries : Array (Name × Array EnvExtensionEntry)) :
@@ -37,12 +38,43 @@ unsafe def rangedNames (entries : Array (Name × Array EnvExtensionEntry)) :
         s := s.insert p.1
   return s
 
+/-- Names registered as type-class instances (user-written or derived). -/
+unsafe def instanceNames (entries : Array (Name × Array EnvExtensionEntry)) :
+    Std.HashSet Name := Id.run do
+  let mut s : Std.HashSet Name := {}
+  for (k, es) in entries do
+    if k.getString! == "instanceExtension" then
+      for e in es do
+        let en : ScopedEnvExtension.Entry Meta.InstanceEntry := unsafeCast e
+        let p : Meta.InstanceEntry := match en with | .global x => x | .scoped _ x => x
+        if let some g := p.globalName? then s := s.insert g
+  return s
+
 unsafe def load (m : String) (isTest : Bool) : IO CMod := do
   let fn ← findOLean m.toName
   let (md, _) ← readModuleData fn
   let mut cs : Std.HashMap Name ConstantInfo := {}
   for c in md.constants do cs := cs.insert c.name c
-  return { name := m, isTest, consts := cs, ranged := rangedNames md.entries }
+  return { name := m, isTest, consts := cs, ranged := rangedNames md.entries
+           insts := instanceNames md.entries }
+
+/-- Every `("label", rhs)` pair in a term: the label and the rhs. -/
+partial def labelPairs (e : Expr) (out : Array (String × Expr)) :
+    Array (String × Expr) :=
+  let out := match e.getAppFn, e.getAppArgs with
+    | .const ``Prod.mk _, #[_, _, a, b] =>
+      match a.consumeMData with
+      | .lit (.strVal s) => out.push (s, b)
+      | _ => out
+    | _, _ => out
+  match e with
+  | .app f a => labelPairs a (labelPairs f out)
+  | .lam _ t b _ => labelPairs b (labelPairs t out)
+  | .forallE _ t b _ => labelPairs b (labelPairs t out)
+  | .letE _ t v b _ => labelPairs b (labelPairs v (labelPairs t out))
+  | .mdata _ x => labelPairs x out
+  | .proj _ _ x => labelPairs x out
+  | _ => out
 
 /-- Head constant of an application spine. -/
 def headConst (e : Expr) : Option Name :=
@@ -68,15 +100,21 @@ def stripLams : Expr -> Expr
   | .mdata _ e => stripLams e
   | e => e
 
-def isBoilerplate (n : Name) (ci : ConstantInfo) : Bool :=
+def isBoilerplate (m : CMod) (n : Name) (ci : ConstantInfo) : Bool :=
   let isProj := match ci with
     | .defnInfo d => (stripLams d.value).isProj
     | _ => false
-  let inst := n.components.any (·.toString.startsWith "inst")
   let hd := headConst (resultType ci.type)
   let isNota := hd == some `Lean.ParserDescr ||
     hd == some `Lean.TrailingParserDescr
-  isProj || inst || isNota
+  let inInst := Id.run do
+    let mut p := n
+    let mut r := false
+    while !p.isAnonymous do
+      if m.insts.contains p then r := true
+      p := p.getPrefix
+    return r
+  isProj || inInst || isNota
 
 def throwNames : List Name :=
   [`IO.userError, `MonadExcept.throw, `throwThe]
@@ -87,9 +125,19 @@ def used (ci : ConstantInfo) : Array Name :=
   | .opaqueInfo d => d.value.getUsedConstants
   | _ => #[]
 
+def valueOf (ci : ConstantInfo) : Option Expr :=
+  match ci with
+  | .defnInfo d => some d.value
+  | .opaqueInfo d => some d.value
+  | _ => none
+
+/-- The user-facing name: a `private` definition keeps its own name. -/
+def userName (n : Name) : Name := (privateToUserName? n).getD n
+
 unsafe def main (args : List String) : IO UInt32 := do
   let (libs, rest) := args.span (· != "--")
-  let tests := rest.drop 1
+  let (tests, rest) := (rest.drop 1).span (· != "--")
+  let entries := rest.drop 1
   let lm ← libs.mapM (load · false)
   let tm ← tests.mapM (load · true)
   let mods : Array CMod := (lm ++ tm).toArray
@@ -102,37 +150,52 @@ unsafe def main (args : List String) : IO UInt32 := do
     if mods[from_]!.consts.contains n then some from_
     else
       ((defs.getD n []).filter fun i => !mods[i]!.isTest).head?
-  -- entry points: every `main`
-  let mut work : Array (Nat × Name × String) := #[]
-  for (m, i) in mods.zipIdx do
-    if m.consts.contains `main then
-      IO.println s!"ENTRY {m.name}"
-      work := work.push (i, `main, m.name)
-  let mut how : Std.HashMap (Nat × Name) String := {}
-  while h : work.size > 0 do
-    let (i, n, e) := work.back
-    work := work.pop
-    if how.contains (i, n) then continue
-    how := how.insert (i, n) e
-    let some ci := mods[i]!.consts[n]? | continue
-    let mut next := used ci
-    let un := n ++ `_unsafe_rec
-    if mods[i]!.consts.contains un then next := next.push un
-    for u in next do
-      if let some j := resolve i u then
-        if !how.contains (j, u) then work := work.push (j, u, e)
-  -- the library definitions and their refusal paths
+  -- one traversal per entry point named by the caller (the run list)
+  let mut how : Std.HashMap (Nat × Name) (List String) := {}
+  for e in entries do
+    let some ei := mods.findIdx? (·.name == e) | continue
+    unless mods[ei]!.consts.contains `main do continue
+    IO.println s!"ENTRY {e}"
+    let mut seen : Std.HashSet (Nat × Name) := {}
+    let mut work : Array (Nat × Name) := #[(ei, `main)]
+    while h : work.size > 0 do
+      let (i, n) := work.back
+      work := work.pop
+      if seen.contains (i, n) then continue
+      seen := seen.insert (i, n)
+      how := how.insert (i, n) ((how.getD (i, n) []) ++ [e])
+      let some ci := mods[i]!.consts[n]? | continue
+      let mut next := used ci
+      let un := n ++ `_unsafe_rec
+      if mods[i]!.consts.contains un then next := next.push un
+      for u in next do
+        if let some j := resolve i u then
+          if !seen.contains (j, u) then work := work.push (j, u)
+  -- the definitions, their refusal paths, and the label pairs of tests
   for (m, i) in mods.zipIdx do
     for (n, ci) in m.consts.toList do
       unless m.ranged.contains n do continue
       unless (match ci with | .defnInfo _ | .opaqueInfo _ => true | _ => false) do continue
-      if n == `main || n.isInternal || isBoilerplate n ci then continue
+      let un := userName n
+      if un == `main || un.isInternal || isBoilerplate m n ci then continue
       let tag := if m.isTest then "TDEF" else "DEF"
-      IO.println s!"{tag} {m.name} {n} {(how.get? (i, n)).getD "UNTESTED"}"
+      let hs := how.getD (i, n) []
+      IO.println s!"{tag} {m.name} {un} {(hs.head?).getD "UNTESTED"}"
+      for h in hs do IO.println s!"REACH\t{m.name}\t{un}\t{h}"
       if m.isTest then continue
       let us := used ci
       if returnsOption ci.type && us.contains `Option.none then
-        IO.println s!"SITE {m.name} {n} none"
+        IO.println s!"SITE {m.name} {un} none"
       if us.any throwNames.contains then
-        IO.println s!"SITE {m.name} {n} throw"
+        IO.println s!"SITE {m.name} {un} throw"
+  -- `("label", check)` pairs in every test definition an entry reaches
+  for (m, i) in mods.zipIdx do
+    unless m.isTest do continue
+    for (n, ci) in m.consts.toList do
+      let hs := how.getD (i, n) []
+      if hs.isEmpty then continue
+      let some v := valueOf ci | continue
+      for (l, rhs) in labelPairs v #[] do
+        for c in rhs.getUsedConstants do
+          for h in hs do IO.println s!"PAIR\t{h}\t{l}\t{c}"
   return 0

@@ -1,0 +1,17 @@
+# The Lean test runs the gate (scripts/gate-lean.sh) executes, one per line; the coverage check takes its entry points from here.
+# Columns, tab separated: id, mode, file, argument, needle.
+#   ok:     the run exits 0 and a line ends with the needle.   refuse: the run exits non-zero and the output carries the needle.
+#   stub:   a lake exe run with a failing ImageMagick convert on PATH (the gate runs it; the module is the exe root).
+main	ok	AgenticDSTest/Main.lean	../..	contract: ads-lean-p1-v1 OK
+ols	ok	AgenticDSTest/OlsTest.lean	../..	contract: ads-lean-p2-v1 OK
+examples-m1	ok	AgenticDSTest/ExamplesM1.lean	../..	contract: ads-lean-examples-m1-v1 OK
+examples-m2	ok	AgenticDSTest/ExamplesM2.lean	../..	contract: ads-lean-examples-m2-v1 OK
+examples-m3	ok	AgenticDSTest/ExamplesM3.lean	../..	contract: ads-lean-examples-m3-v1 OK
+examples-m4	ok	AgenticDSTest/ExamplesM4.lean	../..	contract: ads-lean-examples-m4-v1 OK
+p4	ok	AgenticDSTest/P4.lean	../..	contract: ads-lean-p4-v1 OK
+refusals	ok	AgenticDSTest/Refusals.lean	../..	contract: ads-lean-refusals-v1 OK
+svg-tall	refuse	AgenticDSTest/PlantedSvgOverflow.lean	tall	plot_svg_bounded violated
+svg-empty	refuse	AgenticDSTest/PlantedSvgOverflow.lean	empty	plot_svg_bounded violated
+scatter-empty	refuse	AgenticDSTest/PlantedScatter.lean	empty	plot_scatter_bounded violated
+scatter-nan	refuse	AgenticDSTest/PlantedScatter.lean	nan	plot_scatter_bounded violated
+ols-demo-convert	stub	AgenticDS/OlsMain.lean	../..	convert failed
