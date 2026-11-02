@@ -21,5 +21,5 @@ verdict(
   "contract: ads-r-p2 solve() closed form == parsnip linear_reg OK"
 )
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m2-v04-oracle"))

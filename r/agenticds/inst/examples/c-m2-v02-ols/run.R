@@ -16,5 +16,5 @@ stopifnot(
 )
 verdict("contract: ads-r-p2 slope and R2 match golden OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m2-v02-ols"))

@@ -23,5 +23,5 @@ cat("no square:", if (passes(m2)) "SURVIVED" else "killed", "\n")
 stopifnot(passes(agenticds::kmeans_fixed), !passes(m1), !passes(m2))
 agenticds::verdict("contract: ads-r-p3 2 of 2 mutants killed OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m3-v06-mutation"))

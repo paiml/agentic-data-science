@@ -10,5 +10,5 @@ stopifnot(isTRUE(all.equal(
 )))
 verdict("contract: ads-r-p1 profile matches golden/p1.json OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m1-v06-json"))

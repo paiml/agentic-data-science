@@ -22,5 +22,5 @@ cat(sprintf("exports: %d, without a test: %d\n",
 stopifnot(lints == 0, sum(sty$changed) == 0, all(tested))
 verdict("contract: ads-r-p3 lint, style, tests per export OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m3-v07-gates"))

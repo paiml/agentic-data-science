@@ -21,5 +21,5 @@ stopifnot(length(new) == length(old), !identical(new, old))
 stopifnot(sum(res$failed) > 0, !any(res$error))
 verdict("contract: ads-r-p3 mutated accuracy() is caught OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m3-v03-red"))

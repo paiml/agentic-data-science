@@ -16,5 +16,5 @@ cat("example 2:", contracts[2], "\n")
 stopifnot(all(grepl("^contract: ads-r-p2 .* OK$", contracts)))
 verdict("contract: ads-r-p2 both examples hold their contract OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m2-v10-wrapup"))

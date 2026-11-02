@@ -23,5 +23,5 @@ print(gates)
 stopifnot(all(gates))
 agenticds::verdict("contract: ads-r-p4 all three gates pass OK")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m4-v07-gates"))

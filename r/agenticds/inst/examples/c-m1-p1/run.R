@@ -16,5 +16,5 @@ cat(sprintf(
 stopifnot(nrow(penguins) == 344L, nrow(clean) == 342L)
 cat("contract: ads-r-p1 ingest 344 -> 342 OK\n")
 
-# The lesson figure: $ADS_OUT/plot.svg from the lesson dataset (no-op when ADS_OUT is unset).
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
 invisible(agenticds::figure_demo("c-m1-p1"))
