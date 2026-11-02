@@ -40,6 +40,7 @@ def exact : List (String × List String) := [
     "sulphates vs quality: n = 200", "slope 2.247654",
     "svg 200 points plot-m4v03b.svg",
     "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK",
     "contract: ads-lean-m4v03-v1 OK"]),
   ("v04", ["clean_length_le", "clean_sub", "clean_complete",
     "clean_in_range", "contract: ads-lean-m4v04-v1 OK"]),
@@ -57,6 +58,7 @@ def exact : List (String × List String) := [
     "density vs quality: n = 200", "slope -78.910503",
     "svg 200 points plot-m4v06b.svg",
     "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK",
     "contract: ads-lean-m4v06-v1 OK"]),
   ("v07", ["(some [4/5, 7/5])",
     "contract: ads-lean-m4v07-v1 OK"])]
@@ -83,7 +85,8 @@ def main (_ : List String) : IO UInt32 := do
   let want8 := ["\"n_rows\": 6497", "\"n_train\": 5198",
     "\"n_test\": 1299", "n_rows 6497", "n_train 5198",
     "n_test 1299", "svg 200 points plot-m4v08.svg",
-    "contract: plot_scatter_bounded OK", "rmse 0.7602",
+    "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK", "rmse 0.7602",
     "r2 0.2598", "red 5.636", "white 5.877",
     "contract: ads-lean-m4v08-v1 OK"]
   for w in want8 do

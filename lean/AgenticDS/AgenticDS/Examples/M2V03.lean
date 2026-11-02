@@ -19,3 +19,4 @@ def m2v03 : IO Unit := do
     (m2v03_d.map fun p => (qf p.1, qf p.2))
     [(1, qf (a + b)), (3, qf (a + 3 * b))] []
     [s!"slope     = {b}", s!"intercept = {a}"]
+    (m2v03_d.map fun p => (qf p.1, qf p.2))

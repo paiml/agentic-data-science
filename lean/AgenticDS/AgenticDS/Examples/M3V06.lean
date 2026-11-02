@@ -29,6 +29,7 @@ def m3v06 : IO Unit := do
   writeScatter "plot-m3v06.svg" "Deviance after a split"
     "threshold (mm)" "left plus right deviance" cs cs []
     [s!"dev all = {dev rows}"]
+    cs
   contract "ads-lean-m3v06-v1"
     (cs.all (fun p => p.2 ≤ qf (dev rows)) &&
       (← plotOk "plot-m3v06.svg"))

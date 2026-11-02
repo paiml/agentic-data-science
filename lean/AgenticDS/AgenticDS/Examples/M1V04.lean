@@ -24,4 +24,5 @@ def m1v04 : IO Unit := do
     "Gate scan of the examples"
     "lines in the file" "non-blank lines scanned" ps [] []
     [s!"scanned {fs.length} files", s!"{h} banned words"]
+    ps
   contract "ads-lean-m1v04-v1" (fs.length > 0 && h == 0)

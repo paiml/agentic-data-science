@@ -23,9 +23,10 @@ def m1v07 : IO Unit := do
     axiomsOf% AgenticDS.variance_nonneg)]
   for (n, a) in all.drop 2 do
     IO.println s!"{n} depends on axioms: {a}"
+  let pts7 := all.zipIdx.map fun ((_, a), i) =>
+    ((i + 1).toFloat, a.length.toFloat)
   AgenticDS.writeScatter "plot-m1v07.svg"
     "Axioms under each theorem"
     "theorem (1 mean_const, 2 variance_shift, 3 variance_nonneg)"
     "axioms used"
-    (all.zipIdx.map fun ((_, a), i) =>
-      ((i + 1).toFloat, a.length.toFloat)) [] [] []
+    pts7 [] [] [] pts7

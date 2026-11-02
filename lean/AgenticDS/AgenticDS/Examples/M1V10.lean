@@ -21,5 +21,6 @@ def m1v10 : IO Unit := do
   AgenticDS.writeScatter "plot-m1v10.svg" "Penguins: bill and mass"
     "bill length (mm)" "body mass (g)" (rows.map at') [] marks
     [s!"n = {rows.length} penguins", "red: species mean"]
+    (rows.map at')
   contract "ads-lean-m1v10-v1"
     (rows.length > 0 && marks.length == 3)

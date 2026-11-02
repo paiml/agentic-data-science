@@ -40,3 +40,4 @@ def m1v06 : IO Unit := do
     "golden mean from R (mm or g)" "mean computed in Lean" pts
     [(18, 18), (5100, 5100)] []
     [s!"{pts.length} means", "line: exact agreement"]
+    pts

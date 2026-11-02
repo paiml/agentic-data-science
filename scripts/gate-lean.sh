@@ -56,8 +56,8 @@ for p in empty nan; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
 done
-# The source-row contract must fire on swapped axes and on a wrong row.
-for p in swap row; do
+# The source-row contract must fire on swapped axes, a wrong row, a missing and an extra row.
+for p in swap row missing extra; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatterSource.lean $p 2>&1); then echo "FAIL PlantedScatterSource $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_scatter_source violated" || { echo "FAIL PlantedScatterSource $p failed for another reason: $out"; exit 1; }
 done

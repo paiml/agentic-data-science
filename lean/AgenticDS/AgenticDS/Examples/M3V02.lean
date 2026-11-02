@@ -24,6 +24,7 @@ def m3v02 : IO Unit := do
   writeScatter "plot-m3v02.svg" "Objective by centroid choice"
     "centroid position" "sum of squared distances" cs cs []
     [s!"best centroid 3: {objective m3v02_d ps 3 []}"]
+    cs
   contract "ads-lean-m3v02-v1"
     (decide (objective m3v02_d ps 0 [6] ≤
       objective m3v02_d ps 3 []) &&

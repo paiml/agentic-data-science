@@ -23,3 +23,4 @@ def m1v02 : IO Unit := do
     "Float error (1e-12 mm)" pts
     [(1, 0), (xs.length.toFloat, 0)] []
     [s!"exact sum = {xs.sum} mm", "exact line: error 0"]
+    pts

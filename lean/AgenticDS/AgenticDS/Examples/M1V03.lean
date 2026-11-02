@@ -16,7 +16,8 @@ def m1v03 : IO Unit := do
   let ns ← fs.mapM fun f => do
     pure (AgenticDS.nLines (← IO.FS.readFile f))
   for (f, n) in fs.zip ns do IO.println s!"{f}: {n} lines"
+  let pts3 := ns.zipIdx.map fun (n, i) =>
+    ((i + 1).toFloat, n.toFloat)
   AgenticDS.writeScatter "plot-m1v03.svg" "Files that pin the build"
     "file (1 toolchain, 2 lakefile, 3 manifest)" "lines"
-    (ns.zipIdx.map fun (n, i) => ((i + 1).toFloat, n.toFloat))
-    [] [] fs
+    pts3 [] [] fs pts3

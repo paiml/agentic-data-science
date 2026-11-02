@@ -16,3 +16,5 @@ def m2v06 : IO Unit := do
     (d.map fun p => (qf p.1, qf p.2))
     [(170, qf (a + 170 * b)), (232, qf (a + 232 * b))] []
     [s!"n = {d.length} penguins", s!"slope = {qf b} g/mm"]
+    (← rawPairs "../../datasets/penguins/penguins.csv"
+      "flipper_length_mm" "body_mass_g")

@@ -27,9 +27,13 @@ def xSpan (d : Data ℚ) : ℚ × ℚ :=
 def penguinPairs (xc yc : String) : IO (Data ℚ) := do
   pure (pairsOf (← readCsv "../..") xc yc)
 
+/-- Two penguin columns read straight from the CSV text. -/
+def penguinRaw (xc yc : String) : IO (List (Float × Float)) :=
+  rawPairs "../../datasets/penguins/penguins.csv" xc yc
+
 /-- Scatter of the data with its exact OLS line. -/
 def fitScatter (path title xl yl : String) (d : Data ℚ)
-    (marks : List (Float × Float)) : IO Unit := do
+    (marks src : List (Float × Float)) : IO Unit := do
   let a := olsIntercept d
   let b := olsSlope d
   let (lo, hi) := xSpan d
@@ -38,6 +42,7 @@ def fitScatter (path title xl yl : String) (d : Data ℚ)
     [(qf lo, qf (a + lo * b)), (qf hi, qf (a + hi * b))] marks
     [s!"n = {d.length} penguins", s!"slope = {qf b}",
      s!"intercept = {qf a}"]
+    src
 
 end AgenticDS
 
@@ -48,6 +53,7 @@ def m2Plot01 : IO Unit := do
   IO.println s!"sxx {sxx d}, sxy {sxy d}"
   fitScatter "plot-m2v01.svg" "Penguins: flipper and mass"
     "flipper length (mm)" "body mass (g)" d []
+    (← penguinRaw "flipper_length_mm" "body_mass_g")
   contract "ads-lean-m2v01-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-02: the sums and ols defs on bill length against mass. -/
@@ -57,6 +63,7 @@ def m2Plot02 : IO Unit := do
   IO.println s!"slope: {olsSlope d}"
   fitScatter "plot-m2v02.svg" "Penguins: bill and mass"
     "bill length (mm)" "body mass (g)" d []
+    (← penguinRaw "bill_length_mm" "body_mass_g")
   contract "ads-lean-m2v02-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-04: the residual sum for intercepts around the fitted one
@@ -71,13 +78,15 @@ def m2Plot04 : IO Unit := do
   IO.println s!"sum at fitted intercept: {(resid d a0 b).sum}"
   IO.println s!"identity holds: {sums == at_.map fun a =>
     sy d - cnt d * a - b * sx d}"
+  let pts4 := (at_.zip sums).map fun p => (qf p.1, qf p.2)
   writeScatter "plot-m2v04.svg" "Residual sum by intercept"
     "intercept a (g)" "sum of residuals (g)"
-    ((at_.zip sums).map fun p => (qf p.1, qf p.2))
+    pts4
     [(qf (a0 - 600), qf ((resid d (a0 - 600) b).sum)),
      (qf (a0 + 600), qf ((resid d (a0 + 600) b).sum))]
     [(qf a0, 0)]
     [s!"n = {d.length} penguins", "sum = 0 at fitted a"]
+    pts4
   contract "ads-lean-m2v04-v1"
     ((resid d a0 b).sum == 0 &&
       sums == at_.map fun a => sy d - cnt d * a - b * sx d)
@@ -91,11 +100,13 @@ def m2Plot05 : IO Unit := do
   let r := resid d a b
   IO.println s!"residuals sum: {r.sum}"
   let (lo, hi) := xSpan d
+  let pts5 := (d.zip r).map fun (p, e) => (qf (fit p.1), qf e)
   writeScatter "plot-m2v05.svg" "Residuals against fitted mass"
     "fitted body mass (g)" "residual (g)"
-    ((d.zip r).map fun (p, e) => (qf (fit p.1), qf e))
+    pts5
     [(qf (fit lo), 0), (qf (fit hi), 0)] []
     [s!"n = {d.length} penguins", s!"sum = {r.sum}"]
+    pts5
   contract "ads-lean-m2v05-v1" (d.length > 0 && r.sum == 0)
 
 /-- m2-07: bill length against flipper length. -/
@@ -104,6 +115,7 @@ def m2Plot07 : IO Unit := do
   IO.println s!"cnt {cnt d}, slope {olsSlope d}"
   fitScatter "plot-m2v07.svg" "Penguins: bill and flipper"
     "bill length (mm)" "flipper length (mm)" d []
+    (← penguinRaw "bill_length_mm" "flipper_length_mm")
   contract "ads-lean-m2v07-v1" (cnt d > 0 && sxx d > 0)
 
 /-- m2-09: the true slope passes its guard on the penguins. -/
@@ -114,6 +126,7 @@ def m2Plot09 : IO Unit := do
   IO.println s!"guard planted slope 2: {olsSlope d == 2}"
   fitScatter "plot-m2v09.svg" "Penguins: the guarded slope"
     "flipper length (mm)" "body mass (g)" d []
+    (← penguinRaw "flipper_length_mm" "body_mass_g")
   contract "ads-lean-m2v09-v1"
     (olsSlope d == 1145743050 / 23059877 && olsSlope d != 2)
 
@@ -127,6 +140,7 @@ def m2Plot10 : IO Unit := do
     olsIntercept d + olsSlope d * mx == my}"
   fitScatter "plot-m2v10.svg" "Penguins: depth and mass"
     "bill depth (mm)" "body mass (g)" d [(qf mx, qf my)]
+    (← penguinRaw "bill_depth_mm" "body_mass_g")
   contract "ads-lean-m2v10-v1"
     (cnt d > 0 && olsIntercept d + olsSlope d * mx == my)
 

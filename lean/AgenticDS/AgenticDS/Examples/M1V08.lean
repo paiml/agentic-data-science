@@ -19,3 +19,4 @@ def m1v08 : IO Unit := do
   AgenticDS.writeScatter "plot-m1v08.svg" "The contract file"
     "line number" "characters in the line" ps [] []
     [s!"{ls.length} lines", s!"{n} FALSIFY ids"]
+    ps
