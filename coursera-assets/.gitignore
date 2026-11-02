@@ -1,0 +1,10 @@
+# media are NAS symlinks, never committed
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.m4a
+*.webm
+*.png
+*.jpg
+rendered/
