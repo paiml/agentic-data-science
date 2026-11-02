@@ -23,18 +23,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     python3 \
     python-dev \
     python3-pip \
-    # Java 11 SDK
-    default-jre-headless \
-    default-jdk-headless \
-    maven \
-    gradle \ 
-    # Scala SDK
-    scala \
     # C and C++ SDK
     valgrind \
     gdb \
-    # C# SDK
-    mono-complete \
     # Ruby SDK
     ruby-full \
     # PHP SDK
@@ -68,27 +59,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1
 RUN python3 -m pip install --upgrade setuptools \
     && python3 -m pip install wheel pylint requests
 
-# Scala SDK
-RUN apt-get remove scala-library scala -y \
-    && wget -q http://scala-lang.org/files/archive/scala-2.13.1.deb \
-    && dpkg -i scala-2.13.1.deb
-
-# SBT
-RUN echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list \
-    && echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | sudo tee /etc/apt/sources.list.d/sbt_old.list \
-    && curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | sudo apt-key add \
-    && apt-get update \
-    && apt-get install sbt --no-install-recommends -y
-
-# Rust SDK (note, this requires build-essential to exist)
-ENV RUSTUP_HOME "/bin/rustup"
-ENV CARGO_HOME "/bin/cargo"
-RUN curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh -s -- -y
-
-# Chromium SDK -- required for the old browser preview extension
-RUN curl -sLO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-RUN apt-get install -y ./google-chrome-stable_current_amd64.deb
-RUN rm google-chrome-stable_current_amd64.deb
+# PATCH vs upstream: Java, Scala, sbt, mono, Rust and Chrome removed (a Lean lab needs none; image must fit the runner disk and the Lab size cap).
 
 # Code-Server
 RUN localedef -i en_US -c -f UTF-8 -A /usr/share/locale/locale.alias en_US.UTF-8
@@ -152,18 +123,10 @@ COPY extensions/ /tmp/
 # Set up C# Extension (disabled since it's always trying to install packages)
 #RUN code-server --install-extension ms-dotnettools.csharp --extensions-dir=$VSCODE_EXTENSIONS
 
-# Set up Rust alias
-RUN cat /usr/bin/cargo/env >> /home/coder/.bash_aliases
-
 # code-server v3.12.0 does not use the open VSX marketplace by default. This fixes that
 ENV SERVICE_URL=https://open-vsx.org/vscode/gallery 
 ENV ITEM_URL=https://open-vsx.org/vscode/item
 
-
-# Set up Chrome Viewer (can't be found on the code-server marketplace currently as of 07/20/2020)
-# We don't want to download the vsix file here because it fails too often.
-RUN mkdir -p $VSCODE_EXTENSIONS/vscode-browser-preview \
-    && bsdtar --strip-components=1 -xf /tmp/auchenberg.vscode-browser-preview-0.6.7.vsix -C $VSCODE_EXTENSIONS/vscode-browser-preview extension
 
 # Set up coursera launch button extension
 RUN mkdir -p $VSCODE_EXTENSIONS/coursera-launch-button \
