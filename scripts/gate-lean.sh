@@ -35,13 +35,32 @@ for t in AgenticDSTest/ExamplesM*.lean; do
   out=$(lake env lean "${LEANOPTS[@]}" --run "$t" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
 done
+# Every demo that once printed nothing must end in its contract line (ads#132); the checker must refuse empty stdout.
+scripts/falsify-rerun-lean-demos.sh >/dev/null || { echo "FAIL rerun-lean-demos falsifier"; scripts/falsify-rerun-lean-demos.sh; exit 1; }
+out=$(scripts/rerun-lean-demos.sh 2 .lake/build/bin $(cat scripts/contract-demos.txt) 2>&1) || { echo "FAIL contract demos: $out"; exit 1; }
+
 # Example files lake does not build must still elaborate; the planted fault must still be refused.
 for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/Examples/M2V09.lean; do
   out=$(lake env lean "$f" 2>&1) || { echo "FAIL $f: $out"; exit 1; }
+  # Each also writes its plot from real data: the contract line must print.
+  echo "$out" | grep -q "contract: plot_scatter_bounded OK" || { echo "FAIL $f printed no plot contract: $out"; exit 1; }
 done
 if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
+# The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
+for p in tall empty; do
+  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
+  echo "$out" | grep -q "plot_svg_bounded violated" || { echo "FAIL PlantedSvgOverflow $p failed for another reason: $out"; exit 1; }
+done
+# The scatter contract must fire on an empty plot and on a NaN point.
+for p in empty nan; do
+  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
+  echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
+done
 if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
 fi
+bash ../../scripts/gate-lean-anscombe.sh || exit 1
+rcp=$(mktemp); trap 'rm -f "${rcp:?}"' EXIT
+../../labs/c05-final/tests/lab-verify.sh "$rcp" || { echo "FAIL lab c05-final"; exit 1; }
 echo "lean OK"

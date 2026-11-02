@@ -1,4 +1,5 @@
 import AgenticDS.Tree
+import AgenticDS.Plot
 /-! Pruning at cp, and fitTree. -/
 open AgenticDS
 -- Nine rows, one feature; the 48.5 adelie is an outlier.
@@ -18,3 +19,9 @@ def m3v07 : IO Unit := do
   let t := prune 2 rows (grow 1 5 rows)
   IO.println s!"cp 2:    {sh t}"
   IO.println s!"fitTree: {sh (fitTree 1 5 rows)}"
+  let cls := fun (r : Row) =>
+    (qf (r.x.headD 0), if r.y = .adelie then 0 else 1)
+  writeScatter "plot-m3v07.svg" "Rows by species"
+    "bill length (mm)" "species: 0 adelie, 1 gentoo"
+    (rows.map cls) [] [cls (rows.getD 4 ⟨[0], .adelie⟩)]
+    [s!"fitTree: {sh (fitTree 1 5 rows)}"]

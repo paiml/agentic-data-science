@@ -13,7 +13,12 @@ function main()
     path = joinpath(DATA, "penguins.csv")
     d = na_policy(read_penguins(path))
     s = summarise_by_species(d)
-    display(select(s, :species, :n, r"body_mass"))
+    show(
+        stdout,
+        select(s, :species, :n, r"body_mass");
+        summary = false,
+    )
+    println()
     sds = gentoo(d, s)
     println("Gentoo body mass sd: ", map(r3, sds))
     ok = s.n == [151, 68, 123]

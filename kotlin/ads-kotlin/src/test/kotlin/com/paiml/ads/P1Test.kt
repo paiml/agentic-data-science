@@ -12,9 +12,10 @@ import kotlin.math.abs
 
 private val root: Path = Path.of(System.getProperty("ads.root"))
 private val csv: String =
-    root.resolve(
-        "datasets/penguins/penguins.csv",
-    ).toString()
+    root
+        .resolve(
+            "datasets/penguins/penguins.csv",
+        ).toString()
 private const val TOL = 1e-9
 
 class P1Test {
@@ -69,7 +70,9 @@ class P1Test {
         for (s in summary) {
             assertEquals(
                 MEASURES.toSet(),
-                golden[s.species].fieldNames().asSequence()
+                golden[s.species]
+                    .fieldNames()
+                    .asSequence()
                     .toSet() - "n",
             )
             val g = golden[s.species]
@@ -137,9 +140,12 @@ class P1Test {
             withNa.map {
                 it.n
             } ==
-                golden.fields().asSequence().map {
-                    it.value["n"].asInt()
-                }.toList(),
+                golden
+                    .fields()
+                    .asSequence()
+                    .map {
+                        it.value["n"].asInt()
+                    }.toList(),
         )
     }
 

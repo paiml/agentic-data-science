@@ -15,7 +15,7 @@ private val gradleBin = System.getProperty("ads.gradle")
 private val LONG_LINE =
     "val longName = \"${"a".repeat(54)}\"\n"
 private const val CLEAN = "fun ok(a: Int) = a + 1\n"
-private const val UNUSED = "private fun unused() {}\n\n$CLEAN"
+private const val EMPTY_FN = "fun empty() {}\n\n$CLEAN"
 private const val BRANCHY =
     "fun pick(a: Int) = if (a > 0) 1 else 2\n"
 
@@ -39,11 +39,19 @@ private fun exec(
     vararg cmd: String,
 ): Pair<Int, String> {
     val p =
-        ProcessBuilder(*cmd).directory(dir)
-            .redirectErrorStream(true).start()
+        ProcessBuilder(*cmd)
+            .directory(dir)
+            .redirectErrorStream(true)
+            .start()
     val out = p.inputStream.bufferedReader().readText()
     return p.waitFor() to out
 }
+
+private val CONTRACT_APPLY =
+    Regex(
+        """\n*// Contract line for the gradle[^\n]*\n""" +
+            """apply\(from = "contract.gradle.kts"\)\n?""",
+    )
 
 private val SHACL_APPLY =
     Regex(
@@ -71,8 +79,10 @@ private fun buildCopy(
     // Tool copies have no repo tree; the shacl gate is tested apart.
     val gb = File(tmp, "ads-kotlin/build.gradle.kts")
     val stripped = gb.readText().replace(SHACL_APPLY, "\n")
+    val bare = stripped.replace(CONTRACT_APPLY, "\n")
     check(stripped != gb.readText()) { "no shacl apply line" }
-    gb.writeText(stripped)
+    check(bare != stripped) { "no contract apply line" }
+    gb.writeText(bare)
     val src = File(tmp, "ads-kotlin/src/main/kotlin")
     src.mkdirs()
     File(src, "Source.kt").writeText(source)
@@ -112,10 +122,10 @@ class ToolsFailOnFindingsTest {
     }
 
     @Test
-    fun detektFailsOnAnUnusedMemberAndPassesWhenItIsFixed() {
-        val bad = gradle(buildCopy(UNUSED), "detekt")
+    fun detektFailsOnAnEmptyFunctionAndPassesWhenItIsFixed() {
+        val bad = gradle(buildCopy(EMPTY_FN), "detekt")
         assertNotEquals(0, bad.first, bad.second)
-        has(bad.second, "UnusedPrivate")
+        has(bad.second, "EmptyFunctionBlock")
         val ok = gradle(buildCopy(CLEAN), "detekt")
         assertEquals(0, ok.first, ok.second)
     }

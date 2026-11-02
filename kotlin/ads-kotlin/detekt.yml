@@ -1,6 +1,3 @@
-build:
-  maxIssues: 0
-
 # Plot style literals (marker size, alpha, line width) read best inline in the Kandy DSL.
 style:
   MagicNumber:

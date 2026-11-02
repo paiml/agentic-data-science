@@ -16,7 +16,10 @@ val PENGUINS: String =
     )
 val PLOT: String = System.getProperty("ads.plot", "plot.png")
 
-data class Fit(val intercept: Double, val slope: Double) {
+data class Fit(
+    val intercept: Double,
+    val slope: Double,
+) {
     /** True when both coefficients agree within [tol]. */
     fun agrees(
         other: Fit,
@@ -28,9 +31,11 @@ data class Fit(val intercept: Double, val slope: Double) {
 
 /** A numeric DataFrame column as doubles. */
 fun AnyFrame.doubles(name: String): DoubleArray =
-    this[name].values().map {
-        (it as Number).toDouble()
-    }.toDoubleArray()
+    this[name]
+        .values()
+        .map {
+            (it as Number).toDouble()
+        }.toDoubleArray()
 
 /** Least squares y ~ x (SimpleRegression). */
 fun fitSimple(

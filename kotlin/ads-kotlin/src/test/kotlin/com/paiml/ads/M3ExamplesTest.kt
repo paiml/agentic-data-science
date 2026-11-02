@@ -38,8 +38,7 @@ private fun oracle(
             n,
         ) { i -> DoubleArray(4) { (cols[it][i] - mu[it]) / s[it] } }
     val c =
-        start.map {
-                r ->
+        start.map { r ->
             DoubleArray(4) { (r[it] - mu[it]) / s[it] }
         }
     val a = IntArray(n)
@@ -82,7 +81,8 @@ class M3ExamplesTest {
         val buf = ByteArrayOutputStream()
         System.setOut(PrintStream(buf, true))
         try {
-            com.paiml.ads.m3v01.main()
+            com.paiml.ads.m3v01
+                .main()
         } finally {
             System.setOut(old)
         }
@@ -126,8 +126,7 @@ class M3ExamplesTest {
     @Test
     fun movedStartingCentroidsFailTheGolden() {
         val moved =
-            start.map {
-                    r ->
+            start.map { r ->
                 r.map { it + SHIFT }.toDoubleArray()
             }
         val sc = classify(df, split)

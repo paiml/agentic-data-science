@@ -1,4 +1,5 @@
 import AgenticDS.Confusion
+import AgenticDS.Plot
 /-! Species and the confusion total. -/
 open AgenticDS
 -- Species is finite: Species.all lists its three values.
@@ -18,3 +19,6 @@ def m3v04 : IO Unit := do
   let sum := (Species.all.map fun a =>
     (Species.all.map fun p => confusion ps a p).sum).sum
   IO.println s!"sum {sum}, length {ps.length}"
+  writeSvg "plot-m3v04.svg" "Correct per species" 2
+    (Species.all.zipIdx.map fun (a, i) =>
+      (s!"species {i}", confusion ps a a))

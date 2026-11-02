@@ -385,6 +385,15 @@ end
               "julia --project=julia/BM1 -e '" *
               BM1.V07.TEST *
               "'"
+        out = BM1.capture(
+            () -> BM1.V07.main(["exit 0", "true"]),
+        )
+        @test occursin("gate 2 exit=0", out)
+        @test occursin("gates OK", out)
+        bad =
+            BM1.capture(() -> BM1.V07.main(["exit 3"]))
+        @test occursin("gate 1 exit=3", bad)
+        @test occursin("gates FAILED", bad)
     end
 
     @testset "v08 mutants" begin
