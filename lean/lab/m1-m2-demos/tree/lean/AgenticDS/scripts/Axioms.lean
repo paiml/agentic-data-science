@@ -1,5 +1,5 @@
 import AgenticDS.Ols
-import AgenticDS.Regression
+import AgenticDS.OlsExample
 import AgenticDS.Stats
 
 open AgenticDS
@@ -8,4 +8,5 @@ open AgenticDS
 #print axioms variance_nonneg
 #print axioms variance_shift
 #print axioms sum_residuals
+#print axioms residuals_sum
 #print axioms sum_map_add_const

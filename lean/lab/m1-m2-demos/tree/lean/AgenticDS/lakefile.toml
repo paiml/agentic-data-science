@@ -18,7 +18,7 @@ scope = "leanprover-community"
 [[lean_lib]]
 name = "AgenticDS"
 roots = ["AgenticDS.ExampleM1Main", "AgenticDS.ExampleM2Main"]
-globs = ["AgenticDS.Examples.+", "AgenticDS.Csv", "AgenticDS.Cv", "AgenticDS.Ols", "AgenticDS.Plot", "AgenticDS.Profile", "AgenticDS.Regression", "AgenticDS.Stats"]
+globs = ["AgenticDS.Examples.+", "AgenticDS.Csv", "AgenticDS.Cv", "AgenticDS.Ols", "AgenticDS.OlsExample", "AgenticDS.Plot", "AgenticDS.Profile", "AgenticDS.Regression", "AgenticDS.Stats"]
 
 [[lean_exe]]
 name = "example-m1"
