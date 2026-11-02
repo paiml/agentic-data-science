@@ -19,6 +19,10 @@ T="no #eval/#print/#check/run_cmd after other text on a line (those commands are
 t bash -c '! grep -nE "[^[:space:]].*(#eval|#print|#check|#reduce|#synth|#exit|run_cmd|run_tac)" "$0"' "$g/stripped.lean"
 T="no attribute (@[ ... ], attribute), by_elab, unif_hint, command_elab, term_elab, register_option or init hook of any kind"
 t bash -c '! grep -nE "@\[|\b(by_elab|unif_hint|command_elab|term_elab|tactic_elab|register_option|register_builtin_option|builtin_init|init)\b" "$0"' "$g/stripped.lean"
+T="top-level commands are an ALLOWLIST (def/theorem/lemma/example/namespace/section/end/open/variable at column 0; #eval/#print/#check lines are accepted only because the grader drops them before compiling)"
+t bash -c '! perl -ne "print qq{\$.:\$_} if /^\\S/ && !/^(def|theorem|lemma|example|namespace|section|end|open|variable|#eval|#print|#check)\\b/" "$0" | grep -n .' "$g/stripped.lean"
+T="no unsafe/unsafeBaseIO/include_str/macro/syntax/elab/structure/inductive/class/abbrev/mutual/universe token anywhere, strings included"
+t bash -c '! grep -nE "unsafe|include_str|\b(macro|macro_rules|syntax|elab|structure|inductive|class|abbrev|mutual|universe|declare_syntax_cat)\b" "$0"' "$g/stripped.lean"
 # Keyword layer first: if ANY check above tripped, Learner is never compiled (compiling Lean is executing it: elaborators run).
 if [ "$rc" -ne 0 ]; then echo "tests run: $n"; echo "grader: keyword layer refused Mean.lean; it was not compiled"; exit 1; fi
 # Model (honest): compiling Lean IS execution. Learner.lean compiles from a comment-stripped grader copy (no import, so no meta code
@@ -36,12 +40,12 @@ REF
 perl -ne 'if (/^\s*(#eval|#print|#check|#reduce|#synth|run_cmd|run_tac)\b/) { $skip=1; next } if ($skip && /^\s+\S/) { next } $skip=0; print' "$g/stripped.lean" > "$g/body.lean"
 { cat "$g/body.lean"; printf '\ntheorem grader_probe : True := trivial\n'; } > "$g/lrn/Learner.lean"
 lean_c() { # dir module [-o]
-  (cd "$1" && LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
+  (cd "$1" && LEAN_PATH="$g/ref" lean "+$tc" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
 }
 lean_sandbox() { # learner compile: bwrap when it works here, plain otherwise
   if bwrap --ro-bind / / --dev /dev --proc /proc true 2>/dev/null; then
     (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
-      env LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
+      env LEAN_PATH="$g/ref" lean "+$tc" -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
   else lean_c "$g/lrn" Learner -o; fi
 }
 e=0; out=""
@@ -58,8 +62,10 @@ def fail (msg : String) : IO UInt32 := do
   IO.println s!"grader: FAIL {msg}"
   return 1
 
-def main : IO UInt32 := do
-  initSearchPath (← findSysroot)
+def main (args : List String) : IO UInt32 := do
+  let some mods := args.head? | return (← fail "no module dir")
+  let sys ← findSysroot
+  searchPathRef.set [sys / "lib" / "lean", System.FilePath.mk mods]
   let env ← importModules #[{ module := `Ref }, { module := `Learner }] {} (loadExts := false)
   let some li := env.getModuleIdx? `Learner | return (← fail "Learner module not found")
   let lconsts := env.header.moduleData[li.toNat]!.constants
@@ -95,11 +101,13 @@ GRADE
   gsha=$(sha256sum "$g/grade/Grade.lean" | cut -d' ' -f1)
   if [ "$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1)" != "$refsha" ]; then e=1; out="grader: Ref.olean was modified while the learner file compiled"
   else
-    out=$(cd "$g/grade" && LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" --run Grade.lean 2>&1); e=$?
+    # Grade sees the sysroot first, then a FRESH dir holding only copies of the two oleans: never the learner build dir (a forged Lean.olean there is not on the path).
+    mkdir -p "$g/mods"; cp "$g/ref/Ref.olean" "$g/lrn/Learner.olean" "$g/mods/"; [ -f "$g/lrn/Learner.ilean" ] && cp "$g/lrn/Learner.ilean" "$g/mods/"
+    out=$(cd "$g/grade" && env -u LEAN_PATH lean "+$tc" --run Grade.lean "$g/mods" 2>&1); e=$?
     [ "$(sha256sum "$g/grade/Grade.lean" | cut -d' ' -f1)" = "$gsha" ] || { e=1; out="grader: Grade.lean was modified while checking"; }
   fi
 fi
 T="compiles (warnings as errors) and the grader's environment check passes (verdict from Grade.lean only)"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader verdict: PASS" && echo "$2" | grep -q "^grader contract: mean_shift OK"' x "$e" "$out"
 T="axioms of sum_shift within allowed set"; t bash -c '! { echo "$0" | grep "depends on axioms" | grep -vE "\[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$"; } && echo "$0" | grep -q "depends on axioms"' "$out"
-[ -n "${GRADER_DEBUG:-}" ] && echo "$out" >&2
+[ -n "${GRADER_DEBUG:-}" ] && { echo "$out" >&2; echo "lrn dir: $(cd "$g/lrn" && ls | tr "\n" " ")" >&2; echo "mods dir: $(cd "$g/mods" 2>/dev/null && ls | tr "\n" " ")" >&2; }
 echo "tests run: $n"; [ "$n" -ge 1 ] || exit 2; exit $rc

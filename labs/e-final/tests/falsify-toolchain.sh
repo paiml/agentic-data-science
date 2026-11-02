@@ -49,14 +49,20 @@ cheat unif-hint "FAIL test4" standalone
 # by_elab: refused before compile AND the probe file is never created (compiling Lean is executing it)
 rm -f /tmp/e76-executed-by_elab
 cheat by-elab-exec "FAIL test2"
+cheat guard-exec "FAIL test5"          # #guard (unsafe unsafeBaseIO (writeFile ..)): not an allowlisted command, and unsafe is refused
+cheat guard-forge-olean "FAIL test5"
+cheat guard-exec "FAIL test6"
+cheat eval-in-term "FAIL test3"      # #eval / #reduce / #print inside a term
+cheat reduce-in-term "FAIL test3"
+cheat print-in-term "FAIL test3"
 [ ! -e /tmp/e76-executed-by_elab ] && echo "arm by-elab probe file absent ok" || { echo "FAIL: /tmp/e76-executed-by_elab was created (learner code ran at grade time)"; fail=1; rm -f /tmp/e76-executed-by_elab; }
 # H: the word "instance" in a comment must NOT trip the keyword layer (comments are stripped first).
 mk H; printf "\n-- an instance of the law; set_option and local are only words here\n/- macro syntax elab -/\n" >> "$S/H/labs/e-final/solution/Mean.lean"; chk H 0
 
 # G: root layer alone. Delete all three keyword layers from a copy of the grader; the attacks must still be refused by Grade.lean's
 # environment check (kernel replay/defeq/axioms), each with its own reason, and the by_elab probe must not appear on the host.
-mk G; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" "$S/G/labs/e-final/tests/run.sh"
-grep -qE "hijack keywords|after other text|no attribute" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: keyword layers not removed"; fail=1; }
+mk G; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" -e "/top-level commands are an ALLOWLIST/,+1d" -e "\#no unsafe/unsafeBaseIO#,+1d" "$S/G/labs/e-final/tests/run.sh"
+grep -qE "hijack keywords|after other text|no attribute|ALLOWLIST|no unsafe" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: keyword layers not removed"; fail=1; }
 rm -f /tmp/e76-executed-by_elab
 garm() { # cheat reason
   GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$1" >"$S/G-$1.out" 2>&1; rc=$?
@@ -70,5 +76,13 @@ garm init-hook "not kernel-defeq"
 garm unif-hint "not kernel-defeq"
 garm by-elab-exec "type differs"
 garm true-statement "type differs"
+# Root layer, compile-time execution: with every keyword layer deleted the #guard really runs (under bwrap), writes into the learner build
+# dir (Lean.olean forged, e76-guard-ran), but Grade reads only the sysroot plus a fresh dir with copies of Ref/Learner oleans: the forged
+# Lean.olean is never on its path, and nothing is written to the host cwd.
+for c in guard-exec guard-forge-olean; do
+  GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$c" >"$S/G-$c.out" 2>&1; rc=$?
+  if grep -q "^lrn dir:.*\(e76-guard-ran\|Lean.olean\)" "$S/G-$c.out" && grep -q "^mods dir: Learner.olean Ref.olean *$" "$S/G-$c.out" && [ "$rc" -eq 0 ] && [ ! -e "$PWD/e76-guard-ran" ] && [ ! -e "$PWD/Lean.olean" ]; then echo "arm G-$c ok (attack ran in the sandboxed build dir; Grade path has no forged olean; rc=0 for an honest proof)"; else echo "FAIL arm G-$c: rc=$rc"; sed -n '/lrn dir/,$p' "$S/G-$c.out"; fail=1; fi
+  groot=$((groot+1))
+done
 [ ! -e /tmp/e76-executed-by_elab ] && echo "arm G-by-elab probe file absent ok (compiled under bwrap, private /tmp)" || { echo "FAIL: by_elab ran on the host with the keyword layer deleted"; fail=1; rm -f /tmp/e76-executed-by_elab; }
 [ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $groot root-layer arms)"; exit "$fail"
