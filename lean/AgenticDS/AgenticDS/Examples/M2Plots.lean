@@ -79,14 +79,14 @@ def m2Plot04 : IO Unit := do
   IO.println s!"identity holds: {sums == at_.map fun a =>
     sy d - cnt d * a - b * sx d}"
   let pts4 := (at_.zip sums).map fun p => (qf p.1, qf p.2)
-  writeScatter "plot-m2v04.svg" "Residual sum by intercept"
+  writeScatterDerived
+    "plot-m2v04.svg" "Residual sum by intercept"
     "intercept a (g)" "sum of residuals (g)"
     pts4
     [(qf (a0 - 600), qf ((resid d (a0 - 600) b).sum)),
      (qf (a0 + 600), qf ((resid d (a0 + 600) b).sum))]
     [(qf a0, 0)]
     [s!"n = {d.length} penguins", "sum = 0 at fitted a"]
-    pts4
   contract "ads-lean-m2v04-v1"
     ((resid d a0 b).sum == 0 &&
       sums == at_.map fun a => sy d - cnt d * a - b * sx d)
@@ -101,12 +101,12 @@ def m2Plot05 : IO Unit := do
   IO.println s!"residuals sum: {r.sum}"
   let (lo, hi) := xSpan d
   let pts5 := (d.zip r).map fun (p, e) => (qf (fit p.1), qf e)
-  writeScatter "plot-m2v05.svg" "Residuals against fitted mass"
+  writeScatterDerived
+    "plot-m2v05.svg" "Residuals against fitted mass"
     "fitted body mass (g)" "residual (g)"
     pts5
     [(qf (fit lo), 0), (qf (fit hi), 0)] []
     [s!"n = {d.length} penguins", s!"sum = {r.sum}"]
-    pts5
   contract "ads-lean-m2v05-v1" (d.length > 0 && r.sum == 0)
 
 /-- m2-07: bill length against flipper length. -/

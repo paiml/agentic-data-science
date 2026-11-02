@@ -41,6 +41,5 @@ for id in v05 v08 v09; do
     fi
   done
 done
-rm -f plot-m3v05.svg plot-m3v08b.svg plot-m3v09.svg 2>/dev/null
 [ "$fail" -eq 0 ] && echo "falsifier OK ($arms arms)"
 exit "$fail"

@@ -24,10 +24,11 @@ def m1v09 : IO Unit := do
     IO.println s!"check {c}: {n} items"
   let pts9 := ns.zipIdx.map fun (n, i) =>
     ((i + 1).toFloat, n.toFloat)
-  AgenticDS.writeScatter "plot-m1v09.svg"
+  AgenticDS.writeScatterDerived
+    "plot-m1v09.svg"
     "What each gate check reads"
     "check (1 build, 2 scan, 3 axioms, 4 golden)" "items"
-    pts9 [] [] ["scan must find 0"] pts9
+    pts9 [] [] ["scan must find 0"]
   contract "ads-lean-m1v09-v1"
     (fs.length > 0 && (ts.map AgenticDS.hits).sum == 0 &&
       thms > 0 && gold > 0)

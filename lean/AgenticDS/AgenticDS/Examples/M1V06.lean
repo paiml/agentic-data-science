@@ -36,8 +36,8 @@ def m1v06 : IO Unit := do
   if worst < 1 / 1000000000 then
     IO.println "all 12 means agree with R"
   else throw (IO.userError "FAIL parity on all means")
-  writeScatter "plot-m1v06.svg" "Lean mean against R golden mean"
+  writeScatterDerived
+    "plot-m1v06.svg" "Lean mean against R golden mean"
     "golden mean from R (mm or g)" "mean computed in Lean" pts
     [(18, 18), (5100, 5100)] []
     [s!"{pts.length} means", "line: exact agreement"]
-    pts

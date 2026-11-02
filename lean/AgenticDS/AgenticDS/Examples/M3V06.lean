@@ -26,10 +26,10 @@ def m3v06 : IO Unit := do
     let r := rows.filter fun r => (t : ℚ) < r.x.headD 0
     (t.toFloat, qf (dev l + dev r))
   let cs := (List.range 12).map fun i => gain (37 + i)
-  writeScatter "plot-m3v06.svg" "Deviance after a split"
+  writeScatterDerived
+    "plot-m3v06.svg" "Deviance after a split"
     "threshold (mm)" "left plus right deviance" cs cs []
     [s!"dev all = {dev rows}"]
-    cs
   contract "ads-lean-m3v06-v1"
     (cs.all (fun p => p.2 ≤ qf (dev rows)) &&
       (← plotOk "plot-m3v06.svg"))

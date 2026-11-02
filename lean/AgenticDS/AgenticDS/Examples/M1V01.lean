@@ -15,8 +15,8 @@ def m1v01 : IO Unit := do
   let pts := m1v01_xs.zipIdx.map fun (v, i) =>
     (i.toFloat, qf v)
   let m := qf (mean m1v01_xs)
-  writeScatter "plot-m1v01.svg" "Values and their mean"
+  writeScatterDerived
+    "plot-m1v01.svg" "Values and their mean"
     "position in list" "value" pts [(0, m), (7, m)] []
     [s!"mean     = {mean m1v01_xs}",
      s!"variance = {variance m1v01_xs}"]
-    pts

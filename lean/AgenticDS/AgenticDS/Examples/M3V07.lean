@@ -22,11 +22,11 @@ def m3v07 : IO Unit := do
   IO.println s!"fitTree: {sh (fitTree 1 5 rows)}"
   let cls := fun (r : Row) =>
     (qf (r.x.headD 0), if r.y = .adelie then 0 else 1)
-  writeScatter "plot-m3v07.svg" "Rows by species"
+  writeScatterDerived
+    "plot-m3v07.svg" "Rows by species"
     "bill length (mm)" "species: 0 adelie, 1 gentoo"
     (rows.map cls) [] [cls (rows.getD 4 ⟨[0], .adelie⟩)]
     [s!"fitTree: {sh (fitTree 1 5 rows)}"]
-    (rows.map cls)
   contract "ads-lean-m3v07-v1"
     (decide ((fitTree 1 5 rows).leaves ≤ (grow 1 5 rows).leaves) &&
       (← plotOk "plot-m3v07.svg"))

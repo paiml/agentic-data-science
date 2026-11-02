@@ -27,10 +27,10 @@ def m3v03 : IO Unit := do
   let cost := fun (i : Nat) =>
     (i.toFloat / 2, qf (minCost m3v03_d (i / 2 : ℚ) 0 [6]))
   let cs := (List.range 13).map cost
-  writeScatter "plot-m3v03.svg" "Cost to the nearest centroid"
+  writeScatterDerived
+    "plot-m3v03.svg" "Cost to the nearest centroid"
     "point position" "squared distance" cs cs
     (ps.map fun p => (qf p, qf (minCost m3v03_d p 0 [6])))
     [s!"centroids 0 and 6, total {best}"]
-    cs
   contract "ads-lean-m3v03-v1"
     (decide (best ≤ other) && (← plotOk "plot-m3v03.svg"))

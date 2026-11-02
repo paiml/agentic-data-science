@@ -12,9 +12,9 @@ def m2v08 : IO Unit := do
   let b := olsSlope d
   let pts8 := d.map fun p =>
     (qf p.1, qf (p.2 - (a + b * p.1)))
-  writeScatter "plot-m2v08.svg" "Residuals of the fit"
+  writeScatterDerived
+    "plot-m2v08.svg" "Residuals of the fit"
     "flipper length (mm)" "mass minus fit (g)"
     pts8
     [(170, 0), (232, 0)] []
     [s!"cv rmse = {cvRmse d folds 5}"]
-    pts8

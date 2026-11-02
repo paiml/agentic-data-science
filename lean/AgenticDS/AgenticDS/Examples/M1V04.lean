@@ -20,9 +20,9 @@ def m1v04 : IO Unit := do
      ((t.splitOn "\n").filter live).length.toFloat)
   let h := (ts.map AgenticDS.hits).sum
   IO.println s!"scanned {fs.length} files, {h} markers"
-  AgenticDS.writeScatter "plot-m1v04.svg"
+  AgenticDS.writeScatterDerived
+    "plot-m1v04.svg"
     "Gate scan of the examples"
     "lines in the file" "non-blank lines scanned" ps [] []
     [s!"scanned {fs.length} files", s!"{h} banned words"]
-    ps
   contract "ads-lean-m1v04-v1" (fs.length > 0 && h == 0)

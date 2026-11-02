@@ -154,10 +154,11 @@ def scatterSvg (title xl yl : String) (pts line marks :
 `plot_scatter_source` (every plotted point is its row of `src`):
 at least one point, one circle per point and mark, and every
 circle inside the plot box. -/
-def writeScatter (path : System.FilePath) (title xl yl : String)
+def writeScatterChecked (path : System.FilePath)
+    (title xl yl : String)
     (pts line marks : List (Float × Float))
     (notes : List String)
-    (src : List (Float × Float)) : IO Unit := do
+    (src : Option (List (Float × Float))) : IO Unit := do
   let s := scatterSvg title xl yl pts line marks notes
   IO.FS.writeFile path s
   let all := pts ++ line ++ marks
@@ -172,13 +173,33 @@ def writeScatter (path : System.FilePath) (title xl yl : String)
   if bad then
     throw (IO.userError "plot_scatter_bounded violated")
   -- Each plotted point is its source row, compared as data.
-  let same := pts.length == src.length &&
-    (pts.zip src).all fun (a, b) => a.1 == b.1 && a.2 == b.2
+  let same := match src with
+    | none => true
+    | some s => pts.length == s.length &&
+      (pts.zip s).all fun (a, b) => a.1 == b.1 && a.2 == b.2
   if !same then
     throw (IO.userError "plot_scatter_source violated")
   IO.println s!"svg {pts.length} points {path}"
   IO.println "contract: plot_scatter_bounded OK"
-  IO.println "contract: plot_scatter_source OK"
+  IO.println (if src.isSome then "contract: plot_scatter_source OK"
+    else "plot_scatter_source: derived, no independent source")
+
+/-- A scatter whose points are checked against independent source
+rows `src` (read from the data file, not from the plotted list). -/
+def writeScatter (path : System.FilePath) (title xl yl : String)
+    (pts line marks : List (Float × Float))
+    (notes : List String) (src : List (Float × Float)) :
+    IO Unit :=
+  writeScatterChecked path title xl yl pts line marks notes
+    (some src)
+
+/-- A scatter of derived or synthetic data: it has no independent
+source rows, so it checks bounds only and says so. -/
+def writeScatterDerived (path : System.FilePath)
+    (title xl yl : String)
+    (pts line marks : List (Float × Float))
+    (notes : List String) : IO Unit :=
+  writeScatterChecked path title xl yl pts line marks notes none
 
 
 /-- A decimal such as `39.1` or `7`, read as digits over a
