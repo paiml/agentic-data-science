@@ -12,3 +12,4 @@ lean/AgenticDS/plot.*
 .pv/
 contracts/.pv/
 target-lab/
+*.profraw
