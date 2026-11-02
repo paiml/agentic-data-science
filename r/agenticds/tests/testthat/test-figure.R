@@ -59,7 +59,8 @@ svg_lines <- function(p) {
 # Data points are the round-capped filled paths; text is one <use>
 # per glyph (the cairo device draws no <text>).
 n_points <- function(txt) {
-  sum(grepl("fill-rule:nonzero;fill:rgb.*stroke-linecap:round", txt))
+  pat <- "fill-rule:nonzero;fill:rgb.*stroke-linecap:round"
+  sum(grepl(pat, txt))
 }
 n_glyphs <- function(txt) sum(grepl("<use", txt, fixed = TRUE))
 chars <- function(...) nchar(paste(c(...), collapse = ""))
