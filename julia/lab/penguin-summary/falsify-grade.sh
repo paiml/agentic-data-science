@@ -8,7 +8,7 @@
 #   G grader copy missing -> REFUSED rc 2    H suite with zero checks -> FAIL
 #   I grader runner that writes a clean result but exits 3 -> FAIL (exit-code check)   I2 learner atexit(exit(3)) runs in the child -> PASS (a learner exit code is not the verdict)
 #   J grader runner that always exits 0, starter code, MIN_TOTAL=0: fail/error counts in the result -> FAIL
-#   K starter + __init__ that reads Main.RESULT/Main.NONCE and writes a forged pass result -> FAIL (cop ads#142 blocker; globals are not in the verdict process)
+#   K starter + __init__ that reads Main.RESULT/Main.NONCE and writes a forged pass result -> FAIL (review blocker on ads#142; globals are not in the verdict process)
 #   N grader runner that writes no result file -> FAIL (result gate)
 #   L starter + __init__ that prints a pass line and arms atexit(exit(0)) -> FAIL
 # Mutants: each defence line of grade.sh is removed in a scratch copy, and the arm that depends on it must flip.

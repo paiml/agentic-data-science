@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Lean demo plot (ADS-DEMO-001 R-6, D-4): run one Lean example, check its SVG is a real plot
-# (axes, grid, tick labels, and points or bars), rasterise it with rmedia (resvg) and hold it as a clip.
+# (axes, grid, tick labels, and points or bars), rasterise it with the plot tool (resvg) and hold it as a clip.
 # usage: lean-plot.sh check <svg>                    RED unless the SVG is a plot with axes, ticks and points
 #        lean-plot.sh png <m1..m4> <v01..v10> <out>  run the example, check, write <out>/plot-<m><v>.png
-#        lean-plot.sh clip <svg> <secs> <out.mp4>    check, then render the plot as a held clip (rmedia animate)
+#        lean-plot.sh clip <svg> <secs> <out.mp4>    check, then render the plot as a held clip (plot tool animate)
 set -euo pipefail
-RM="${RMEDIA:-rmedia}"
+RM="${PLOT_TOOL:-plot-tool}"
 count() { { /usr/bin/grep -o "$1" "$2" || true; } | wc -l; }
 check() {
   [ -s "$1" ] || { echo "FAIL: $1 missing or empty"; return 1; }

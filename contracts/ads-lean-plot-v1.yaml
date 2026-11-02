@@ -5,7 +5,7 @@ metadata:
   created: "2026-11-02"
   kind: pattern
   author: "PAIML Engineering"
-  description: "scripts/lean-plot.sh runs one Lean example, refuses an SVG that is not a plot with points, axes and tick labels, rasterises it with rmedia svg2png (resvg) and holds it as a clip with rmedia animate. It never draws; the SVG comes from Svg.lean."
+  description: "scripts/lean-plot.sh runs one Lean example, refuses an SVG that is not a plot with points, axes and tick labels, rasterises it with the plot tool svg2png (resvg) and holds it as a clip with the plot tool animate. It never draws; the SVG comes from Svg.lean."
   references:
     - "scripts/lean-plot.sh"
     - "scripts/falsify-lean-plot.sh"
@@ -45,6 +45,6 @@ falsification_tests:
     rule: "png and clip report a missing output instead of a pass"
     prediction: "arms 10, 11, 13, 14 exit 1"
     test: "scripts/falsify-lean-plot.sh"
-    mutation: "A stub rmedia that writes no file: png and clip print FAIL no png/clip written and exit 1 (measured 2026-11-02)"
+    mutation: "A stub plot tool that writes no file: png and clip print FAIL no png/clip written and exit 1 (measured 2026-11-02)"
     discriminates: "A silent render failure cannot pass as a plot"
     if_fails: "A demo is composited with a stale or absent plot"
