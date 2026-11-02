@@ -1,10 +1,7 @@
-# ads-c05-lean: course SOURCE dir
+# ads-c05-lean: course source dir
 
-Canonical SOURCE location for the Lean course (`<repo>/coursera-assets/<course-id>/`).
-Chosen by planted quorum A 3/3 on 2026-11-02.
+Source location for the Lean course (`coursera-assets/<course-id>/`).
 
-- **Code only.** Scene specs, `.srt`, scripts and keyframe pins are committed here.
-  Media (wav, mov, mp4) are NAS symlinks and are gitignored.
-- RAW footage: `/mnt/unas/media/RecordedCourses/ads-c05-lean/`.
-- RENDER output: `<repo>/coursera-assets/rendered/` (flat).
-- Plates from the scratch generator stay unshippable until rmedia#1863 lands.
+- **Code only.** Scene specs, `.srt` files and scripts are committed here.
+  Media (wav, mov, mp4) are symlinks to external storage and are gitignored.
+- Rendered output goes to `coursera-assets/rendered/` (flat) and is not committed.
