@@ -1,0 +1,25 @@
+name: lab-image-kotlin
+on:
+  pull_request: { paths: ["kotlin/lab/ols-from-scratch/**", ".github/workflows/lab-image-kotlin.yml"] }
+  merge_group: {}
+  push: { branches: [main], paths: ["kotlin/lab/ols-from-scratch/**"] }
+concurrency: { group: "lab-image-kotlin-${{ github.ref }}", cancel-in-progress: true }
+permissions: { contents: read }
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (from a clean git export)
+        shell: bash
+        run: bash kotlin/lab/ols-from-scratch/image/build-image.sh ads-kotlin-lab:ci | tee "$RUNNER_TEMP/build.txt"
+      - name: Offline proof (starter 7 of 8 named failures, solution 8 of 8)
+        run: docker run --rm --network none ads-kotlin-lab:ci proof.sh
+      - name: Fresh-container test (starter fails, solution passes, 5 plants refused, first demo <= 300 s)
+        shell: bash
+        run: bash kotlin/lab/ols-from-scratch/image/image-test.sh ads-kotlin-lab:ci | tee "$RUNNER_TEMP/test.txt"
+      - name: Report size, build time and test results
+        if: always()
+        run: |
+          { echo '### kotlin lab image'; echo '```'; cat "$RUNNER_TEMP/build.txt" "$RUNNER_TEMP/test.txt" 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

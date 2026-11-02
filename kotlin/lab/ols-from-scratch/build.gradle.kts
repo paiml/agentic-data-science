@@ -6,12 +6,15 @@ plugins {
 }
 
 val variant: String = (findProperty("variant") as String?) ?: "starter"
-require(variant in setOf("starter", "solution")) { "variant must be starter or solution" }
+require(variant in setOf("starter", "solution") || variant.startsWith("cheat-")) {
+    "variant must be starter, solution or cheat-<name>"
+}
+val variantDir = if (variant.startsWith("cheat-")) "cheats/${variant.removePrefix("cheat-")}" else variant
 
 kotlin { jvmToolchain(25) }
 
 sourceSets {
-    main { kotlin.setSrcDirs(listOf("$variant/src")) }
+    main { kotlin.setSrcDirs(listOf("$variantDir/src")) }
     test { kotlin.setSrcDirs(listOf("tests")) }
 }
 
