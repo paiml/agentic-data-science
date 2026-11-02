@@ -39,6 +39,9 @@ printf '#!/bin/sh\n[ "$STUB" = nolake ] && exit 0\ncp "%s" "plot-$(echo "$2" | c
 printf '#!/bin/sh\ncase "$1" in svg2png) [ "$STUB" = nopng ] || echo png > "$3";; animate) [ "$STUB" = noclip ] || { for a; do o="$a"; done; echo mp4 > "$o"; };; esac\n' > "$t/bin/toolstub"
 chmod +x "$t/bin/lake" "$t/bin/toolstub"
 export PLOT_TOOL="$t/bin/toolstub" PATH="$t/bin:$PATH"
+refused() { n="$1"; shift; (unset PLOT_TOOL; "$@" >"$t/o.txt" 2>&1); rc=$?; if [ "$rc" -ne 0 ] && /usr/bin/grep -q "PLOT_TOOL: set PLOT_TOOL to the svg2png/animate tool" "$t/o.txt"; then echo "  $n ok"; pass=$((pass+1)); else echo "  $n FAIL (rc=$rc)"; fail=$((fail+1)); fi; }
+refused 20-png-unset-tool $S png m1 v01 "$t/o"
+refused 21-clip-unset-tool $S clip "$good" 2 "$t/c0.mp4"
 want 09-png-ok 0 $S png m1 v01 "$t/o"
 STUB=nolake want 10-png-no-svg 1 $S png m1 v01 "$t/o"
 STUB=nopng want 11-png-no-file 1 $S png m1 v01 "$t/o2"

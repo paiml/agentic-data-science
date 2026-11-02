@@ -5,7 +5,7 @@
 #        lean-plot.sh png <m1..m4> <v01..v10> <out>  run the example, check, write <out>/plot-<m><v>.png
 #        lean-plot.sh clip <svg> <secs> <out.mp4>    check, then render the plot as a held clip (plot tool animate)
 set -euo pipefail
-RM="${PLOT_TOOL:-plot-tool}"
+RM="${PLOT_TOOL:-}"
 count() { { /usr/bin/grep -o "$1" "$2" || true; } | wc -l; }
 check() {
   [ -s "$1" ] || { echo "FAIL: $1 missing or empty"; return 1; }
@@ -20,12 +20,14 @@ case "$mode" in
   png)
     m="$2"; v="$3"; out="$4"; root="$(cd "$(dirname "$0")/../lean/AgenticDS" && pwd)"
     case "$m$v" in m[1-4]v[01][0-9]) ;; *) echo "usage: lean-plot.sh png m1..m4 v01..v10 <out>"; exit 2;; esac
+    : "${PLOT_TOOL:?set PLOT_TOOL to the svg2png/animate tool}"
     mkdir -p "$out"; svg="$root/plot-$m$v.svg"; rm -f "${svg:?}"
     (cd "$root" && lake exe "example-$m" "$v" >/dev/null)
     check "$svg"; "$RM" svg2png "$svg" "$out/plot-$m$v.png"
     [ -s "$out/plot-$m$v.png" ] || { echo "FAIL: no png written"; exit 1; }
     echo "png OK: $out/plot-$m$v.png";;
   clip)
+    : "${PLOT_TOOL:?set PLOT_TOOL to the svg2png/animate tool}"
     svg="$2"; secs="$3"; out="$4"; check "$svg"
     t="$(mktemp -d)"; trap 'rm -rf "${t:?}"' EXIT; cp "$svg" "$t/Frame-0.svg"
     "$RM" animate --frames "$t/Frame-*.svg" --duration "$secs" --fps 20 -q -o "$out"

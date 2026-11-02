@@ -5,7 +5,7 @@ metadata:
   created: "2026-11-02"
   kind: pattern
   author: "PAIML Engineering"
-  description: "scripts/lean-plot.sh runs one Lean example, refuses an SVG that is not a plot with points, axes and tick labels, rasterises it with the plot tool svg2png (resvg) and holds it as a clip with the plot tool animate. It never draws; the SVG comes from Svg.lean."
+  description: "scripts/lean-plot.sh runs one Lean example, refuses an SVG that is not a plot with points, axes and tick labels, rasterises it with the tool named by PLOT_TOOL (svg2png, resvg) and holds it as a clip with the tool named by PLOT_TOOL (animate), and refuses to run when PLOT_TOOL is unset. It never draws; the SVG comes from Svg.lean."
   references:
     - "scripts/lean-plot.sh"
     - "scripts/falsify-lean-plot.sh"
@@ -26,11 +26,11 @@ equations:
 proof_obligations:
   - type: invariant
     property: "Every refusal arm exits non-zero and the control exits 0"
-    formal: "scripts/falsify-lean-plot.sh exits 0 (19 arms: control, 5 refusals, 4 bar, 3 usage, png ok/no-svg/no-file, clip ok/bad-plot/no-file)"
+    formal: "scripts/falsify-lean-plot.sh exits 0 (21 arms: control, 5 refusals, 4 bar, 3 usage, png ok/no-svg/no-file, clip ok/bad-plot/no-file, png and clip refuse when PLOT_TOOL is unset)"
     applies_to: plot_is_real
   - type: invariant
     property: "Every line of lean-plot.sh runs under the falsifier (kcov, one run per call, merged)"
-    formal: "kcov coverage of scripts/lean-plot.sh is 22/22 lines"
+    formal: "kcov coverage of scripts/lean-plot.sh is 24/24 lines"
     applies_to: plot_is_real
 
 falsification_tests:
@@ -45,6 +45,6 @@ falsification_tests:
     rule: "png and clip report a missing output instead of a pass"
     prediction: "arms 10, 11, 13, 14 exit 1"
     test: "scripts/falsify-lean-plot.sh"
-    mutation: "A stub plot tool that writes no file: png and clip print FAIL no png/clip written and exit 1 (measured 2026-11-02)"
+    mutation: "A stub tool (named by PLOT_TOOL) that writes no file: png and clip print FAIL no png/clip written and exit 1 (measured 2026-11-02)"
     discriminates: "A silent render failure cannot pass as a plot"
     if_fails: "A demo is composited with a stale or absent plot"
