@@ -4,4 +4,4 @@ Code only: the import closure of the two mains (31 Lean sources) under `tree/lea
 - Source: paiml/agentic-data-science `lean/AgenticDS` at main `bf6c7b5276a83a55234ce0a07a370298042f131d`; `src/` is `git archive` of that commit, reduced to the closure; the lakefile drops m3/m4/ols-demo.
 - Toolchain: `leanprover/lean4:v4.35.0`. Mathlib rev `e91b1280...` from the manifest.
 - Nothing is uploaded to Coursera before the 18:00Z sync.
-- Open: the elan installer pin and sha256 are not yet recorded (see Dockerfile); the image build itself was NOT RUN here.
+- elan 4.2.4, sha256 `42b94d42...1f63` (matches the GitHub release digest). Base image pinned by digest.
