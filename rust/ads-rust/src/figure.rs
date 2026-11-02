@@ -8,7 +8,7 @@
 //! width) and `figure_has_axes` (the SVG names both axis labels and draws mesh lines).
 use plotters::prelude::*;
 
-/// Frame size in pixels; rmedia rasterises this SVG with resvg.
+/// Frame size in pixels; the SVG-to-PNG step rasterises this SVG with resvg.
 pub const SIZE: (u32, u32) = (1280, 720);
 
 /// One drawn series: a legend name, its points and whether it is a line or markers.
@@ -138,14 +138,39 @@ pub fn scatter_fit(
     )
 }
 
-/// The SVG names both axis labels and draws mesh `<line>`s (the gridlines).
+/// The SVG carries each axis label as a whole `<text>` element (never a substring of other
+/// markup), the x label upright and the y label rotated, and draws mesh `<line>`s.
 pub fn figure_has_axes(svg: &str, xl: &str, yl: &str) -> bool {
     let esc =
         |s: &str| s.replace('&', "&amp;").replace('<', "&lt;");
+    // The open tag of the `<text>` element whose whole content is `label`.
+    let tag = |label: &str| -> Option<&str> {
+        let body = format!(">\n{}\n</text>", esc(label));
+        let end = svg.find(&body)?;
+        let open = svg[..end].rfind("<text")?;
+        Some(&svg[open..end])
+    };
+    let upright = tag(xl).is_some_and(|t| !t.contains("rotate("));
+    let rotated = tag(yl).is_some_and(|t| t.contains("rotate(270"));
     svg.contains("<svg")
-        && svg.contains(&esc(xl))
-        && svg.contains(&esc(yl))
+        && upright
+        && rotated
         && svg.contains("<line")
+}
+
+/// Centres `(cx, cy)` of every drawn circle marker, legend keys included.
+pub fn circles(svg: &str) -> Vec<(f64, f64)> {
+    let attr = |c: &str, name: &str| -> f64 {
+        let key = format!("{name}=\"");
+        let at =
+            c.find(&key).expect("circle attribute") + key.len();
+        let val = c[at..].split('"').next().unwrap_or("");
+        val.parse().expect("number")
+    };
+    svg.split("<circle")
+        .skip(1)
+        .map(|c| (attr(c, "cx"), attr(c, "cy")))
+        .collect()
 }
 
 /// One scatter series per group on shared axes (e.g. per species or per cluster).
@@ -271,6 +296,57 @@ mod tests {
         assert_eq!(a, b);
         assert!(figure_has_axes(&a, "x (cm)", "y (g)"));
         assert!(!figure_has_axes(&a, "missing label", "y (g)"));
+    }
+
+    #[test]
+    fn axis_labels_match_whole_text_elements_only() {
+        let pts = [(0.0, 0.0), (1.0, 2.0), (2.0, 3.0)];
+        let svg = scatter_fit(("t", "x", "y"), &pts);
+        // "x" is also a substring of the xmlns attribute; only a <text> counts.
+        assert!(figure_has_axes(&svg, "x", "y"));
+        assert!(!figure_has_axes(&svg, "xml", "y"));
+        assert!(!figure_has_axes(&svg, "x", "mlns"));
+        // Swapped labels fail: x must be upright, y rotated.
+        assert!(!figure_has_axes(&svg, "y", "x"));
+        let raw = concat!(
+            "<svg><line/><text>\na&amp;b\n</text>",
+            "<text transform=\"rotate(270, 1, 2)\">\n&lt;c\n</text>"
+        );
+        assert!(figure_has_axes(raw, "a&b", "<c"));
+        assert!(!figure_has_axes(raw, "<c", "a&b"));
+        // A label with no text element at all is refused.
+        assert!(!figure_has_axes("<svg><line/>", "a", "b"));
+    }
+
+    #[test]
+    fn markers_are_one_per_point_plus_a_legend_key_inside_the_frame()
+     {
+        let pts: Vec<_> =
+            (0..8).map(|i| (i as f64, (i * i) as f64)).collect();
+        let svg = scatter_fit(("t", "x (u)", "y (u)"), &pts);
+        let c = circles(&svg);
+        // 8 observations plus the legend key; the fit is a line, not markers.
+        assert_eq!(c.len(), pts.len() + 1);
+        let (w, h) = (SIZE.0 as f64, SIZE.1 as f64);
+        assert!(c.iter().all(|p| p.0 > 0.0 && p.0 < w));
+        assert!(c.iter().all(|p| p.1 > 0.0 && p.1 < h));
+        let xs: Vec<f64> = c.iter().take(8).map(|p| p.0).collect();
+        let ys: Vec<f64> = c.iter().take(8).map(|p| p.1).collect();
+        let span = |v: &[f64]| {
+            v.iter().cloned().fold(f64::MIN, f64::max)
+                - v.iter().cloned().fold(f64::MAX, f64::min)
+        };
+        // The data fills the panel, not a corner of it.
+        assert!(span(&xs) > 0.5 * w);
+        assert!(span(&ys) > 0.4 * h);
+        let g = scatter_groups(
+            ("t", "x (u)", "y (u)"),
+            &[
+                ("a".to_string(), vec![(0.0, 0.0), (1.0, 1.0)]),
+                ("b".to_string(), vec![(2.0, 0.0)]),
+            ],
+        );
+        assert_eq!(circles(&g).len(), 3 + 2);
     }
 
     #[test]

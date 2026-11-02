@@ -150,6 +150,7 @@ fn p3_plot_is_a_real_axes_figure_of_the_clusters() {
         ),
         &groups,
     );
-    assert!(svg.matches("<circle").count() >= df.height());
+    let n = ads_rust::figure::circles(&svg).len();
+    assert_eq!(n, df.height() + groups.len());
     ads_rust::figure::write_if_out(&svg);
 }

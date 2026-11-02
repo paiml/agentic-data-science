@@ -66,7 +66,7 @@ figure_svg <- function(p, file = NULL) {
   grDevices::dev.off()
   txt <- readLines(file)
   txt <- txt[!startsWith(txt, "<?xml")]
-  # A double-quoted px header, which rmedia svg2png reads.
+  # A double-quoted px header, which the SVG-to-PNG step reads.
   head <- startsWith(txt, "<svg")
   txt[head] <- paste0(
     "<svg xmlns=\"http://www.w3.org/2000/svg\" ",

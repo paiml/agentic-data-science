@@ -250,7 +250,10 @@ fn p4_plot_is_a_real_axes_figure_of_the_test_predictions() {
         ),
         &pts,
     );
-    assert!(svg.matches("<circle").count() > pts.len());
+    assert_eq!(
+        ads_rust::figure::circles(&svg).len(),
+        pts.len() + 1
+    );
     ads_rust::figure::write_if_out(&svg);
 }
 

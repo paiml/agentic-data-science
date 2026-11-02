@@ -53,72 +53,164 @@ test_that("figure_svg writes to ADS_OUT, else nothing", {
 
 svg_lines <- function(p) {
   f <- tempfile(fileext = ".svg")
-  figure_svg(p, f)
+  agenticds::figure_svg(p, f)
   readLines(f)
 }
-# Data points are the round-capped filled paths; text is one <use>
-# per glyph (the cairo device draws no <text>).
-n_points <- function(txt) {
-  pat <- "fill-rule:nonzero;fill:rgb.*stroke-linecap:round"
-  sum(grepl(pat, txt))
+# Data points are the round-capped filled paths.
+pt_pat <- "fill-rule:nonzero;fill:rgb.*stroke-linecap:round"
+n_points <- function(txt) sum(grepl(pt_pat, txt))
+point_xy <- function(txt) {
+  rx <- ".* d=\"M ([0-9.]+) ([0-9.]+) .*"
+  d <- sub(rx, "\\1 \\2", txt[grepl(pt_pat, txt)])
+  m <- do.call(rbind, strsplit(d, " "))
+  storage.mode(m) <- "double"
+  m
 }
-n_glyphs <- function(txt) sum(grepl("<use", txt, fixed = TRUE))
-chars <- function(...) nchar(paste(c(...), collapse = ""))
+# The cairo device draws text as glyph shapes, one <use> per
+# character, so a text run is read back by looking each glyph's
+# outline up in a table made from a known alphabet.
+alphabet <- paste0(
+  paste(c(letters, LETTERS, 0:9), collapse = ""), " ()-./%,"
+)
+glyph_paths <- function(txt) {
+  s <- grep("<symbol", txt, fixed = TRUE)
+  ids <- sub(".*id=\"([^\"]+)\".*", "\\1", txt[s])
+  d <- sub(".* d=\"([^\"]*)\".*", "\\1", txt[s + 1L])
+  stats::setNames(d, ids)
+}
+text_runs <- function(txt) {
+  paths <- glyph_paths(txt)
+  starts <- grep("^<g style=\"fill:rgb", txt)
+  lapply(starts, function(s) {
+    e <- s + match("</g>", txt[-seq_len(s)])
+    u <- txt[s:e][grepl("<use", txt[s:e], fixed = TRUE)]
+    id <- sub(".*href=\"#([^\"]+)\".*", "\\1", u)
+    xy <- function(a) {
+      as.numeric(sub(paste0(".* ", a, "=\"([^\"]+)\".*"), "\\1", u))
+    }
+    list(
+      ink = sub(".*fill:rgb\\(([0-9.]+)%.*", "\\1", txt[s]),
+      x = xy("x")[1], y = xy("y")[1], d = unname(paths[id])
+    )
+  })
+}
+role <- function(r) {
+  if (startsWith(r$ink, "30.19")) {
+    "tick"
+  } else if (r$y < 50) {
+    "title"
+  } else if (r$y > 690) {
+    "xlab"
+  } else if (r$x < 50) {
+    "ylab"
+  } else {
+    "other"
+  }
+}
+runs_by_role <- function(txt) {
+  r <- text_runs(txt)
+  split(r, vapply(r, role, ""))
+}
+font_table <- local({
+  cache <- new.env()
+  function() {
+    if (is.null(cache$tab)) {
+      ch <- strsplit(alphabet, "")[[1]]
+      pieces <- split(ch, (seq_along(ch) - 1L) %/% 18L)
+      cache$tab <- stats::setNames(lapply(
+        c("title", "xlab", "ylab"), function(k) {
+          out <- character()
+          for (pc in pieces) {
+            s <- paste(pc, collapse = "")
+            txt <- svg_lines(fsc(
+              pen, "bill_length_mm", "bill_depth_mm", s, s, s
+            ))
+            d <- runs_by_role(txt)[[k]][[1]]$d
+            stopifnot(length(d) == length(pc))
+            out <- c(out, stats::setNames(pc, d))
+          }
+          # The font fuses these pairs into one glyph.
+          for (lg in c("fl", "fi", "ff")) {
+            txt <- svg_lines(fsc(
+              pen, "bill_length_mm", "bill_depth_mm", lg, lg, lg
+            ))
+            d <- runs_by_role(txt)[[k]][[1]]$d
+            if (length(d) == 1L) {
+              out <- c(out, stats::setNames(lg, d))
+            }
+          }
+          out
+        }
+      ), c("title", "xlab", "ylab"))
+    }
+    cache$tab
+  }
+})
+read_label <- function(txt, k) {
+  r <- runs_by_role(txt)[[k]]
+  stopifnot(length(r) == 1L)
+  tab <- font_table()[[k]]
+  paste(unname(tab)[match(r[[1]]$d, names(tab))], collapse = "")
+}
+ticks_of <- function(p) {
+  pp <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]
+  list(x = pp$x$get_labels(), y = pp$y$get_labels())
+}
 
-test_that("the svg draws one point per row", {
+test_that("the svg draws one point per row, inside the panel", {
   expect_identical(n_points(svg_lines(bill())), nrow(pen))
   # Grouped: one legend key per species as well.
-  g <- bill(group = "species")
+  g <- svg_lines(bill(group = "species"))
   expect_identical(
-    n_points(svg_lines(g)),
-    nrow(pen) + length(unique(pen$species))
+    n_points(g), nrow(pen) + length(unique(pen$species))
   )
   expect_identical(n_points(svg_lines(bill(pen[1:5, ]))), 5L)
+  xy <- point_xy(svg_lines(bill()))
+  expect_true(all(xy[, 1] > 60 & xy[, 1] < 1280))
+  expect_true(all(xy[, 2] > 30 & xy[, 2] < 690))
+  # Spread over the frame, not collapsed to a point or a line.
+  expect_gt(diff(range(xy[, 1])), 0.2 * 1280)
+  expect_gt(diff(range(xy[, 2])), 0.2 * 720)
 })
 
-test_that("the svg draws the title and both axis labels", {
-  txt <- svg_lines(bill())
-  blank <- svg_lines(fsc(
-    pen, "bill_length_mm", "bill_depth_mm", "", "", ""
-  ))
-  # One glyph per character of "t", "x" and "y".
-  expect_identical(
-    n_glyphs(txt) - n_glyphs(blank),
-    chars("t", "x", "y")
-  )
-  long <- svg_lines(fsc(
+test_that("the title and each axis label read back exactly", {
+  txt <- svg_lines(fsc(
     pen, "bill_length_mm", "bill_depth_mm",
     "Bill depth on length", "length (mm)", "depth (mm)"
   ))
-  expect_identical(
-    n_glyphs(long) - n_glyphs(blank),
-    chars("Bill depth on length", "length (mm)", "depth (mm)")
-  )
-})
-
-test_that("the svg draws tick labels on both axes", {
-  p <- bill()
-  pp <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]
-  ticks <- c(pp$x$get_labels(), pp$y$get_labels())
-  ticks <- ticks[!is.na(ticks)]
-  expect_gt(length(pp$x$get_labels()), 1L)
-  expect_gt(length(pp$y$get_labels()), 1L)
-  blank <- svg_lines(fsc(
-    pen, "bill_length_mm", "bill_depth_mm", "", "", ""
+  expect_identical(read_label(txt, "title"), "Bill depth on length")
+  expect_identical(read_label(txt, "xlab"), "length (mm)")
+  expect_identical(read_label(txt, "ylab"), "depth (mm)")
+  # Swapped labels are caught: each lands on its own axis.
+  sw <- svg_lines(fsc(
+    pen, "bill_length_mm", "bill_depth_mm",
+    "t", "depth (mm)", "length (mm)"
   ))
-  expect_gte(n_glyphs(blank), chars(ticks))
-  expect_true(any(grepl("stroke:rgb", blank)))
+  expect_identical(read_label(sw, "xlab"), "depth (mm)")
+  expect_identical(read_label(sw, "ylab"), "length (mm)")
 })
 
-test_that("a fit adds a line without adding points", {
+test_that("the svg draws exactly the tick labels of both axes", {
+  p <- bill()
+  tk <- ticks_of(p)
+  rr <- runs_by_role(svg_lines(p))
+  got <- vapply(rr$tick, function(r) length(r$d), 0L)
+  want <- nchar(c(tk$x, tk$y)[!is.na(c(tk$x, tk$y))])
+  expect_gt(length(tk$x), 1L)
+  expect_gt(length(tk$y), 1L)
+  expect_identical(sort(got), sort(unname(want)))
+})
+
+test_that("a fit adds exactly one line and no points", {
   red <- function(p) {
-    sum(grepl("stroke:rgb(75", svg_lines(p), fixed = TRUE))
+    sum(grepl("stroke:rgb(75.29", svg_lines(p), fixed = TRUE))
   }
+  expect_identical(red(bill()), 0L)
+  expect_identical(red(bill(fit = TRUE)), 1L)
   expect_identical(
     n_points(svg_lines(bill(fit = TRUE))),
     n_points(svg_lines(bill()))
   )
-  expect_gt(red(bill(fit = TRUE)), red(bill()))
 })
 
 test_that("figure_demo draws every module's figure", {
@@ -127,24 +219,43 @@ test_that("figure_demo draws every module's figure", {
   wine <- nrow(utils::read.csv(file.path(
     root, "datasets", "wine-quality", "winequality-red.csv"
   )))
-  ids <- c(
-    "c-m1-v01-ticket", "c-m2-v02-ols", "c-m3-v03-red",
-    "c-m3-v04-determinism", "c-m4-v02-ingest"
+  want <- list(
+    "c-m1-v01-ticket" = c(
+      "flipper length on bill length",
+      "bill length (mm)", "flipper length (mm)"
+    ),
+    "c-m2-v02-ols" = c(
+      "body mass on flipper length",
+      "flipper length (mm)", "body mass (g)"
+    ),
+    "c-m3-v03-red" = c(
+      "bill depth on bill length",
+      "bill length (mm)", "bill depth (mm)"
+    ),
+    "c-m3-v04-determinism" = c(
+      "body mass on flipper length",
+      "flipper length (mm)", "body mass (g)"
+    ),
+    "c-m4-v02-ingest" = c(
+      "Wine quality on alcohol",
+      "alcohol (% vol)", "quality score (0-10)"
+    )
   )
   withr::with_dir(root, withr::with_envvar(c(ADS_OUT = d), {
-    for (id in ids) {
+    for (id in names(want)) {
       unlink(file.path(d, "plot.svg"))
       figure_demo(id)
       txt <- readLines(file.path(d, "plot.svg"))
-      expect_gt(file.size(file.path(d, "plot.svg")), 1000)
       expected <- if (grepl("^c-m4", id)) {
         wine
       } else {
         nrow(pen) + length(unique(pen$species))
       }
-      # Every row is a point; axes, title and ticks carry glyphs.
+      # Every row is a point; the labels sit on their own axes.
       expect_identical(n_points(txt), expected, info = id)
-      expect_gt(n_glyphs(txt), 40L)
+      expect_identical(read_label(txt, "title"), want[[id]][1])
+      expect_identical(read_label(txt, "xlab"), want[[id]][2])
+      expect_identical(read_label(txt, "ylab"), want[[id]][3])
     }
   }))
   expect_error(figure_demo("c-m9-v01-x"))
