@@ -70,8 +70,10 @@ def by1 : Float := 880
 def rng (l : List Float) : Float × Float :=
   let lo := l.foldl min (l.headD 0)
   let hi := l.foldl max (l.headD 0)
-  if hi - lo < 1e-9 then (lo - 1, hi + 1)
-  else (lo - (hi - lo) / 20, hi + (hi - lo) / 20)
+  let pad := if hi - lo < 1e-9 then 1 else (hi - lo) / 20
+  -- non-negative data never gets a negative tick (a count axis)
+  let lo' := if lo >= 0 then max 0 (lo - pad) else lo - pad
+  (lo', hi + pad)
 
 /-- Pixel x of a data x. -/
 def pxOf (r : Float × Float) (x : Float) : Float :=

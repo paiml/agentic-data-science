@@ -18,6 +18,14 @@ arm 02-missing refuse "$t/none.svg"
 /usr/bin/grep -v '<circle' "$good" > "$t/nopts.svg"; echo '</svg>' >> "$t/nopts.svg"; arm 03-no-points refuse "$t/nopts.svg"
 /usr/bin/grep -v '<path' "$good" > "$t/noaxes.svg";  arm 04-no-axes refuse "$t/noaxes.svg"
 /usr/bin/grep -v '<text' "$good" > "$t/noticks.svg"; arm 05-no-ticks refuse "$t/noticks.svg"
+# bar charts (ads#153): bars count as marks, the background rect does not
+bars() { # n -> nopts.svg with n bar rects and the full-canvas background rect
+  { /usr/bin/grep -v '</svg>' "$t/nopts.svg"; echo '<rect width="1920" height="1080"/>'
+    for i in $(seq 1 "$1"); do echo "<rect x=\"$i\" y=\"1\" width=\"5\" height=\"9\"/>"; done; echo '</svg>'; }; }
+bars 3 > "$t/bars3.svg"; arm 15-bars-ok pass "$t/bars3.svg"
+bars 1 > "$t/bars1.svg"; arm 16-one-bar refuse "$t/bars1.svg"
+bars 0 > "$t/bars0.svg"; arm 17-background-rect-only refuse "$t/bars0.svg"
+/usr/bin/grep -v '<path' "$t/bars3.svg" > "$t/barsnoaxes.svg"; arm 18-bars-no-axes refuse "$t/barsnoaxes.svg"
 # usage errors and the png/clip modes, with stub lake and rmedia so the arms are hermetic
 want() { # name expected-rc cmd...
   n="$1"; e="$2"; shift 2; "$@" >"$t/o.txt" 2>&1; rc=$?

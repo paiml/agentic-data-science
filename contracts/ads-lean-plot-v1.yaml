@@ -15,18 +15,18 @@ metadata:
 equations:
   plot_is_real:
     formula: |
-      check(svg) = OK  iff  size(svg) > 0 and count('<circle') >= 2 and count('<path') >= 4 and count('<text') >= 8
+      check(svg) = OK  iff  size(svg) > 0 and count('<circle') + count('<rect x=') >= 2 (points or bars) and count('<path') >= 4 and count('<text') >= 8
     domain: "any file path"
     codomain: "exit 0 with 'plot OK: <svg>', or exit 1 with a FAIL line naming the missing part"
     postconditions:
-      - "REFUSE: a missing or empty file, fewer than 2 points, no axes and gridlines, or no tick labels is RED"
+      - "REFUSE: a missing or empty file, fewer than 2 points or bars (the full-canvas background rect is not a bar), no axes and gridlines, or no tick labels is RED"
       - "REFUSE: png and clip write nothing when check is RED"
       - "USAGE: no mode, an unknown mode or an example outside m1..m4 v01..v10 exits 2"
 
 proof_obligations:
   - type: invariant
     property: "Every refusal arm exits non-zero and the control exits 0"
-    formal: "scripts/falsify-lean-plot.sh exits 0 (15 arms: control, 5 refusals, 3 usage, png ok/no-svg/no-file, clip ok/bad-plot/no-file)"
+    formal: "scripts/falsify-lean-plot.sh exits 0 (19 arms: control, 5 refusals, 4 bar, 3 usage, png ok/no-svg/no-file, clip ok/bad-plot/no-file)"
     applies_to: plot_is_real
   - type: invariant
     property: "Every line of lean-plot.sh runs under the falsifier (kcov, one run per call, merged)"
