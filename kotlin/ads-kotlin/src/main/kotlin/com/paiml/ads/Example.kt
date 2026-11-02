@@ -36,10 +36,12 @@ fun loadClean(): AnyFrame {
     return df
 }
 
-/** Scatter coloured by species plus the fitted line, saved to PLOT. */
+/** Scatter coloured by species plus the fitted line, saved as [file] (PNG or SVG by extension) under [dir]. */
 fun plotFit(
     df: AnyFrame,
     fit: Fit,
+    file: String = PLOT,
+    dir: String = ".",
 ) {
     val chart =
         df.plot {
@@ -59,5 +61,5 @@ fun plotFit(
             }
             layout { phoneStyle("Palmer penguins: OLS fit") }
         }
-    chart.save(PLOT, scale = PLOT_SCALE, path = ".")
+    chart.save(file, scale = PLOT_SCALE, path = dir)
 }

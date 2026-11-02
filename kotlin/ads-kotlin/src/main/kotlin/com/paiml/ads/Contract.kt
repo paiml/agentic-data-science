@@ -17,6 +17,7 @@ private val CLASS_CONTRACTS =
         "M4ExamplesTest" to "ads-kotlin-examples-m4-v1",
         "P4Test" to "ads-kotlin-p4-v1",
         "AnscombeTest" to "ads-kotlin-anscombe-v1",
+        "PlotCheckTest" to "ads-kotlin-plot-v1",
     )
 
 /** The one contract a set of test classes proves. */
