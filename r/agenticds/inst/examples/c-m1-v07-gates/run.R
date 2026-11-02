@@ -5,7 +5,7 @@ pkg <- file.path("r", "agenticds")
 dir <- file.path(normalizePath(pkg), "tests", "testthat")
 tests <- sprintf(paste0(
   "library(agenticds); testthat::test_dir('%s', ",
-  "filter = 'p[1-4]|verdict|anscombe', package = 'agenticds', ",
+  "filter = 'p[1-4]|verdict|anscombe|figure', package = 'agenticds', ",
   "load_package = 'installed', reporter = 'silent', ",
   "stop_on_failure = TRUE)"
 ), dir)
