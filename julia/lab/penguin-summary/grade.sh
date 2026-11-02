@@ -32,8 +32,9 @@ cd "$gp" || exit 2
 nonce=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 result=$res/result-$nonce
 export JULIA_PKG_OFFLINE=${JULIA_PKG_OFFLINE:-true}
-"$JULIA" --project=. -e 'using Pkg; Pkg.instantiate()' >/dev/null 2>&1
-(cd "$work" && "$JULIA" --project=. -e 'using Pkg; Pkg.instantiate()' >/dev/null 2>&1)
+inst() { ierr=$("$JULIA" --project=. -e 'using Pkg; Pkg.instantiate()' 2>&1 >/dev/null) || { echo "GRADE: instantiate failed in $PWD:" >&2; printf '%s\n' "$ierr" | tail -n 25 >&2; }; }
+inst
+(cd "$work" && inst)
 # the tests run IN PLACE from the grader dir, so their data path (../data) is the grader's, not the learner's copy
 out=$(printf '%s\t%s\n' "$result" "$nonce" | timeout "${GRADE_TIMEOUT:-600}" "$JULIA" --project=. "$runner" "$tests" "$work" "$G/serve.jl" "$G/wire.jl" 2>&1); rc=$?
 printf '%s\n' "$out" | tail -n 25
