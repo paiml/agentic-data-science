@@ -11,28 +11,40 @@ t() { n=$((n+1)); if "$@"; then echo "PASS test$n: $T"; else echo "FAIL test$n: 
 rc=0
 T="no sorry/admit/native_decide"; t bash -c '! grep -nE "\b(sorry|admit)\b|native_decide" "$0"' "$f"
 g=$(mktemp -d); trap 'rm -rf "${g:?}"' EXIT
-# Comments are stripped before the keyword layer reads the file (a word in a comment is not a hijack).
-perl -0pe 's{/-.*?-/}{}gs; s{--[^\n]*}{}g' "$f" > "$g/stripped.lean"
-T="no instance/axiom/macro/syntax/elab/set_option/local/open-in/attribute hijack keywords (second layer, comments stripped)"
-t bash -c '! grep -nE "^\s*(import|#exit|open\b.*\bin\b|local|scoped|private|protected|unsafe|partial|noncomputable)\b|\b(instance|axiom|macro|macro_rules|#exit|run_cmd|run_elab|run_meta|priority|syntax|elab|elab_rules|set_option|notation|infix|infixl|infixr|prefix|postfix|attribute|opaque|implemented_by|extern|export|csimp|deriving instance)\b|@\[[^]]*(instance|reducible|simp|implemented_by|extern|export|csimp|macro|inline)" "$0"' "$g/stripped.lean"
-# Root layer: module boundary. Ref.lean (grader-owned reference sumL and statement) and Learner.lean (the learner file)
-# each compile to their own .olean; Pins.lean imports both and uses fully _root_-qualified names. No open namespace,
-# section, scope, instance or local name of the learner file crosses an import. Learner.lean ends with a grader check that
-# no namespace or section is left open. The reference is elaborated in a module the learner never touches.
-cat > "$g/Ref.lean" <<'REF'
+# Comments are stripped (string-aware: a "--" inside a string literal does not start a comment) before the keyword layer reads the file.
+perl -0pe 's{("(?:\\.|[^"\\])*")|/-.*?-/|--[^\n]*}{defined $1 ? $1 : ""}gse' "$f" > "$g/stripped.lean"
+T="no instance/axiom/macro/syntax/elab/set_option/local/open-in/attribute/unsafeCast/initialize hijack keywords (second layer, comments stripped)"
+t bash -c '! grep -nE "^\s*(import|#exit|open\b.*\bin\b|local|scoped|private|protected|unsafe|partial|noncomputable)\b|\b(instance|axiom|macro|macro_rules|#exit|run_cmd|run_elab|run_meta|priority|syntax|elab|elab_rules|set_option|notation|infix|infixl|infixr|prefix|postfix|attribute|opaque|implemented_by|extern|export|csimp|deriving instance|unsafeCast|ofReduceBool|trustCompiler|lcProof|sorryAx|initialize|builtin_initialize|run_tac|debug)\b|@\[[^]]*(instance|reducible|simp|implemented_by|extern|export|csimp|macro|inline)" "$0"' "$g/stripped.lean"
+T="no #eval/#print/#check/run_cmd after other text on a line (those commands are only accepted at a line start, where the grader drops them)"
+t bash -c '! grep -nE "[^[:space:]].*(#eval|#print|#check|#reduce|#synth|#exit|run_cmd|run_tac)" "$0"' "$g/stripped.lean"
+# Root layer: the grader NEVER executes learner code at elaboration time. Learner.lean is compiled from a grader copy of the
+# comment-stripped file with every #eval/#print/#check/#reduce/#synth/run_cmd command (and its indented continuation lines)
+# removed; initialize/builtin_initialize are refused above. Ref.lean (reference sumL and statement) and Learner.lean compile
+# to their own oleans in separate dirs; Pins.lean is written AFTER Learner compiled, its sha256 and Ref.olean's are checked
+# before use, and the verdict is read from Pins' output only. No scope, instance or name of the learner crosses the import.
+mkdir -p "$g/ref" "$g/lrn" "$g/pins"
+cat > "$g/ref/Ref.lean" <<'REF'
 namespace GraderRef
 def sumL (xs : List Int) : Int := xs.foldl (· + ·) 0
 def stmt : Prop := ∀ (c : Int) (xs : List Int), sumL (xs.map (· + c)) = sumL xs + xs.length * c
 end GraderRef
 REF
-{ echo "import Lean"; cat "$f"; cat <<'TAIL'
+perl -ne 'if (/^\s*(#eval|#print|#check|#reduce|#synth|run_cmd|run_tac)\b/) { $skip=1; next } if ($skip && /^\s+\S/) { next } $skip=0; print' "$g/stripped.lean" > "$g/body.lean"
+{ echo "import Lean"; cat "$g/body.lean"; cat <<'TAIL'
 
 #eval show _root_.Lean.Elab.Command.CommandElabM Unit from do
   unless (← _root_.Lean.Elab.Command.getScopes).length == 1 && (← _root_.Lean.Elab.Command.getScope).currNamespace == _root_.Lean.Name.anonymous do
     _root_.Lean.throwError "grader: a namespace or section is left open at the end of Mean.lean"
 TAIL
-} > "$g/Learner.lean"
-cat > "$g/Pins.lean" <<'PIN'
+} > "$g/lrn/Learner.lean"
+lean_c() { # dir module [-o]
+  (cd "$1" && LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
+}
+e=0; out=""
+o=$(lean_c "$g/ref" Ref -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }
+if [ "$e" -eq 0 ]; then refsha=$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1); o=$(lean_c "$g/lrn" Learner -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }; fi
+if [ "$e" -eq 0 ]; then
+cat > "$g/pins/Pins.lean" <<'PIN'
 import Lean
 import Ref
 import Learner
@@ -56,11 +68,14 @@ open Lean Elab Command in
       throw (IO.userError "grader: contract mean_shift violated at run time")
   IO.println "grader contract: mean_shift OK"
 PIN
-out=""; e=0
-for m in Ref Learner Pins; do
-  if [ "$m" = Pins ]; then o=$(cd "$g" && LEAN_PATH="$g" lean "+$tc" -DwarningAsError=true "$m.lean" 2>&1); else o=$(cd "$g" && LEAN_PATH="$g" lean "+$tc" -DwarningAsError=true -o "$m.olean" "$m.lean" 2>&1); fi
-  r=$?; out="$out$o"$'\n'; if [ "$r" -ne 0 ]; then e=$r; break; fi
-done
-T="elaborates (as modules), warnings as errors, contract OK"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader contract: mean_shift OK" && echo "$2" | grep -q "grader expr: sum_shift type OK"' x "$e" "$out"
+  pinsha=$(sha256sum "$g/pins/Pins.lean" | cut -d' ' -f1)
+  if [ "$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1)" != "$refsha" ]; then e=1; out="grader: Ref.olean was modified while the learner file compiled"
+  else
+    out=$(lean_c "$g/pins" Pins); e=$?
+    [ "$(sha256sum "$g/pins/Pins.lean" | cut -d' ' -f1)" = "$pinsha" ] || { e=1; out="grader: Pins.lean was modified while checking"; }
+  fi
+fi
+T="elaborates (as modules), warnings as errors, contract OK (verdict from the grader's Pins output only)"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader contract: mean_shift OK" && echo "$2" | grep -q "grader expr: sum_shift type OK"' x "$e" "$out"
 T="axioms of sum_shift within allowed set"; t bash -c '! { echo "$0" | grep "depends on axioms" | grep -vE "\[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$"; } && echo "$0" | grep -q grader_sum_shift' "$out"
+[ -n "${GRADER_DEBUG:-}" ] && echo "$out" >&2
 echo "tests run: $n"; [ "$n" -ge 1 ] || exit 2; exit $rc
