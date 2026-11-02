@@ -23,6 +23,8 @@ def scatterDemo (file title xl yl : String) (stride : Nat)
     [(qf lo, qf (a + lo * b)), (qf hi, qf (a + hi * b))] []
     [s!"every {stride}th row, n = {d.length}",
      s!"slope = {qf b}"]
+    ((ps.zipIdx.filter fun p => p.2 % stride == 0).map
+      fun p => (qf p.1.1, qf p.1.2))
 
 /-- Penguin columns `xc` against `yc`. -/
 def penguinDemo (file title xc yc : String) (stride : Nat) :

@@ -56,6 +56,13 @@ for p in empty nan; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
 done
+# The source-row contract must fire on swapped axes and on a wrong row.
+for p in swap row; do
+  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatterSource.lean $p 2>&1); then echo "FAIL PlantedScatterSource $p no longer fails: $out"; exit 1; fi
+  echo "$out" | grep -q "plot_scatter_source violated" || { echo "FAIL PlantedScatterSource $p failed for another reason: $out"; exit 1; }
+done
+# One planted run per id (v05, v08, v09) must be refused by the m3 scatter pins.
+scripts/falsify-m3-scatter.sh >/dev/null || { echo "FAIL m3 scatter falsifier"; scripts/falsify-m3-scatter.sh; exit 1; }
 if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }

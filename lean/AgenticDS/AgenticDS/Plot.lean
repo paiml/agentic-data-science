@@ -150,12 +150,14 @@ def scatterSvg (title xl yl : String) (pts line marks :
   String.join (marks.map (dotSvg 11 rx ry "#f87171")) ++
   "</svg>\n"
 
-/-- Write the scatter SVG, then check `plot_scatter_bounded`:
+/-- Write the scatter SVG, then check `plot_scatter_bounded` and
+`plot_scatter_source` (every plotted point is its row of `src`):
 at least one point, one circle per point and mark, and every
 circle inside the plot box. -/
 def writeScatter (path : System.FilePath) (title xl yl : String)
     (pts line marks : List (Float × Float))
-    (notes : List String) : IO Unit := do
+    (notes : List String)
+    (src : List (Float × Float) := pts) : IO Unit := do
   let s := scatterSvg title xl yl pts line marks notes
   IO.FS.writeFile path s
   let all := pts ++ line ++ marks
@@ -169,6 +171,13 @@ def writeScatter (path : System.FilePath) (title xl yl : String)
     !(all.all inside)
   if bad then
     throw (IO.userError "plot_scatter_bounded violated")
+  -- Each plotted point is its source row, in the file read back.
+  let got := ((← IO.FS.readFile path).splitOn "\n").filter
+    fun l => (l.splitOn "#4ade80").length > 1
+  let want := (src.map (dotSvg (dotR pts) rx ry "#4ade80")).map
+    fun l => (l.splitOn "\n").headD ""
+  if got != want then
+    throw (IO.userError "plot_scatter_source violated")
   IO.println s!"svg {pts.length} points {path}"
   IO.println "contract: plot_scatter_bounded OK"
 
