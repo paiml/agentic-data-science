@@ -1,0 +1,19 @@
+# Every refusal path (a `none` result or a `throw`) in lean/AgenticDS/AgenticDS, with the test that exercises it.
+# Columns, tab separated: module, enclosing def, kind, test file, label the test carries.
+# A test file is relative to lean/AgenticDS or to the repo root. The check is scripts/check-lean-fn-coverage.sh (ads#130).
+Csv	parseRat	none	AgenticDSTest/Refusals.lean	refusal Csv.parseRat none
+Csv	toRawRow	none	AgenticDSTest/Refusals.lean	refusal Csv.toRawRow none
+Ols	pairsOf	none	AgenticDSTest/Refusals.lean	refusal Ols.pairsOf none
+Pipeline	validate	none	AgenticDSTest/Refusals.lean	refusal Pipeline.validate none
+Pipeline	gaussSolve	none	AgenticDSTest/Refusals.lean	refusal Pipeline.gaussSolve none
+Ols	savePlot	throw	scripts/gate-lean.sh	convert failed
+Plot	writeScatter	throw	scripts/gate-lean.sh	plot_scatter_bounded violated
+Plot	writeSvg	throw	scripts/gate-lean.sh	plot_svg_bounded violated
+lean-plot.sh	missing or empty	scripts/falsify-lean-plot.sh	01-empty
+lean-plot.sh	fewer than 2 points or bars	scripts/falsify-lean-plot.sh	03-no-points
+lean-plot.sh	has no axes and gridlines	scripts/falsify-lean-plot.sh	04-no-axes
+lean-plot.sh	has no tick labels	scripts/falsify-lean-plot.sh	05-no-ticks
+lean-plot.sh	usage: lean-plot.sh png	scripts/falsify-lean-plot.sh	08-bad-example
+lean-plot.sh	no png written	scripts/falsify-lean-plot.sh	11-png-no-file
+lean-plot.sh	no clip written	scripts/falsify-lean-plot.sh	14-clip-no-file
+lean-plot.sh	usage: lean-plot.sh check|png|clip	scripts/falsify-lean-plot.sh	07-bad-mode
