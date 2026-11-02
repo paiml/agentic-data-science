@@ -1,0 +1,29 @@
+name = "AgenticDS"
+version = "0.1.0"
+defaultTargets = ["AgenticDS", "example-m1", "example-m2"]
+allowNonModules = true
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+warningAsError = true
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longLine.maxLineLength = 68
+weak.linter.style.header.license = "Released under MIT license as described in the file LICENSE."
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "AgenticDS"
+roots = ["AgenticDS.ExampleM1Main", "AgenticDS.ExampleM2Main"]
+globs = ["AgenticDS.Examples.+", "AgenticDS.Csv", "AgenticDS.Cv", "AgenticDS.Ols", "AgenticDS.Plot", "AgenticDS.Profile", "AgenticDS.Regression", "AgenticDS.Stats"]
+
+[[lean_exe]]
+name = "example-m1"
+root = "AgenticDS.ExampleM1Main"
+
+[[lean_exe]]
+name = "example-m2"
+root = "AgenticDS.ExampleM2Main"

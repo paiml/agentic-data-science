@@ -1,0 +1,38 @@
+pv lint — contract quality gate
+================================
+
+  Gate 1: validate             ✓  (36 contracts, 0 errors, 0 warnings) [0ms] → Pass
+  Gate 2: audit                ✓  (36 contracts, 0 findings) [0ms] → Pass
+  Gate 3: score                ✓  (36 contracts, mean=0.61, threshold=0.00) [0ms] → Pass
+  Gate 4: verify               ✓  (0 refs, 0 found, 0 missing) [0ms] → Pass
+  Gate 5: enforce              ✓  (0 eqs, 0 pre, 0 post) [0ms] → Pass
+  Gate 6: enforcement-level    ✓  (skipped: 36 contracts, 0 below level) [0ms] → Pass
+  Gate 7: reverse-coverage     ⏭  (skipped: no --binding or --crate-dir provided) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 8: duplicate-stems      ✓  (0 ambiguous stems, 0 baselined, 0 unbaselined, 0 stale) [0ms] → Pass
+  Gate 9: composition          ✓  (0 edges, 0 satisfied, 0 broken) [0ms] → Pass
+  Gate 10: sigma                ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 11: relations            ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 12: shapes               ⏭  (skipped: no `shape:` block in 36 contracts — R-2: zero is a decline) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 13: valid-under          ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 14: theorem-pairing      ⏭  (skipped: no Lean theorem base (ProvableContracts/Theorems) under .) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 15: depends-on-present   ⏭  (skipped: no kernel-kind contract in 36 contract(s): nothing was measured) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 16: proved-is-derived    ⏭  (36 contracts, 0 errors, 0 warnings) [5ms] → Unknown(NotArmed) [gate: Unknown(Report)]
+  Gate 17: challenge-fresh      ⏭  (skipped: no Lean theorem base under the repo root) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 18: ont-consistency      ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(NoCheckable)]
+  Gate 19: refines              ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(NoCheckable)]
+  Gate 20: bindings             ⏭  (skipped: not at a workspace root: `contracts` has no [workspace] Cargo.toml beside it, so no binding can be resolved) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 21: refinement           ⏭  (skipped: no crates/aprender-contracts-staging/lean/formalization.yaml beside the corpus) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+  Gate 22: evidence             ⏭  (skipped: no contracts/ontology.yaml) [0ms] → Unknown(NotArmed) [gate: Unknown(Skip)]
+
+Slowest contracts:
+  ads-julia-examples-m1-v1.yaml            0ms
+  ads-julia-examples-m2-v1.yaml            0ms
+  ads-julia-examples-m3-v1.yaml            0ms
+  ads-julia-examples-m4-v1.yaml            0ms
+  ads-julia-p1-v1.yaml                     0ms
+
+Summary: 0 errors, 0 warnings, 0 suppressed
+armed meet: Pass (8 armed; not armed: reverse-coverage, sigma, relations, shapes, valid-under, theorem-pairing, depends-on-present, proved-is-derived, challenge-fresh, ont-consistency, refines, bindings, refinement, evidence)
+armed_gates monotone: OK against merge-base(HEAD, origin/main) bf6c7b5276a8 (8 committed, 8 declared)
+armed_shapes monotone: OK against merge-base(HEAD, origin/main) bf6c7b5276a8 (all shapes armed there and here)
+Result: PASS
