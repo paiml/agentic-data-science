@@ -237,3 +237,19 @@ fn wine_points_pairs_an_integer_column_with_a_float_column() {
     assert_eq!(pts.len(), df.height());
     assert!(pts.iter().all(|p| (0.0..=10.0).contains(&p.1)));
 }
+
+#[test]
+fn p4_plot_is_a_real_axes_figure_of_the_test_predictions() {
+    let pts =
+        test_predictions(&wine("red"), &wine("white")).unwrap();
+    let svg = ads_rust::figure::scatter_fit(
+        (
+            "Pipeline: predicted vs observed quality (test rows)",
+            "observed quality score",
+            "predicted quality score",
+        ),
+        &pts,
+    );
+    assert!(svg.matches("<circle").count() > pts.len());
+    ads_rust::figure::write_if_out(&svg);
+}

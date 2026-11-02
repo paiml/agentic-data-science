@@ -94,3 +94,24 @@ fn verdict_is_green_on_a_tty_and_plain_when_piped() {
         "\x1b[1;32mcontract: x OK\x1b[0m"
     );
 }
+
+#[test]
+fn p2_plot_is_a_real_axes_figure_of_the_fitted_data() {
+    let (c, _, _) = load();
+    let pts: Vec<(f64, f64)> = c
+        .flipper
+        .iter()
+        .copied()
+        .zip(c.mass.iter().copied())
+        .collect();
+    let svg = ads_rust::figure::scatter_fit(
+        (
+            "Body mass on flipper length (Palmer penguins)",
+            "flipper length (mm)",
+            "body mass (g)",
+        ),
+        &pts,
+    );
+    assert_eq!(svg.matches("<circle").count(), pts.len() + 1);
+    ads_rust::figure::write_if_out(&svg);
+}
