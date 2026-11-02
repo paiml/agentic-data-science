@@ -51,174 +51,164 @@ test_that("figure_svg writes to ADS_OUT, else nothing", {
   )
 })
 
-svg_lines <- function(p) {
+# The content checks render with svglite, which keeps real <text>
+# elements and <circle> markers, so labels and ticks are read as
+# strings and no font or glyph table is involved.
+svg_txt <- function(p) {
   f <- tempfile(fileext = ".svg")
-  agenticds::figure_svg(p, f)
+  svglite::svglite(f, width = 1280 / 72, height = 720 / 72)
+  print(p)
+  grDevices::dev.off()
   readLines(f)
 }
-# Data points are the round-capped filled paths.
-pt_pat <- "fill-rule:nonzero;fill:rgb.*stroke-linecap:round"
-n_points <- function(txt) sum(grepl(pt_pat, txt))
-point_xy <- function(txt) {
-  rx <- ".* d=\"M ([0-9.]+) ([0-9.]+) .*"
-  d <- sub(rx, "\\1 \\2", txt[grepl(pt_pat, txt)])
-  m <- do.call(rbind, strsplit(d, " "))
-  storage.mode(m) <- "double"
-  m
+attr_of <- function(el, a) {
+  sub(paste0(".* ", a, "='([^']*)'.*"), "\\1", el)
 }
-# The cairo device draws text as glyph shapes, one <use> per
-# character, so a text run is read back by looking each glyph's
-# outline up in a table made from a known alphabet.
-alphabet <- paste0(
-  paste(c(letters, LETTERS, 0:9), collapse = ""), " ()-./%,"
-)
-glyph_paths <- function(txt) {
-  s <- grep("<symbol", txt, fixed = TRUE)
-  ids <- sub(".*id=\"([^\"]+)\".*", "\\1", txt[s])
-  d <- sub(".* d=\"([^\"]*)\".*", "\\1", txt[s + 1L])
-  stats::setNames(d, ids)
+circles <- function(txt) {
+  el <- txt[grepl("^<circle ", txt)]
+  cbind(
+    x = as.numeric(attr_of(el, "cx")),
+    y = as.numeric(attr_of(el, "cy"))
+  )
 }
-text_runs <- function(txt) {
-  paths <- glyph_paths(txt)
-  starts <- grep("^<g style=\"fill:rgb", txt)
-  lapply(starts, function(s) {
-    e <- s + match("</g>", txt[-seq_len(s)])
-    u <- txt[s:e][grepl("<use", txt[s:e], fixed = TRUE)]
-    id <- sub(".*href=\"#([^\"]+)\".*", "\\1", u)
-    xy <- function(a) {
-      as.numeric(sub(paste0(".* ", a, "=\"([^\"]+)\".*"), "\\1", u))
-    }
-    list(
-      ink = sub(".*fill:rgb\\(([0-9.]+)%.*", "\\1", txt[s]),
-      x = xy("x")[1], y = xy("y")[1], d = unname(paths[id])
-    )
-  })
+texts <- function(txt) {
+  el <- txt[grepl("^<text ", txt)]
+  # A rotated label is placed by translate(); the rest by x and y.
+  pos <- ifelse(
+    grepl("translate(", el, fixed = TRUE),
+    sub("^<text transform=.translate\\(([^)]*)\\).*", "\\1", el),
+    sub("^<text x=.([0-9.]+). y=.([0-9.]+).*", "\\1,\\2", el)
+  )
+  xy <- do.call(rbind, strsplit(pos, ","))
+  data.frame(
+    label = sub("^<text [^>]*>(.*)</text>$", "\\1", el),
+    x = as.numeric(xy[, 1]),
+    y = as.numeric(xy[, 2]),
+    rot = grepl("rotate(", el, fixed = TRUE)
+  )
 }
-role <- function(r) {
-  if (startsWith(r$ink, "30.19")) {
-    "tick"
-  } else if (r$y < 50) {
-    "title"
-  } else if (r$y > 690) {
-    "xlab"
-  } else if (r$x < 50) {
-    "ylab"
-  } else {
-    "other"
-  }
+# Title: the top line; x label: the bottom unrotated line; y label:
+# the rotated line; everything else is a tick label or a legend.
+label_of <- function(txt, k) {
+  t <- texts(txt)
+  r <- switch(k,
+    title = t[t$y == min(t$y), ],
+    xlab = t[!t$rot & t$y == max(t$y), ],
+    ylab = t[t$rot, ]
+  )
+  stopifnot(nrow(r) == 1L)
+  r$label
 }
-runs_by_role <- function(txt) {
-  r <- text_runs(txt)
-  split(r, vapply(r, role, ""))
-}
-font_table <- local({
-  cache <- new.env()
-  function() {
-    if (is.null(cache$tab)) {
-      ch <- strsplit(alphabet, "")[[1]]
-      pieces <- split(ch, (seq_along(ch) - 1L) %/% 18L)
-      cache$tab <- stats::setNames(lapply(
-        c("title", "xlab", "ylab"), function(k) {
-          out <- character()
-          for (pc in pieces) {
-            s <- paste(pc, collapse = "")
-            txt <- svg_lines(fsc(
-              pen, "bill_length_mm", "bill_depth_mm", s, s, s
-            ))
-            d <- runs_by_role(txt)[[k]][[1]]$d
-            stopifnot(length(d) == length(pc))
-            out <- c(out, stats::setNames(pc, d))
-          }
-          # The font fuses these pairs into one glyph.
-          for (lg in c("fl", "fi", "ff")) {
-            txt <- svg_lines(fsc(
-              pen, "bill_length_mm", "bill_depth_mm", lg, lg, lg
-            ))
-            d <- runs_by_role(txt)[[k]][[1]]$d
-            if (length(d) == 1L) {
-              out <- c(out, stats::setNames(lg, d))
-            }
-          }
-          out
-        }
-      ), c("title", "xlab", "ylab"))
-    }
-    cache$tab
-  }
-})
-read_label <- function(txt, k) {
-  r <- runs_by_role(txt)[[k]]
-  stopifnot(length(r) == 1L)
-  tab <- font_table()[[k]]
-  paste(unname(tab)[match(r[[1]]$d, names(tab))], collapse = "")
+tick_labels <- function(txt) {
+  t <- texts(txt)
+  t[!t$rot & t$y > min(t$y) & t$y < max(t$y), "label"]
 }
 ticks_of <- function(p) {
   pp <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]
-  list(x = pp$x$get_labels(), y = pp$y$get_labels())
+  c(pp$x$get_labels(), pp$y$get_labels())
 }
+rho <- function(a, b) stats::cor(a, b, method = "spearman")
 
 test_that("the svg draws one point per row, inside the panel", {
-  expect_identical(n_points(svg_lines(bill())), nrow(pen))
+  expect_identical(nrow(circles(svg_txt(bill()))), nrow(pen))
   # Grouped: one legend key per species as well.
-  g <- svg_lines(bill(group = "species"))
+  g <- svg_txt(bill(group = "species"))
   expect_identical(
-    n_points(g), nrow(pen) + length(unique(pen$species))
+    nrow(circles(g)), nrow(pen) + length(unique(pen$species))
   )
-  expect_identical(n_points(svg_lines(bill(pen[1:5, ]))), 5L)
-  xy <- point_xy(svg_lines(bill()))
-  expect_true(all(xy[, 1] > 60 & xy[, 1] < 1280))
-  expect_true(all(xy[, 2] > 30 & xy[, 2] < 690))
+  expect_identical(nrow(circles(svg_txt(bill(pen[1:5, ])))), 5L)
+  xy <- circles(svg_txt(bill()))
+  expect_true(all(xy[, "x"] > 60 & xy[, "x"] < 1280))
+  expect_true(all(xy[, "y"] > 30 & xy[, "y"] < 690))
   # Spread over the frame, not collapsed to a point or a line.
-  expect_gt(diff(range(xy[, 1])), 0.2 * 1280)
-  expect_gt(diff(range(xy[, 2])), 0.2 * 720)
+  expect_gt(diff(range(xy[, "x"])), 0.2 * 1280)
+  expect_gt(diff(range(xy[, "y"])), 0.2 * 720)
+})
+
+test_that("the points sit where the data says", {
+  # x grows rightwards, y grows upwards (svg y runs downwards).
+  xy <- circles(svg_txt(bill()))
+  expect_gt(rho(xy[, "x"], pen$bill_length_mm), 0.999)
+  expect_lt(rho(xy[, "y"], pen$bill_depth_mm), -0.999)
+  # Swapped axes, shuffled y and a transposed scatter all fail.
+  expect_lt(abs(rho(xy[, "x"], pen$bill_depth_mm)), 0.99)
+  expect_lt(abs(rho(xy[, "y"], pen$bill_length_mm)), 0.99)
+  expect_lt(abs(rho(xy[, "y"], rev(pen$bill_depth_mm))), 0.99)
+  w <- utils::read.csv(file.path(
+    root, "datasets", "wine-quality", "winequality-red.csv"
+  ))
+  wp <- circles(svg_txt(fsc(w, "alcohol", "pH", "t", "x", "y")))
+  expect_gt(rho(wp[, "x"], w$alcohol), 0.999)
+  expect_lt(rho(wp[, "y"], w$pH), -0.999)
 })
 
 test_that("the title and each axis label read back exactly", {
-  txt <- svg_lines(fsc(
+  txt <- svg_txt(fsc(
     pen, "bill_length_mm", "bill_depth_mm",
     "Bill depth on length", "length (mm)", "depth (mm)"
   ))
-  expect_identical(read_label(txt, "title"), "Bill depth on length")
-  expect_identical(read_label(txt, "xlab"), "length (mm)")
-  expect_identical(read_label(txt, "ylab"), "depth (mm)")
+  expect_identical(label_of(txt, "title"), "Bill depth on length")
+  expect_identical(label_of(txt, "xlab"), "length (mm)")
+  expect_identical(label_of(txt, "ylab"), "depth (mm)")
   # Swapped labels are caught: each lands on its own axis.
-  sw <- svg_lines(fsc(
+  sw <- svg_txt(fsc(
     pen, "bill_length_mm", "bill_depth_mm",
     "t", "depth (mm)", "length (mm)"
   ))
-  expect_identical(read_label(sw, "xlab"), "depth (mm)")
-  expect_identical(read_label(sw, "ylab"), "length (mm)")
+  expect_identical(label_of(sw, "xlab"), "depth (mm)")
+  expect_identical(label_of(sw, "ylab"), "length (mm)")
 })
 
 test_that("the svg draws exactly the tick labels of both axes", {
   p <- bill()
-  tk <- ticks_of(p)
-  rr <- runs_by_role(svg_lines(p))
-  got <- vapply(rr$tick, function(r) length(r$d), 0L)
-  want <- nchar(c(tk$x, tk$y)[!is.na(c(tk$x, tk$y))])
-  expect_gt(length(tk$x), 1L)
-  expect_gt(length(tk$y), 1L)
-  expect_identical(sort(got), sort(unname(want)))
-})
-
-test_that("a fit adds exactly one line and no points", {
-  red <- function(p) {
-    sum(grepl("stroke:rgb(75.29", svg_lines(p), fixed = TRUE))
-  }
-  expect_identical(red(bill()), 0L)
-  expect_identical(red(bill(fit = TRUE)), 1L)
+  want <- ticks_of(p)
+  want <- want[!is.na(want)]
+  expect_gt(length(want), 3L)
   expect_identical(
-    n_points(svg_lines(bill(fit = TRUE))),
-    n_points(svg_lines(bill()))
+    sort(tick_labels(svg_txt(p))), sort(as.character(want))
   )
 })
 
+test_that("a fit adds exactly one line, with the lm slope sign", {
+  fit_line <- function(p) {
+    el <- svg_txt(p)
+    is_fit <- grepl("^<polyline ", el) &
+      grepl("#C0392B", el, fixed = TRUE)
+    el[is_fit]
+  }
+  slope_sign <- function(el) {
+    rx <- ".* points='([^']*)'.*"
+    pts <- strsplit(sub(rx, "\\1", el), " ")[[1]]
+    m <- do.call(rbind, strsplit(pts, ","))
+    storage.mode(m) <- "double"
+    # svg y runs downwards: the data slope is the negated pixel one.
+    -sign(stats::coef(stats::lm(m[, 2] ~ m[, 1]))[[2]])
+  }
+  lm_sign <- function(d, x, y) {
+    sign(stats::coef(stats::lm(d[[y]] ~ d[[x]]))[[2]])
+  }
+  expect_length(fit_line(bill()), 0L)
+  expect_identical(
+    nrow(circles(svg_txt(bill(fit = TRUE)))), nrow(pen)
+  )
+  neg <- fit_line(bill(fit = TRUE))
+  expect_length(neg, 1L)
+  expect_identical(
+    slope_sign(neg), lm_sign(pen, "bill_length_mm", "bill_depth_mm")
+  )
+  pos <- fit_line(fsc(
+    pen, "flipper_length_mm", "body_mass_g", "t", "x", "y",
+    fit = TRUE
+  ))
+  expect_length(pos, 1L)
+  expect_identical(slope_sign(pos), 1)
+  expect_identical(slope_sign(neg), -1)
+})
+
 test_that("figure_demo draws every module's figure", {
-  d <- tempfile("demo-")
-  dir.create(d)
-  wine <- nrow(utils::read.csv(file.path(
+  wine <- utils::read.csv(file.path(
     root, "datasets", "wine-quality", "winequality-red.csv"
-  )))
+  ))
   want <- list(
     "c-m1-v01-ticket" = c(
       "flipper length on bill length",
@@ -241,23 +231,31 @@ test_that("figure_demo draws every module's figure", {
       "alcohol (% vol)", "quality score (0-10)"
     )
   )
-  withr::with_dir(root, withr::with_envvar(c(ADS_OUT = d), {
+  withr::with_dir(root, {
     for (id in names(want)) {
-      unlink(file.path(d, "plot.svg"))
-      figure_demo(id)
-      txt <- readLines(file.path(d, "plot.svg"))
+      txt <- svg_txt(agenticds:::demo_plot(id))
       expected <- if (grepl("^c-m4", id)) {
-        wine
+        nrow(wine)
       } else {
         nrow(pen) + length(unique(pen$species))
       }
       # Every row is a point; the labels sit on their own axes.
-      expect_identical(n_points(txt), expected, info = id)
-      expect_identical(read_label(txt, "title"), want[[id]][1])
-      expect_identical(read_label(txt, "xlab"), want[[id]][2])
-      expect_identical(read_label(txt, "ylab"), want[[id]][3])
+      expect_identical(nrow(circles(txt)), expected, info = id)
+      expect_identical(label_of(txt, "title"), want[[id]][1])
+      expect_identical(label_of(txt, "xlab"), want[[id]][2])
+      expect_identical(label_of(txt, "ylab"), want[[id]][3])
     }
-  }))
+    # The demo writes the same figure through figure_svg.
+    d <- tempfile("demo-")
+    dir.create(d)
+    withr::with_envvar(
+      c(ADS_OUT = d), figure_demo("c-m4-v02-ingest")
+    )
+    expect_true(file.exists(file.path(d, "plot.svg")))
+    wp <- circles(svg_txt(agenticds:::demo_plot("c-m4-v02-ingest")))
+    expect_gt(rho(wp[, "x"], wine$alcohol), 0.999)
+    expect_lt(rho(wp[, "y"], wine$quality), -0.999)
+  })
   expect_error(figure_demo("c-m9-v01-x"))
   expect_error(figure_demo("nonsense"))
 })

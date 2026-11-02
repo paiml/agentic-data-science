@@ -86,6 +86,12 @@ figure_svg <- function(p, file = NULL) {
 #' @return The path written, or NULL, invisibly.
 #' @export
 figure_demo <- function(id) {
+  p <- demo_plot(id)
+  figure_svg(p)
+}
+
+# The ggplot behind figure_demo, so a test can render it any way.
+demo_plot <- function(id) {
   m <- as.integer(sub("^c-m([0-9]).*$", "\\1", id))
   v <- suppressWarnings(
     as.integer(sub("^c-m[0-9]-[vp]([0-9]+).*$", "\\1", id))
@@ -95,11 +101,11 @@ figure_demo <- function(id) {
     w <- utils::read.csv(
       file.path("datasets", "wine-quality", "winequality-red.csv")
     )
-    return(figure_svg(figure_scatter(
+    return(figure_scatter(
       w, "alcohol", "quality", "Wine quality on alcohol",
       "alcohol (% vol)", "quality score (0-10)",
       fit = TRUE
-    )))
+    ))
   }
   csv <- file.path("datasets", "penguins", "penguins.csv")
   d <- agenticds::na_policy(agenticds::read_penguins(csv))
@@ -119,9 +125,9 @@ figure_demo <- function(id) {
   )
   pr <- pairs[[(v + m) %% length(pairs) + 1L]]
   nm <- function(s) sub(" \\(.*", "", s)
-  figure_svg(figure_scatter(
+  figure_scatter(
     d, pr[1], pr[2], paste(nm(pr[4]), "on", nm(pr[3])),
     pr[3], pr[4],
     group = "species", fit = (m == 2L)
-  ))
+  )
 }

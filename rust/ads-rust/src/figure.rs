@@ -139,8 +139,14 @@ pub fn scatter_fit(
 }
 
 /// The SVG carries each axis label as a whole `<text>` element (never a substring of other
-/// markup), the x label upright and the y label rotated, and draws mesh `<line>`s.
+/// markup), the x label upright and the y label rotated, and labels at least three ticks per
+/// axis, each sitting on a major gridline.
 pub fn figure_has_axes(svg: &str, xl: &str, yl: &str) -> bool {
+    labels_ok(svg, xl, yl) && ticks_on_grid(svg)
+}
+
+/// The SVG holds both axis labels as whole `<text>` elements, x upright and y rotated.
+fn labels_ok(svg: &str, xl: &str, yl: &str) -> bool {
     let esc =
         |s: &str| s.replace('&', "&amp;").replace('<', "&lt;");
     // The open tag of the `<text>` element whose whole content is `label`.
@@ -152,25 +158,146 @@ pub fn figure_has_axes(svg: &str, xl: &str, yl: &str) -> bool {
     };
     let upright = tag(xl).is_some_and(|t| !t.contains("rotate("));
     let rotated = tag(yl).is_some_and(|t| t.contains("rotate(270"));
-    svg.contains("<svg")
-        && upright
-        && rotated
-        && svg.contains("<line")
+    svg.contains("<svg") && upright && rotated
 }
 
 /// Centres `(cx, cy)` of every drawn circle marker, legend keys included.
 pub fn circles(svg: &str) -> Vec<(f64, f64)> {
     let attr = |c: &str, name: &str| -> f64 {
-        let key = format!("{name}=\"");
-        let at =
-            c.find(&key).expect("circle attribute") + key.len();
-        let val = c[at..].split('"').next().unwrap_or("");
-        val.parse().expect("number")
+        num_attr(c, name).expect("circle attribute")
     };
     svg.split("<circle")
         .skip(1)
         .map(|c| (attr(c, "cx"), attr(c, "cy")))
         .collect()
+}
+
+/// The value of numeric attribute `name` in an element's open tag.
+fn num_attr(tag: &str, name: &str) -> Option<f64> {
+    let key = format!(" {name}=\"");
+    let at = tag.find(&key)? + key.len();
+    tag[at..].split('"').next()?.parse().ok()
+}
+
+/// Every `<text>` element as `(open tag, content)`.
+fn text_elems(svg: &str) -> Vec<(&str, &str)> {
+    svg.split("<text")
+        .skip(1)
+        .filter_map(|t| {
+            let (open, rest) = t.split_once('>')?;
+            let body = rest.split("</text>").next()?;
+            Some((open, body.trim_matches('\n')))
+        })
+        .collect()
+}
+
+/// Tick labels of one axis as `(value, pixel)`.
+pub type Ticks = Vec<(f64, f64)>;
+
+/// The numeric tick labels as `(value, pixel)`: x ticks sit below the panel and are placed
+/// by their `x`, y ticks are right-aligned (`text-anchor="end"`) and placed by their `y`.
+pub fn ticks(svg: &str) -> (Ticks, Ticks) {
+    let (mut xs, mut ys) = (Vec::new(), Vec::new());
+    for (open, body) in text_elems(svg) {
+        let Ok(v) = body.parse::<f64>() else { continue };
+        if open.contains("text-anchor=\"end\"") {
+            ys.push((v, num_attr(open, "y").unwrap_or(f64::NAN)));
+        } else {
+            xs.push((v, num_attr(open, "x").unwrap_or(f64::NAN)));
+        }
+    }
+    (xs, ys)
+}
+
+/// Major gridlines (the `opacity="0.2"` lines): the x of each vertical one and the y of each
+/// horizontal one.
+pub fn gridlines(svg: &str) -> (Vec<f64>, Vec<f64>) {
+    let (mut vs, mut hs) = (Vec::new(), Vec::new());
+    for l in svg
+        .lines()
+        .filter(|l| l.starts_with("<line opacity=\"0.2\""))
+    {
+        let g = |n: &str| num_attr(l, n).unwrap_or(f64::NAN);
+        if g("x1") == g("x2") {
+            vs.push(g("x1"));
+        } else {
+            hs.push(g("y1"));
+        }
+    }
+    (vs, hs)
+}
+
+/// Pixel position of data value `v` on an axis, interpolated through its first and last tick.
+fn to_px(t: &[(f64, f64)], v: f64) -> f64 {
+    let (a, b) = (t[0], t[t.len() - 1]);
+    a.1 + (v - a.0) * (b.1 - a.1) / (b.0 - a.0)
+}
+
+/// Data value at pixel `p` on an axis (the inverse of `to_px`).
+fn from_px(t: &[(f64, f64)], p: f64) -> f64 {
+    let (a, b) = (t[0], t[t.len() - 1]);
+    a.0 + (p - a.1) * (b.0 - a.0) / (b.1 - a.1)
+}
+
+/// Each axis has at least three ticks and every tick label sits on a major gridline.
+fn ticks_on_grid(svg: &str) -> bool {
+    let (xt, yt) = ticks(svg);
+    let (gv, gh) = gridlines(svg);
+    let on = |t: &[(f64, f64)], g: &[f64]| {
+        t.len() >= 3
+            && t.iter()
+                .all(|p| g.iter().any(|q| (p.1 - q).abs() <= 1.0))
+    };
+    on(&xt, &gv) && on(&yt, &gh)
+}
+
+/// The first `pts.len()` circle markers sit where the tick labels say their data values are:
+/// swapped axes, shuffled values or a transposed scatter all fail.
+pub fn points_on_axes(svg: &str, pts: &[(f64, f64)]) -> bool {
+    let (xt, yt) = ticks(svg);
+    let c = circles(svg);
+    xt.len() >= 2
+        && yt.len() >= 2
+        && c.len() >= pts.len()
+        && pts.iter().zip(&c).all(|(p, m)| {
+            (to_px(&xt, p.0) - m.0).abs() <= 2.0
+                && (to_px(&yt, p.1) - m.1).abs() <= 2.0
+        })
+}
+
+/// The drawn fit line (the first 3-pixel polyline) runs along the least-squares line of
+/// `pts`, so its slope has the data's sign.
+pub fn fit_line_matches(svg: &str, pts: &[(f64, f64)]) -> bool {
+    let (xt, yt) = ticks(svg);
+    let (a, b) = fit(pts);
+    if xt.len() < 2 || yt.len() < 2 {
+        return false;
+    }
+    let Some(l) = svg.lines().find(|l| {
+        l.starts_with("<polyline")
+            && l.contains("stroke-width=\"3\"")
+    }) else {
+        return false;
+    };
+    let Some(p) = l.split("points=\"").nth(1) else {
+        return false;
+    };
+    let ends: Vec<Vec<f64>> = p
+        .split('"')
+        .next()
+        .unwrap_or("")
+        .split_whitespace()
+        .map(|q| {
+            q.split(',').filter_map(|n| n.parse().ok()).collect()
+        })
+        .collect();
+    ends.len() == 2
+        && ends.iter().all(|e| {
+            e.len() == 2
+                && (to_px(&yt, a + b * from_px(&xt, e[0])) - e[1])
+                    .abs()
+                    <= 3.0
+        })
 }
 
 /// One scatter series per group on shared axes (e.g. per species or per cluster).
@@ -312,10 +439,116 @@ mod tests {
             "<svg><line/><text>\na&amp;b\n</text>",
             "<text transform=\"rotate(270, 1, 2)\">\n&lt;c\n</text>"
         );
-        assert!(figure_has_axes(raw, "a&b", "<c"));
-        assert!(!figure_has_axes(raw, "<c", "a&b"));
+        assert!(labels_ok(raw, "a&b", "<c"));
+        assert!(!labels_ok(raw, "<c", "a&b"));
         // A label with no text element at all is refused.
-        assert!(!figure_has_axes("<svg><line/>", "a", "b"));
+        assert!(!labels_ok("<svg><line/>", "a", "b"));
+        // Labels alone are not axes: no ticks, no figure.
+        assert!(!figure_has_axes(raw, "a&b", "<c"));
+    }
+
+    fn sample() -> (Vec<(f64, f64)>, String) {
+        let pts: Vec<_> =
+            (0..8).map(|i| (i as f64, (i * i) as f64)).collect();
+        let svg = scatter_fit(("t", "x (u)", "y (u)"), &pts);
+        (pts, svg)
+    }
+
+    #[test]
+    fn ticks_are_numeric_labels_on_major_gridlines() {
+        let (_, svg) = sample();
+        let (xt, yt) = ticks(&svg);
+        let (gv, gh) = gridlines(&svg);
+        assert!(xt.len() >= 3 && yt.len() >= 3);
+        // The title and axis labels are not ticks; each tick has its gridline.
+        assert!(
+            xt.iter()
+                .all(|t| gv.iter().any(|g| (t.1 - g).abs() <= 1.0))
+        );
+        assert!(
+            yt.iter()
+                .all(|t| gh.iter().any(|g| (t.1 - g).abs() <= 1.0))
+        );
+        // Tick values rise left to right and bottom to top (pixel y falls).
+        assert!(
+            xt.windows(2)
+                .all(|w| w[1].0 > w[0].0 && w[1].1 > w[0].1)
+        );
+        assert!(
+            yt.windows(2)
+                .all(|w| w[1].0 > w[0].0 && w[1].1 < w[0].1)
+        );
+        // A tick with no gridline under it is refused.
+        let moved = svg.replace(
+            "<line opacity=\"0.2\"",
+            "<line opacity=\"0.3\"",
+        );
+        assert_ne!(moved, svg);
+        assert!(!ticks_on_grid(&moved));
+        assert!(!ticks_on_grid("<svg/>"));
+    }
+
+    #[test]
+    fn markers_sit_where_the_tick_labels_put_their_values() {
+        let (pts, svg) = sample();
+        assert!(points_on_axes(&svg, &pts));
+        // Swapped axes, a shuffled y and a transposed scatter all fail.
+        let swapped: Vec<_> =
+            pts.iter().map(|p| (p.1, p.0)).collect();
+        assert!(!points_on_axes(&svg, &swapped));
+        let mut shuffled = pts.clone();
+        shuffled.reverse();
+        let mixed: Vec<_> = pts
+            .iter()
+            .zip(&shuffled)
+            .map(|(a, b)| (a.0, b.1))
+            .collect();
+        assert!(!points_on_axes(&svg, &mixed));
+        // More points than markers, or no ticks at all, fail.
+        let more: Vec<_> =
+            pts.iter().chain(&pts).copied().collect();
+        assert!(!points_on_axes(&svg, &more));
+        assert!(!points_on_axes("<svg/>", &pts));
+    }
+
+    #[test]
+    fn the_fit_line_runs_along_the_least_squares_line() {
+        let (pts, svg) = sample();
+        assert!(fit_line_matches(&svg, &pts));
+        // A line fitted to the mirrored data slopes the other way.
+        let down: Vec<_> =
+            pts.iter().map(|p| (p.0, -p.1)).collect();
+        assert!(!fit_line_matches(&svg, &down));
+        assert!(fit_line_matches(
+            &scatter_fit(("t", "x (u)", "y (u)"), &down),
+            &down
+        ));
+        // No line, or a malformed one, fails.
+        assert!(!fit_line_matches("<svg/>", &pts));
+        // Ticks but no fit line: the markers alone are not a fit.
+        let no_line =
+            svg.replace("stroke-width=\"3\"", "stroke-width=\"2\"");
+        assert!(!fit_line_matches(&no_line, &pts));
+        // A fit line with no points attribute.
+        let no_points = svg.replace(
+            "stroke-width=\"3\" points=",
+            "stroke-width=\"3\" pts=",
+        );
+        assert!(!fit_line_matches(&no_points, &pts));
+        for bad in ["9,9 3 ", "1,2 3 4,5 "] {
+            let s = svg.replacen(
+                "stroke-width=\"3\" points=\"",
+                &format!(
+                    "stroke-width=\"3\" points=\"{bad}\" x=\""
+                ),
+                1,
+            );
+            assert!(!fit_line_matches(&s, &pts), "{bad}");
+        }
+        assert!(!fit_line_matches(
+            "<polyline stroke-width=\"3\"/>",
+            &pts
+        ));
     }
 
     #[test]

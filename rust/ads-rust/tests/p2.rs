@@ -112,6 +112,12 @@ fn p2_plot_is_a_real_axes_figure_of_the_fitted_data() {
         ),
         &pts,
     );
+    use ads_rust::figure::{fit_line_matches, points_on_axes};
     assert_eq!(svg.matches("<circle").count(), pts.len() + 1);
+    // Every marker sits where the ticks put its data value, the fit runs along the lm line.
+    assert!(points_on_axes(&svg, &pts));
+    assert!(fit_line_matches(&svg, &pts));
+    // Body mass rises with flipper length: the drawn line slopes up.
+    assert!(ads_rust::figure::fit(&pts).1 > 0.0);
     ads_rust::figure::write_if_out(&svg);
 }

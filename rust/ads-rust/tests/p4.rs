@@ -254,6 +254,8 @@ fn p4_plot_is_a_real_axes_figure_of_the_test_predictions() {
         ads_rust::figure::circles(&svg).len(),
         pts.len() + 1
     );
+    assert!(ads_rust::figure::points_on_axes(&svg, &pts));
+    assert!(ads_rust::figure::fit_line_matches(&svg, &pts));
     ads_rust::figure::write_if_out(&svg);
 }
 

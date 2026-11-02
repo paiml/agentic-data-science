@@ -151,6 +151,9 @@ fn p3_plot_is_a_real_axes_figure_of_the_clusters() {
         &groups,
     );
     let n = ads_rust::figure::circles(&svg).len();
+    let drawn: Vec<(f64, f64)> =
+        groups.iter().flat_map(|g| g.1.iter().copied()).collect();
+    assert!(ads_rust::figure::points_on_axes(&svg, &drawn));
     assert_eq!(n, df.height() + groups.len());
     ads_rust::figure::write_if_out(&svg);
 }
