@@ -230,7 +230,12 @@ pub fn wine_points(
 
 /// Write `svg` as `plot.svg` into `$ADS_OUT` when it is set; no-op otherwise.
 pub fn write_if_out(svg: &str) {
-    if let Ok(dir) = std::env::var("ADS_OUT") {
+    write_to(std::env::var("ADS_OUT").ok().as_deref(), svg);
+}
+
+/// Write `svg` as `plot.svg` into `dir` when there is one; no-op otherwise.
+pub fn write_to(dir: Option<&str>, svg: &str) {
+    if let Some(dir) = dir {
         std::fs::write(format!("{dir}/plot.svg"), svg)
             .expect("plot.svg");
     }
@@ -279,6 +284,43 @@ mod tests {
         assert_eq!((g[0].0.as_str(), g[0].1.len()), ("b", 2));
         let svg = scatter_groups(("t", "x (u)", "y (u)"), &g);
         assert!(figure_has_axes(&svg, "x (u)", "y (u)"));
+    }
+
+    #[test]
+    fn penguin_rows_pairs_species_with_two_columns() {
+        use polars::prelude::*;
+        let df = df!(
+            "species" => ["Adelie", "Gentoo"],
+            "bill_length_mm" => [39.1, 46.5],
+            "bill_depth_mm" => [18.7, 13.5],
+        )
+        .expect("frame");
+        let r =
+            penguin_rows(&df, "bill_length_mm", "bill_depth_mm");
+        assert_eq!(
+            r,
+            vec![
+                ("Adelie".to_string(), 39.1, 18.7),
+                ("Gentoo".to_string(), 46.5, 13.5),
+            ]
+        );
+    }
+
+    #[test]
+    fn write_to_writes_only_when_there_is_a_directory() {
+        let dir = std::env::temp_dir()
+            .join(format!("ads-figure-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        write_to(None, "<svg/>");
+        assert!(!dir.join("plot.svg").exists());
+        write_to(dir.to_str(), "<svg/>");
+        assert_eq!(
+            std::fs::read_to_string(dir.join("plot.svg"))
+                .expect("plot"),
+            "<svg/>"
+        );
+        std::fs::remove_dir_all(&dir).expect("cleanup");
+        write_if_out("<svg/>");
     }
 
     #[test]
