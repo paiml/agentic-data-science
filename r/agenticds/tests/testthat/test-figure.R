@@ -84,7 +84,12 @@ texts <- function(txt) {
     label = sub("^<text [^>]*>(.*)</text>$", "\\1", el),
     x = as.numeric(xy[, 1]),
     y = as.numeric(xy[, 2]),
-    rot = grepl("rotate(", el, fixed = TRUE)
+    rot = grepl("rotate(", el, fixed = TRUE),
+    anchor = ifelse(
+      grepl("text-anchor='", el, fixed = TRUE),
+      sub(".*text-anchor='([a-z]+)'.*", "\\1", el),
+      "start"
+    )
   )
 }
 # Title: the top line; x label: the bottom unrotated line; y label:
@@ -99,13 +104,78 @@ label_of <- function(txt, k) {
   stopifnot(nrow(r) == 1L)
   r$label
 }
-tick_labels <- function(txt) {
-  t <- texts(txt)
-  t[!t$rot & t$y > min(t$y) & t$y < max(t$y), "label"]
+# Gridlines are the only polylines of width 1.75 (major) in #EBEBEB.
+gridlines <- function(txt) {
+  pl <- grepl("^<polyline ", txt)
+  major <- grepl("stroke-width: 1.75", txt, fixed = TRUE)
+  grey <- grepl("#EBEBEB", txt, fixed = TRUE)
+  g <- txt[pl & major & grey]
+  pts <- sub("^<polyline points='([^']*)'.*", "\\1", g)
+  m <- do.call(rbind, strsplit(trimws(pts), "[ ,]"))
+  storage.mode(m) <- "double"
+  m
 }
-ticks_of <- function(p) {
-  pp <- ggplot2::ggplot_build(p)$layout$panel_params[[1]]
-  c(pp$x$get_labels(), pp$y$get_labels())
+# Value -> pixel maps read only from the drawn tick labels and the
+# gridline each one sits on. Fails unless every tick fits one line.
+axis_map <- function(txt) {
+  t <- texts(txt)
+  t <- t[!t$rot & t$y > min(t$y) & t$y < max(t$y), ]
+  g <- gridlines(txt)
+  xt <- t[t$anchor == "middle", ]
+  yt <- t[t$anchor == "end", ]
+  gx <- sort(g[g[, 1] == g[, 3], 1])
+  gy <- sort(g[g[, 2] == g[, 4], 2])
+  xt <- xt[order(xt$x), ]
+  yt <- yt[order(yt$y), ]
+  stopifnot(
+    length(gx) == nrow(xt), length(gy) == nrow(yt),
+    max(abs(gx - xt$x)) < 0.05,
+    diff(range(yt$y - gy)) < 0.05
+  )
+  fit1 <- function(v, p) {
+    cf <- stats::coef(stats::lm(p ~ v))
+    stopifnot(max(abs(cf[[1]] + cf[[2]] * v - p)) < 0.05)
+    function(z) cf[[1]] + cf[[2]] * z
+  }
+  list(
+    px = fit1(as.numeric(xt$label), gx),
+    py = fit1(as.numeric(yt$label), gy),
+    xlab = xt$label, ylab = rev(yt$label)
+  )
+}
+# The fit line: the one polyline of more than two points.
+fit_pts <- function(txt) {
+  el <- txt[grepl("^<polyline ", txt)]
+  pts <- strsplit(trimws(sub(
+    "^<polyline points='([^']*)'.*", "\\1", el
+  )), " ")
+  el <- pts[lengths(pts) > 2L]
+  stopifnot(length(el) == 1L)
+  m <- do.call(rbind, strsplit(el[[1]], ","))
+  storage.mode(m) <- "double"
+  m
+}
+# Every datum lands where its value maps (first n circles are data).
+expect_on_axes <- function(txt, x, y, info = "") {
+  am <- axis_map(txt)
+  xy <- circles(txt)[seq_along(x), , drop = FALSE]
+  within(xy[, "x"] - am$px(x), info)
+  within(xy[, "y"] - am$py(y), info)
+}
+# Every pixel gap is under 0.6 px.
+within <- function(gap, info) {
+  testthat::expect_lt(max(abs(gap)), 0.6, label = info)
+}
+# The fit's two ends are the least-squares line at the data range.
+expect_fit_ends <- function(txt, x, y, info = "") {
+  am <- axis_map(txt)
+  m <- fit_pts(txt)
+  cf <- stats::coef(stats::lm(y ~ x))
+  xr <- range(x)
+  e <- rbind(m[1, ], m[nrow(m), ])
+  want_y <- am$py(cf[[1]] + cf[[2]] * xr)
+  within(e[, 1] - am$px(xr), info)
+  within(e[, 2] - want_y, info)
 }
 rho <- function(a, b) stats::cor(a, b, method = "spearman")
 
@@ -159,50 +229,61 @@ test_that("the title and each axis label read back exactly", {
   expect_identical(label_of(sw, "ylab"), "length (mm)")
 })
 
-test_that("the svg draws exactly the tick labels of both axes", {
-  p <- bill()
-  want <- ticks_of(p)
-  want <- want[!is.na(want)]
-  expect_gt(length(want), 3L)
-  expect_identical(
-    sort(tick_labels(svg_txt(p))), sort(as.character(want))
+test_that("ticks come from the data, and values map to pixels", {
+  # Known inputs: the tick strings are fixed here, not read from
+  # ggplot, and the markers must sit at their value's pixel.
+  d <- data.frame(a = c(0, 5, 10), b = c(0, 50, 100))
+  txt <- svg_txt(fsc(d, "a", "b", "t", "x", "y"))
+  am <- axis_map(txt)
+  expect_identical(am$xlab, c("0.0", "2.5", "5.0", "7.5", "10.0"))
+  expect_identical(am$ylab, c("0", "25", "50", "75", "100"))
+  expect_on_axes(txt, d$a, d$b)
+  # Axes are not interchangeable: the y axis maps y, not x.
+  expect_gt(abs(am$py(5) - am$py(50)), 100)
+  s <- data.frame(a = c(1, 4, 9, 2, 7), b = c(30, 10, 80, 55, 60))
+  expect_on_axes(svg_txt(fsc(s, "a", "b", "t", "x", "y")), s$a, s$b)
+  # A swapped y vector puts markers off their values.
+  txt2 <- svg_txt(fsc(s, "a", "b", "t", "x", "y"))
+  am2 <- axis_map(txt2)
+  off <- abs(circles(txt2)[, "y"] - am2$py(rev(s$b)))
+  expect_gt(max(off), 5)
+  # Real data, both axes.
+  expect_on_axes(
+    svg_txt(bill()), pen$bill_length_mm, pen$bill_depth_mm
   )
 })
 
-test_that("a fit adds exactly one line, with the lm slope sign", {
-  fit_line <- function(p) {
-    el <- svg_txt(p)
-    is_fit <- grepl("^<polyline ", el) &
-      grepl("#C0392B", el, fixed = TRUE)
-    el[is_fit]
-  }
-  slope_sign <- function(el) {
-    rx <- ".* points='([^']*)'.*"
-    pts <- strsplit(sub(rx, "\\1", el), " ")[[1]]
-    m <- do.call(rbind, strsplit(pts, ","))
-    storage.mode(m) <- "double"
-    # svg y runs downwards: the data slope is the negated pixel one.
-    -sign(stats::coef(stats::lm(m[, 2] ~ m[, 1]))[[2]])
-  }
-  lm_sign <- function(d, x, y) {
-    sign(stats::coef(stats::lm(d[[y]] ~ d[[x]]))[[2]])
-  }
-  expect_length(fit_line(bill()), 0L)
-  expect_identical(
-    nrow(circles(svg_txt(bill(fit = TRUE)))), nrow(pen)
+test_that("a fit is one line from the data's ends on the lm line", {
+  d <- data.frame(a = c(0, 5, 10), b = c(0, 50, 100))
+  txt <- svg_txt(fsc(d, "a", "b", "t", "x", "y", fit = TRUE))
+  expect_fit_ends(txt, d$a, d$b)
+  # A 1-point-per-pixel check: rises from lower-left to upper-right.
+  m <- fit_pts(txt)
+  expect_lt(m[nrow(m), 2], m[1, 2])
+  expect_gt(m[nrow(m), 1], m[1, 1])
+  expect_error(fit_pts(svg_txt(fsc(d, "a", "b", "t", "x", "y"))))
+  s <- data.frame(a = c(1, 4, 9, 2, 7), b = c(30, 10, 80, 55, 60))
+  expect_fit_ends(
+    svg_txt(fsc(s, "a", "b", "t", "x", "y", fit = TRUE)), s$a, s$b
   )
-  neg <- fit_line(bill(fit = TRUE))
-  expect_length(neg, 1L)
-  expect_identical(
-    slope_sign(neg), lm_sign(pen, "bill_length_mm", "bill_depth_mm")
-  )
-  pos <- fit_line(fsc(
+  # Falling and rising real data; a wrong line is refused.
+  neg <- svg_txt(bill(fit = TRUE))
+  expect_fit_ends(neg, pen$bill_length_mm, pen$bill_depth_mm)
+  expect_on_axes(neg, pen$bill_length_mm, pen$bill_depth_mm)
+  pos <- svg_txt(fsc(
     pen, "flipper_length_mm", "body_mass_g", "t", "x", "y",
     fit = TRUE
   ))
-  expect_length(pos, 1L)
-  expect_identical(slope_sign(pos), 1)
-  expect_identical(slope_sign(neg), -1)
+  expect_fit_ends(pos, pen$flipper_length_mm, pen$body_mass_g)
+  # The mirrored line (slope flipped) is far from the drawn one.
+  am <- axis_map(neg)
+  cf <- stats::coef(stats::lm(
+    -pen$bill_depth_mm ~ pen$bill_length_mm
+  ))
+  xmin <- min(pen$bill_length_mm)
+  expect_gt(
+    abs(fit_pts(neg)[1, 2] - am$py(cf[[1]] + cf[[2]] * xmin)), 50
+  )
 })
 
 test_that("figure_demo draws every module's figure", {
@@ -212,29 +293,36 @@ test_that("figure_demo draws every module's figure", {
   want <- list(
     "c-m1-v01-ticket" = c(
       "flipper length on bill length",
-      "bill length (mm)", "flipper length (mm)"
+      "bill length (mm)", "flipper length (mm)",
+      "bill_length_mm", "flipper_length_mm"
     ),
     "c-m2-v02-ols" = c(
       "body mass on flipper length",
-      "flipper length (mm)", "body mass (g)"
+      "flipper length (mm)", "body mass (g)",
+      "flipper_length_mm", "body_mass_g"
     ),
     "c-m3-v03-red" = c(
       "bill depth on bill length",
-      "bill length (mm)", "bill depth (mm)"
+      "bill length (mm)", "bill depth (mm)",
+      "bill_length_mm", "bill_depth_mm"
     ),
     "c-m3-v04-determinism" = c(
       "body mass on flipper length",
-      "flipper length (mm)", "body mass (g)"
+      "flipper length (mm)", "body mass (g)",
+      "flipper_length_mm", "body_mass_g"
     ),
     "c-m4-v02-ingest" = c(
       "Wine quality on alcohol",
-      "alcohol (% vol)", "quality score (0-10)"
+      "alcohol (% vol)", "quality score (0-10)",
+      "alcohol", "quality"
     )
   )
   withr::with_dir(root, {
     for (id in names(want)) {
       txt <- svg_txt(agenticds:::demo_plot(id))
-      expected <- if (grepl("^c-m4", id)) {
+      m4 <- grepl("^c-m4", id)
+      d <- if (m4) wine else pen
+      expected <- if (m4) {
         nrow(wine)
       } else {
         nrow(pen) + length(unique(pen$species))
@@ -244,6 +332,19 @@ test_that("figure_demo draws every module's figure", {
       expect_identical(label_of(txt, "title"), want[[id]][1])
       expect_identical(label_of(txt, "xlab"), want[[id]][2])
       expect_identical(label_of(txt, "ylab"), want[[id]][3])
+      x <- d[[want[[id]][4]]]
+      y <- d[[want[[id]][5]]]
+      # Position and rank: each marker at its value's pixel.
+      expect_on_axes(txt, x, y, info = id)
+      xy <- circles(txt)[seq_along(x), ]
+      expect_gt(rho(xy[, "x"], x), 0.999)
+      expect_lt(rho(xy[, "y"], y), -0.999)
+      # Module 2 and 4 carry the fit; 1 and 3 carry none.
+      if (m4 || grepl("^c-m2", id)) {
+        expect_fit_ends(txt, x, y, info = id)
+      } else {
+        expect_error(fit_pts(txt))
+      }
     }
     # The demo writes the same figure through figure_svg.
     d <- tempfile("demo-")
@@ -252,9 +353,6 @@ test_that("figure_demo draws every module's figure", {
       c(ADS_OUT = d), figure_demo("c-m4-v02-ingest")
     )
     expect_true(file.exists(file.path(d, "plot.svg")))
-    wp <- circles(svg_txt(agenticds:::demo_plot("c-m4-v02-ingest")))
-    expect_gt(rho(wp[, "x"], wine$alcohol), 0.999)
-    expect_lt(rho(wp[, "y"], wine$quality), -0.999)
   })
   expect_error(figure_demo("c-m9-v01-x"))
   expect_error(figure_demo("nonsense"))
