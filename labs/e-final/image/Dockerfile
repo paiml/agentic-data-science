@@ -110,7 +110,6 @@ RUN mkdir -p ${VSCODE_USER}
 # PATCH vs upstream: the Go tools, the C/C++ vsix and the marketplace extension installs are removed (a Lean lab needs none; upstream steps fail at HEAD).
 
 # Set up environment variables required for Scala to work (without cosmetic errors)
-RUN echo 'export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:/bin/javac::")' >> /home/coder/.bashrc
 RUN echo "export TERM=xterm" >> /home/coder/.bashrc
 
 COPY extensions/ /tmp/

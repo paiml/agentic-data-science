@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - name: Free disk (the image is ~9 GB)
+      - name: Free disk (the image is ~6 GB)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost /usr/share/swift && sudo docker image prune -af >/dev/null && df -h / | tail -n 1
       - name: Pin check (toolchain from lean-toolchain, installer verified)
         run: bash labs/e-final/tests/image-pin.sh
