@@ -4,7 +4,7 @@
 #   S        the starter (with its sorry) is refused
 #   cheats   each fixture in cheats/ is refused by the FULL grader (rc 1 plus a refusal line)
 #   H, H2, H3  harmless comments, nested comments and a comment-hidden command still pass (rc 0)
-#   HA-HD    honest solutions (comment words alternative/sorry/native/admit, identifier init, a type continued at column 0, a docstring) PASS; HE: the axiom-set check accepts [] and refuses anything outside the allowed three
+#   HA-HF    honest solutions (comment words alternative/sorry/native/admit, identifier init, a type continued at column 0, a docstring) PASS; HE: the axiom-set check accepts [] and refuses anything outside the allowed three
 #   M, M2    a tiny memory limit is refused (whole grader; learner compile alone must report the memory refusal)
 #   P        parser-only copy (the advisory grep lines deleted; they never decide): each refusal names the command kind or token
 #   G        root-layer copy (parser test and grep lines deleted): the sandbox, timeout, kernel replay, defeq and axiom checks still refuse
@@ -62,6 +62,12 @@ hon HD '
 def noteOnly : Nat := 1
 def greeting : String := "a native speaker of unsafe words, #eval and @[simp]"
 '
+hon HF "
+def sum_shift_alternative : Nat := 1
+def native_note : Nat := 2
+def initialized : Nat := 3
+def unsafe_looking (alternative : Nat) : Nat := alternative
+"
 # HE: the axiom check accepts the empty set (a proof using no axiom) and refuses anything outside the allowed three.
 for ok in '[]' '[propext]' '[propext, Quot.sound]' '[Classical.choice, propext, Quot.sound]'; do
   printf "'x' depends on axioms: %s\n" "$ok" | bash "$repo/labs/e-final/tests/axioms-line.sh" && echo "arm HE ok (axioms $ok accepted)" || { echo "FAIL arm HE: axioms $ok refused"; fail=1; }
@@ -132,4 +138,4 @@ for c in guard-exec guard-forge-olean; do
   if grep -q "^lrn dir:.*\(probe-guard-ran\|Lean.olean\)" "$S/G-$c.out" && grep -q "^mods dir: Learner.olean Ref.olean *$" "$S/G-$c.out" && [ "$rc" -eq 0 ] && [ ! -e "$PWD/probe-guard-ran" ] && [ ! -e "$PWD/Lean.olean" ]; then echo "arm G-$c ok (ran under bwrap, forged file never on Grade's path)"; else echo "FAIL arm G-$c: rc=$rc"; fail=1; fi
   gcont=$((gcont+1))
 done
-[ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $parms parser-only arms, $groot root-layer refusals + $gcont containment arms, 4 honest solutions PASS, axiom-set unit arms)"; exit "$fail"
+[ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $parms parser-only arms, $groot root-layer refusals + $gcont containment arms, 5 honest solutions PASS, axiom-set unit arms)"; exit "$fail"

@@ -2,18 +2,19 @@ import Lean
 open Lean Parser
 
 /-- Grader-owned command classifier. Parses Mean.lean with Lean's own command parser in an Init-only environment
-    (sound here because syntax/macro/notation/elab are refused by the token layer) and allowlists command KINDS.
+    (sound here because the command-kind allowlist below refuses syntax, macro, notation and elab commands) and allowlists command KINDS.
     Nothing is elaborated or executed: the parser only builds syntax trees. -/
 def okTop : List Name := [`Lean.Parser.Command.namespace, `Lean.Parser.Command.section, `Lean.Parser.Command.end,
   `Lean.Parser.Command.open, `Lean.Parser.Command.variable]
 def okDecl : List Name := [`Lean.Parser.Command.definition, `Lean.Parser.Command.theorem, `Lean.Parser.Command.example]
 
-def bannedWords : List String := ["unsafe", "native", "unif_hint", "by_elab", "run_cmd", "run_tac", "run_elab", "run_meta", "initialize"]
+def bannedWords : List String := ["unsafe", "native", "unif_hint", "by_elab", "run_cmd", "run_tac", "run_elab", "run_meta", "initialize",
+  "unsafeCast", "unsafeBaseIO", "unsafeIO", "unsafeEIO", "native_decide", "reduceBool", "ofReduceBool", "trustCompiler", "implemented_by"]
 
-/-- Any atom or identifier component that mentions a banned word, anywhere in a command (term level included). -/
+/-- Any atom, or any whole identifier component, that IS a banned word, anywhere in a command (term level included). Whole words only: `alternative` or `initialized` are fine. -/
 partial def bannedIn : Syntax → Option String
-  | .atom _ v => bannedWords.find? (fun w => (v.splitOn w).length > 1)
-  | .ident _ _ n _ => bannedWords.find? (fun w => ((n.toString).splitOn w).length > 1)
+  | .atom _ v => bannedWords.find? (fun w => v == w)
+  | .ident _ _ n _ => bannedWords.find? (fun w => n.components.any (·.toString == w))
   -- a doc comment and a plain string literal are inert text, never code: a word in them decides nothing
   | .node _ k args => if k == ``Lean.Parser.Command.docComment || k == `str then none else args.findSome? bannedIn
   | _ => none
