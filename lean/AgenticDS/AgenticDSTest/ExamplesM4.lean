@@ -120,9 +120,11 @@ def main (_ : List String) : IO UInt32 := do
   let t4 ← IO.FS.readFile "AgenticDSTest/P4.lean"
   let tol := (lines t4).filter (has · "1000000")
   unless tol.length == 4 &&
-      ((lines (get "v09")).filter (!has · "pipeline ms")) ==
-        ["n_rows 6497", "n_train 5198", "n_test 1299",
-         "contract: ads-lean-m4v09-v1 OK"] do
+      (lines (get "v09")).take 3 ==
+        ["n_rows 6497", "n_train 5198", "n_test 1299"] &&
+      has (get "v09") "svg 196 points plot-m4v09.svg" &&
+      (lines (get "v09")).getLast? ==
+        some "contract: ads-lean-m4v09-v1 OK" do
     IO.eprintln s!"FAIL v09 output: {get "v09"}"; ok := false
   if ok then IO.println "contract: ads-lean-examples-m4-v1 OK"
   pure (if ok then 0 else 1)

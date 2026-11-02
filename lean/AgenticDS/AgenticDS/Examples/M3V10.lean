@@ -17,5 +17,6 @@ def m3v10 : IO Unit := do
   penguinDemo "plot-m3v10.svg" "Penguins: bill length and mass"
     "bill_length_mm" "body_mass_g" 4
   contract "ads-lean-m3v10-v1"
-    (decide (tr.sum ≤ (m.map List.sum).sum) &&
+    (tr.sum == 83 && (m.map List.sum).sum == 85 &&
+      m3v08_exact m == 83 / 85 &&
       (← plotOk "plot-m3v10.svg"))
