@@ -40,6 +40,7 @@ unsafe def main (args : List String) : IO UInt32 := do
         unless mods[i].getNumArgs == 0 do return (← refuse s!"declaration modifier at {at_} (only a doc comment is allowed)")
       let dk := stx[1].getKind
       unless okDecl.contains dk do return (← refuse s!"command kind {dk} at {at_}")
+      if (stx.find? (fun s => s.isAtom && s.getAtomVal == "deriving")).isSome then return (← refuse s!"deriving clause on a declaration at {at_}")
     else if k == `Lean.Parser.Command.open then
       if (stx.find? (·.isOfKind `Lean.Parser.Command.openScoped)).isSome || (stx.find? (·.isOfKind `Lean.Parser.Command.openSimple)).isNone then
         return (← refuse s!"only plain `open Name` is allowed, at {at_}")

@@ -13,9 +13,10 @@ T="no sorry/admit/native_decide"; t bash -c '! grep -nE "\b(sorry|admit)\b|nativ
 g=$(mktemp -d); trap 'rm -rf "${g:?}"' EXIT
 TMO="${GRADER_TIMEOUT:-120}"   # seconds for each of: parse, learner compile, grade (a decide on a huge list must not hang the grader)
 MEM_MB="${GRADER_MEM_MB:-4096}"   # lean -M ceiling (MB; a virtual-memory ulimit kills lean thread stacks) for the learner compile
+cp "$f" "$g/validated.lean"   # the exact bytes the parser validates are the bytes that are compiled
 # Root of the keyword layer: Lean's OWN parser classifies every command (indentation, ";", blank lines and nesting cannot hide one).
 T="every command parses (Lean parser, Init-only env, nothing elaborated) to an allowlisted kind: def/theorem/example/namespace/section/end/open/variable; #eval/#print/#guard/deriving/... refused"
-pout=$(timeout "$TMO" env -u LEAN_PATH lean "+$tc" --run "$here/tests/Parse.lean" "$f" 2>&1); prc=$?
+pout=$(timeout "$TMO" env -u LEAN_PATH lean "+$tc" -M "$MEM_MB" --run "$here/tests/Parse.lean" "$g/validated.lean" 2>&1); prc=$?
 [ "$prc" -eq 124 ] && pout="parse: REFUSED timed out after ${TMO}s"
 t bash -c '[ "$1" = 0 ]' x "$prc"; [ "$prc" -ne 0 ] && echo "$pout"
 # Comments are stripped (string-aware: a "--" inside a string literal does not start a comment) before the keyword layer reads the file.
@@ -44,16 +45,15 @@ def sumL (xs : List Int) : Int := xs.foldl (· + ·) 0
 def stmt : Prop := ∀ (c : Int) (xs : List Int), sumL (xs.map (· + c)) = sumL xs + xs.length * c
 end GraderRef
 REF
-perl -ne 'if (/^\s*(#eval|#print|#check|#reduce|#synth|run_cmd|run_tac)\b/) { $skip=1; next } if ($skip && /^\s+\S/) { next } $skip=0; print' "$g/stripped.lean" > "$g/body.lean"
-{ cat "$g/body.lean"; printf '\ntheorem grader_probe : True := trivial\n'; } > "$g/lrn/Learner.lean"
+{ cat "$g/validated.lean"; printf '\ntheorem grader_probe : True := trivial\n'; } > "$g/lrn/Learner.lean"
 lean_c() { # dir module [-o]
-  (cd "$1" && LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
+  (cd "$1" && LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
 }
 lean_sandbox() { # learner compile: bwrap when it works here, plain otherwise
   if bwrap --ro-bind / / --dev /dev --proc /proc true 2>/dev/null; then
     (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
       env LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
-  else lean_c "$g/lrn" Learner -o; fi
+  else echo "grader: WARNING UNSANDBOXED (bwrap unavailable); parser allowlist and Grade.lean are the only guards" >&2; lean_c "$g/lrn" Learner -o; fi
 }
 e=0; out=""
 o=$(lean_c "$g/ref" Ref -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }
@@ -110,7 +110,7 @@ GRADE
   else
     # Grade sees the sysroot first, then a FRESH dir holding only copies of the two oleans: never the learner build dir (a forged Lean.olean there is not on the path).
     mkdir -p "$g/mods"; cp "$g/ref/Ref.olean" "$g/lrn/Learner.olean" "$g/mods/"; [ -f "$g/lrn/Learner.ilean" ] && cp "$g/lrn/Learner.ilean" "$g/mods/"
-    out=$(cd "$g/grade" && env -u LEAN_PATH timeout "$TMO" lean "+$tc" --run Grade.lean "$g/mods" 2>&1); e=$?
+    out=$(cd "$g/grade" && env -u LEAN_PATH timeout "$TMO" lean "+$tc" -M "$MEM_MB" --run Grade.lean "$g/mods" 2>&1); e=$?
     [ "$e" -eq 124 ] && out="grader: FAIL grade timed out after ${TMO}s"
     [ "$(sha256sum "$g/grade/Grade.lean" | cut -d' ' -f1)" = "$gsha" ] || { e=1; out="grader: Grade.lean was modified while checking"; }
   fi

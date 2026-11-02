@@ -36,10 +36,16 @@ cheat() { # name [standalone]: the FULL grader must refuse (rc 1, a FAIL/REFUSED
 rm -f /tmp/e76-executed-by_elab
 for c in true-statement redefined-sumL hijack-add hijack-priority ns-hijack-a ns-hijack-b command-elab-hijack init-hook unif-hint custom-axiom; do cheat "$c" standalone; done
 for c in io-rewrite-pins io-checkcontract unsafecast-skipkernel grader-ref-defs by-elab-exec guard-exec guard-forge-olean eval-in-term reduce-in-term print-in-term \
-  guard-indented guard-after-semicolon guard-col0-in-def p1-blank-indented declare-syntax-cat simproc guard-msgs deriving-instance; do cheat "$c"; done
+  guard-indented guard-after-semicolon guard-col0-in-def p1-blank-indented declare-syntax-cat simproc nested-comment-hide def-deriving guard-msgs deriving-instance; do cheat "$c"; done
 [ ! -e /tmp/e76-executed-by_elab ] && echo "arm by-elab probe file absent ok" || { echo "FAIL: /tmp/e76-executed-by_elab was created (learner code ran at grade time)"; fail=1; rm -f /tmp/e76-executed-by_elab; }
 # H: the word "instance" in a comment must NOT trip the keyword layer (comments are stripped first).
 mk H; printf "\n-- an instance of the law; set_option and local are only words here\n/- macro syntax elab -/\n" >> "$S/H/labs/e-final/solution/Mean.lean"; chk H 0
+# H2: legitimately nested block comments in the learner file still pass (the compiled bytes are the validated bytes).
+mk H2; printf "\n/- outer /- inner -/ still a comment -/\n" >> "$S/H2/labs/e-final/solution/Mean.lean"; chk H2 0
+# H3: rmedia-cop lane 2b input: in Lean the nested comment swallows the #guard, so it is NOT live code. The compiled bytes are the validated bytes, so it passes.
+mk H3; printf "\n/- a /- b -/\n #guard true -- -/\n" >> "$S/H3/labs/e-final/solution/Mean.lean"; chk H3 0
+# M: a tiny GRADER_MEM_MB is refused (parse, compile and grade all run under lean -M).
+mk M; GRADER_MEM_MB=20 bash "$S/M/labs/e-final/tests/run.sh" "$S/M/labs/e-final/solution" >"$S/M.out" 2>&1; mrc=$?; if [ "$mrc" -eq 1 ] && grep -qiE "memory|REFUSED|FAIL" "$S/M.out"; then echo "arm M ok (rc=1 under GRADER_MEM_MB=20)"; else echo "FAIL arm M: rc=$mrc"; fail=1; fi
 
 # P: the parser classifier alone (every other layer deleted): each refusal names the command kind.
 mk P; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" -e "/top-level commands are an ALLOWLIST/,+1d" -e "\#no unsafe/unsafeBaseIO#,+1d" "$S/P/labs/e-final/tests/run.sh"
@@ -58,6 +64,8 @@ parm simproc Simproc
 parm guard-msgs guardMsgsCmd
 parm deriving-instance deriving
 parm eval-in-term "parse error"
+parm nested-comment-hide guardCmd
+parm def-deriving "deriving clause"
 
 # G: root layer alone. Delete every keyword layer AND the parser test from a copy; the attacks must still be refused by the sandbox,
 # the timeout and Grade.lean's environment check (kernel replay, defeq, axioms), each with its own reason.
