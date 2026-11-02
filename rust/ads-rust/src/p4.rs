@@ -160,17 +160,29 @@ pub fn aggregate_polars(
         .collect())
 }
 
-/// Validate, split, fit a linear quality model on train, score it on test.
-pub fn pipeline_wine(
+/// The wine frame, its train and test split, and the test predictions of the linear quality model.
+type Fitted = (DataFrame, DataFrame, DataFrame, Array1<f64>);
+
+/// Read, validate, split, fit on train and predict test: the one place these `?` branches live.
+fn fit_wine(
     red: &str,
     white: &str,
-) -> Result<Value, Box<dyn Error>> {
+) -> Result<Fitted, Box<dyn Error>> {
     let df = read_wine(red, white)?;
     validate_wine(&df)?;
     let (train, test) = split_wine(&df)?;
     let model = LinearRegression::new()
         .fit(&Dataset::new(design(&train), target(&train)))?;
     let pred = model.predict(&design(&test));
+    Ok((df, train, test, pred))
+}
+
+/// Validate, split, fit a linear quality model on train, score it on test.
+pub fn pipeline_wine(
+    red: &str,
+    white: &str,
+) -> Result<Value, Box<dyn Error>> {
+    let (df, train, test, pred) = fit_wine(red, white)?;
     let (rmse, r2) = metrics(&target(&test), &pred);
     let by_color: serde_json::Map<String, Value> =
         aggregate_map(&df)
@@ -188,11 +200,7 @@ pub fn test_predictions(
     red: &str,
     white: &str,
 ) -> Result<Vec<(f64, f64)>, Box<dyn Error>> {
-    let df = read_wine(red, white)?;
-    let (train, test) = split_wine(&df)?;
-    let model = LinearRegression::new()
-        .fit(&Dataset::new(design(&train), target(&train)))?;
-    let pred = model.predict(&design(&test));
+    let (_, _, test, pred) = fit_wine(red, white)?;
     Ok(target(&test)
         .iter()
         .copied()
