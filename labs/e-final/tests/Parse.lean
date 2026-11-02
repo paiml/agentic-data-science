@@ -27,7 +27,8 @@ unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   let ictx := mkInputContext src path
   let (hdr, ps, msgs) ← parseHeader ictx
-  if hdr.raw[1].getNumArgs != 0 then return (← refuse "an import line is not allowed")
+  -- by syntax: any `import` or `prelude` atom anywhere in the header (slot numbers differ between Lean versions)
+  if (hdr.raw.find? (fun s => s.isAtom && (s.getAtomVal == "import" || s.getAtomVal == "prelude"))).isSome then return (← refuse "an import or prelude line is not allowed")
   enableInitializersExecution  -- runs only Init's own initializers: the grader imports nothing of the learner's
   let env ← importModules #[{ module := `Init }] {} (loadExts := true)
   let pmctx : ParserModuleContext := { env, options := {}, currNamespace := .anonymous, openDecls := [] }

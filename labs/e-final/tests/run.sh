@@ -51,11 +51,11 @@ REF
 lean_c() { # dir module [-o]
   (cd "$1" && LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
 }
-lean_sandbox() { # learner compile: bwrap when it works here, plain otherwise
+lean_sandbox() { # learner compile: ONLY under bwrap; without it the grade FAILS (compiling Lean is executing it)
   if bwrap --ro-bind / / --dev /dev --proc /proc true 2>/dev/null; then
-    (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
+    (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
       env LEAN_PATH="$g/ref" timeout "$TMO" lean "+$tc" -M "$MEM_MB" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
-  else echo "grader: WARNING UNSANDBOXED (bwrap unavailable); parser allowlist and Grade.lean are the only guards" >&2; lean_c "$g/lrn" Learner -o; fi
+  else echo "grader: FAIL bwrap is unavailable here; learner code is never compiled unsandboxed"; return 1; fi
 }
 e=0; out=""
 o=$(lean_c "$g/ref" Ref -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }

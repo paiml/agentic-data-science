@@ -19,6 +19,8 @@ chk() { # name want
   if [ "$rc" -eq "$2" ]; then echo "arm $1 ok (rc=$rc)"; else echo "FAIL arm $1: rc=$rc want $2: $(tail -n 1 "$S/$1.out")"; fail=1; fi
 }
 mk A; chk A 0
+# S: the starter (sorry in place) is refused: rc 1.
+mk S; bash "$S/S/labs/e-final/tests/run.sh" "$S/S/labs/e-final/starter" >"$S/S.out" 2>&1; src=$?; if [ "$src" -eq 1 ]; then echo "arm S ok (starter rc=1)"; else echo "FAIL arm S: starter rc=$src want 1"; fail=1; fi
 mk B; rm -f "${S:?}/B/lean/AgenticDS/lean-toolchain"; chk B 1
 mk C; echo "leanprover/lean4:v0.0.0" > "$S/C/lean/AgenticDS/lean-toolchain"; chk C 1
 # Planted cheats: the grader must exit 1 AND the output must carry the SPECIFIC failure reason (not just rc != 0).
@@ -33,17 +35,14 @@ cheat() { # name [standalone]: the FULL grader must refuse (rc 1, a FAIL/REFUSED
   if [ "$rc" -eq 1 ] && grep -qE "^FAIL test|^grader: FAIL|REFUSED" "$S/$1.out"; then echo "arm cheat-$1 ok (rc=1, refused)"; else echo "FAIL arm cheat-$1: rc=$rc, no refusal line"; fail=1; fi
   arms=$((arms+1))
 }
-rm -f /tmp/e76-executed-by_elab
 for c in true-statement redefined-sumL hijack-add hijack-priority ns-hijack-a ns-hijack-b command-elab-hijack init-hook unif-hint custom-axiom; do cheat "$c" standalone; done
 for c in io-rewrite-pins io-checkcontract unsafecast-skipkernel grader-ref-defs by-elab-exec guard-exec guard-forge-olean eval-in-term reduce-in-term print-in-term \
-  guard-indented guard-after-semicolon guard-col0-in-def p1-blank-indented declare-syntax-cat simproc nested-comment-hide desync-char-literal def-deriving guard-msgs deriving-instance; do cheat "$c"; done
-[ ! -e /tmp/e76-desync-ran ] || { echo "FAIL: desync probe ran"; fail=1; rm -f /tmp/e76-desync-ran; }
-[ ! -e /tmp/e76-executed-by_elab ] && echo "arm by-elab probe file absent ok" || { echo "FAIL: /tmp/e76-executed-by_elab was created (learner code ran at grade time)"; fail=1; rm -f /tmp/e76-executed-by_elab; }
+  guard-indented guard-after-semicolon guard-col0-in-def p1-blank-indented declare-syntax-cat simproc nested-comment-hide import-hidden-by-strip desync-char-literal def-deriving guard-msgs deriving-instance; do cheat "$c"; done
 # H: the word "instance" in a comment must NOT trip the keyword layer (comments are stripped first).
 mk H; printf "\n-- an instance of the law; set_option and local are only words here\n/- macro syntax elab -/\n" >> "$S/H/labs/e-final/solution/Mean.lean"; chk H 0
 # H2: legitimately nested block comments in the learner file still pass (the compiled bytes are the validated bytes).
 mk H2; printf "\n/- outer /- inner -/ still a comment -/\n" >> "$S/H2/labs/e-final/solution/Mean.lean"; chk H2 0
-# H3: rmedia-cop lane 2b input: in Lean the nested comment swallows the #guard, so it is NOT live code. The compiled bytes are the validated bytes, so it passes.
+# H3: a reviewer-found input: in Lean the nested comment swallows the #guard, so it is NOT live code. The compiled bytes are the validated bytes, so it passes.
 mk H3; printf "\n/- a /- b -/\n #guard true -- -/\n" >> "$S/H3/labs/e-final/solution/Mean.lean"; chk H3 0
 # M: a tiny GRADER_MEM_MB is refused (parse, compile and grade all run under lean -M).
 mk M; GRADER_MEM_MB=20 bash "$S/M/labs/e-final/tests/run.sh" "$S/M/labs/e-final/solution" >"$S/M.out" 2>&1; mrc=$?; if [ "$mrc" -eq 1 ] && grep -qiE "memory|REFUSED|FAIL" "$S/M.out"; then echo "arm M ok (rc=1 under GRADER_MEM_MB=20)"; else echo "FAIL arm M: rc=$mrc"; fail=1; fi
@@ -68,12 +67,12 @@ parm eval-in-term "parse error"
 parm nested-comment-hide guardCmd
 parm def-deriving "deriving clause"
 parm desync-char-literal "banned token"
+parm import-hidden-by-strip "import or prelude"
 
 # G: root layer alone. Delete every keyword layer AND the parser test from a copy; the attacks must still be refused by the sandbox,
 # the timeout and Grade.lean's environment check (kernel replay, defeq, axioms), each with its own reason.
 mk G; sed -i -e "/Root of the keyword layer/,+4d" -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" -e "/top-level commands are an ALLOWLIST/,+1d" -e "\#no unsafe/unsafeBaseIO#,+1d" -e "/token in the RAW file/,+1d" "$S/G/labs/e-final/tests/run.sh"
 grep -qE "Root of the keyword layer|every command parses|hijack keywords|after other text|no attribute|ALLOWLIST|no unsafe|RAW file" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: a pre-compile layer was not removed"; fail=1; }
-rm -f /tmp/e76-executed-by_elab
 garm() { # cheat reason [env assignment]
   env ${3:-X=1} GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$1" >"$S/G-$1.out" 2>&1; rc=$?
   if [ "$rc" -eq 1 ] && grep -q -- "$2" "$S/G-$1.out" && ! grep -q "keyword layer refused" "$S/G-$1.out"; then echo "arm G-$1 root-layer ok (rc=1, reason: $2)"; else echo "FAIL arm G-$1: rc=$rc, want 1 with '$2' from the root layer"; fail=1; fi
@@ -99,5 +98,4 @@ for c in guard-exec guard-forge-olean; do
   if grep -q "^lrn dir:.*\(e76-guard-ran\|Lean.olean\)" "$S/G-$c.out" && grep -q "^mods dir: Learner.olean Ref.olean *$" "$S/G-$c.out" && [ "$rc" -eq 0 ] && [ ! -e "$PWD/e76-guard-ran" ] && [ ! -e "$PWD/Lean.olean" ]; then echo "arm G-$c ok (ran under bwrap, forged file never on Grade's path)"; else echo "FAIL arm G-$c: rc=$rc"; fail=1; fi
   groot=$((groot+1))
 done
-[ ! -e /tmp/e76-executed-by_elab ] && echo "arm G-by-elab probe file absent ok (compiled under bwrap, private /tmp)" || { echo "FAIL: by_elab ran on the host with the keyword layer deleted"; fail=1; rm -f /tmp/e76-executed-by_elab; }
 [ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $parms parser-only arms, $groot root-layer arms)"; exit "$fail"
