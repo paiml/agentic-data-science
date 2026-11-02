@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 import AgenticDS.Plot
 import AgenticDS.Examples.Scat
@@ -23,3 +24,6 @@ def m4v03 : IO Unit := do
   writeSvg "plot-m4v03.svg" "Rows kept and refused" 20 rows
   wineDemo "plot-m4v03b.svg" "Red wine: sulphates and quality"
     "sulphates" 9 8
+  contract "ads-lean-m4v03-v1"
+    ((clean rs).length == 1 && (← plotOk "plot-m4v03.svg") &&
+      (← plotOk "plot-m4v03b.svg"))

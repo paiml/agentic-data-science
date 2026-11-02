@@ -29,7 +29,8 @@ def has (s sub : String) : Bool := (s.splitOn sub).length > 1
 
 /-- Exact output of the examples whose output is fixed. -/
 def exact : List (String × List String) := [
-  ("v02", ["features 11", "quality 6", "white false"]),
+  ("v02", ["features 11", "quality 6", "white false",
+    "contract: ads-lean-m4v02-v1 OK"]),
   ("v03", ["true", "false", "false", "false", "false",
     "kept 1 of 5", "kept    █████ 1",
     "refused ████████████████████ 4",
@@ -38,12 +39,14 @@ def exact : List (String × List String) := [
     "contract: plot_svg_bounded OK",
     "sulphates vs quality: n = 200", "slope 2.247654",
     "svg 200 points plot-m4v03b.svg",
-    "contract: plot_scatter_bounded OK"]),
+    "contract: plot_scatter_bounded OK",
+    "contract: ads-lean-m4v03-v1 OK"]),
   ("v04", ["clean_length_le", "clean_sub", "clean_complete",
-    "clean_in_range"]),
+    "clean_in_range", "contract: ads-lean-m4v04-v1 OK"]),
   ("v05", ["test rows [4, 9, 14]", "clean 6497", "test 1299",
     "train 5198", "svg 3 bars plot-m4v05.svg",
-    "contract: plot_svg_bounded OK"]),
+    "contract: plot_svg_bounded OK",
+    "contract: ads-lean-m4v05-v1 OK"]),
   ("v06", ["rows 5", "leaky train 5", "test 1",
     "rows        ████████████████████ 5",
     "leaky train ████████████████████ 5",
@@ -53,8 +56,10 @@ def exact : List (String × List String) := [
     "contract: plot_svg_bounded OK",
     "density vs quality: n = 200", "slope -78.910503",
     "svg 200 points plot-m4v06b.svg",
-    "contract: plot_scatter_bounded OK"]),
-  ("v07", ["(some [4/5, 7/5])"])]
+    "contract: plot_scatter_bounded OK",
+    "contract: ads-lean-m4v06-v1 OK"]),
+  ("v07", ["(some [4/5, 7/5])",
+    "contract: ads-lean-m4v07-v1 OK"])]
 
 def main (_ : List String) : IO UInt32 := do
   let dir : System.FilePath := "AgenticDS/Examples"
@@ -79,13 +84,16 @@ def main (_ : List String) : IO UInt32 := do
     "\"n_test\": 1299", "n_rows 6497", "n_train 5198",
     "n_test 1299", "svg 200 points plot-m4v08.svg",
     "contract: plot_scatter_bounded OK", "rmse 0.7602",
-    "r2 0.2598", "red 5.636", "white 5.877"]
+    "r2 0.2598", "red 5.636", "white 5.877",
+    "contract: ads-lean-m4v08-v1 OK"]
   for w in want8 do
     unless has v8 w do
       IO.eprintln s!"FAIL v08 lacks {w}"; ok := false
   -- v01, v10: the scatter of real wine rows.
   for (id, w) in [("v01", "svg 200 points plot-m4v01.svg"),
-      ("v10", "svg 200 points plot-m4v10.svg")] do
+      ("v01", "contract: ads-lean-m4v01-v1 OK"),
+      ("v10", "svg 200 points plot-m4v10.svg"),
+      ("v10", "contract: ads-lean-m4v10-v1 OK")] do
     unless has (get id) w do
       IO.eprintln s!"FAIL {id} lacks {w}"; ok := false
   -- v01: the declarations to grep, in file order.
@@ -113,7 +121,10 @@ def main (_ : List String) : IO UInt32 := do
   let tol := (lines t4).filter (has · "1000000")
   unless tol.length == 4 &&
       (lines (get "v09")).take 3 ==
-        ["n_rows 6497", "n_train 5198", "n_test 1299"] do
+        ["n_rows 6497", "n_train 5198", "n_test 1299"] &&
+      has (get "v09") "svg 196 points plot-m4v09.svg" &&
+      (lines (get "v09")).getLast? ==
+        some "contract: ads-lean-m4v09-v1 OK" do
     IO.eprintln s!"FAIL v09 output: {get "v09"}"; ok := false
   if ok then IO.println "contract: ads-lean-examples-m4-v1 OK"
   pure (if ok then 0 else 1)

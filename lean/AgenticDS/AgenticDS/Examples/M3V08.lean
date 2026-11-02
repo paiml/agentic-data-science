@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import Mathlib
 import AgenticDS.Plot
 import AgenticDS.Examples.Scat
@@ -28,3 +29,6 @@ def m3v08 : IO Unit := do
   IO.println s!"accuracy: {m3v08_exact conf} golden {acc}"
   penguinDemo "plot-m3v08b.svg" "Penguins: bill length and flipper"
     "bill_length_mm" "flipper_length_mm" 4
+  contract "ads-lean-m3v08-v1"
+    (sz.sum > 0 && (← plotOk "plot-m3v08.svg") &&
+      (← plotOk "plot-m3v08b.svg"))

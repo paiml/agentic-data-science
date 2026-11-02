@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 import AgenticDS.Plot
 /-! Every fifth row is a test row; the parts add up. -/
@@ -16,3 +17,6 @@ def m4v05 : IO Unit := do
   writeSvg "plot-m4v05.svg" "Wine rows by split" 6497
     [("clean", l.length), ("train", (trainRows l).length),
      ("test", (testRows l).length)]
+  contract "ads-lean-m4v05-v1"
+    ((trainRows l).length + (testRows l).length == l.length &&
+      (← plotOk "plot-m4v05.svg"))

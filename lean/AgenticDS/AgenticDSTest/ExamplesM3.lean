@@ -95,6 +95,39 @@ def main (_ : List String) : IO UInt32 := do
         (try act catch _ => pure ())
       unless (o.splitOn "plot_scatter_bounded OK").length > 1 do
         IO.eprintln s!"FAIL {id}: no scatter"; ok := false
+  -- every demo ends in its own contract line; v04 and v10
+  -- also state their numbers.
+  for (id, act) in examplesM3 do
+    let (o, _) ← IO.FS.withIsolatedStreams
+      (try act catch _ => pure ())
+    let ls := (o.splitOn "\n").filter (· ≠ "")
+    unless ls.getLast? ==
+        some s!"contract: ads-lean-m3{id}-v1 OK" do
+      IO.eprintln s!"FAIL {id}: no own contract line"; ok := false
+    let want := match id with
+      | "v04" => "sum 5, length 5"
+      | "v10" => "trace 83 of 85"
+      | _ => ""
+    unless want == "" || (o.splitOn want).length > 1 do
+      IO.eprintln s!"FAIL {id}: lacks {want}"; ok := false
+  -- the penguin scatters pin column, n, slope and point count.
+  let pen : List (String × List String) := [
+    ("v01", ["flipper_length_mm vs body_mass_g: n = 86",
+      "slope 50.263104", "svg 86 points plot-m3v01.svg"]),
+    ("v05", ["bill_length_mm vs bill_depth_mm: n = 86",
+      "slope -0.201751", "svg 86 points plot-m3v05.svg"]),
+    ("v08", ["bill_length_mm vs flipper_length_mm: n = 86",
+      "slope 2.176845", "svg 86 points plot-m3v08b.svg"]),
+    ("v09", ["bill_depth_mm vs flipper_length_mm: n = 86",
+      "slope -5.157397", "svg 86 points plot-m3v09.svg"]),
+    ("v10", ["bill_length_mm vs body_mass_g: n = 86",
+      "slope 96.303897", "svg 86 points plot-m3v10.svg"])]
+  for (id, wants) in pen do
+    let (o, _) ← IO.FS.withIsolatedStreams
+      ((examplesM3.lookup id).getD (pure ()))
+    for w in wants do
+      unless (o.splitOn w).length > 1 do
+        IO.eprintln s!"FAIL {id} lacks {w}"; ok := false
   for f in (← runtimeFaults) do
     IO.eprintln s!"FAIL {f}"
     ok := false
