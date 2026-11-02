@@ -23,14 +23,16 @@ mk B; rm -f "${S:?}/B/lean/AgenticDS/lean-toolchain"; chk B 1
 mk C; echo "leanprover/lean4:v0.0.0" > "$S/C/lean/AgenticDS/lean-toolchain"; chk C 1
 # D/E: planted cheats that elaborate fine on their own (so the arm is not vacuous) and must still be refused by the grader.
 tc=$(tr -d "[:space:]" < "$repo/labs/e-final/lean-toolchain")
-for c in true-statement redefined-sumL hijack-add hijack-priority; do
+for c in true-statement redefined-sumL hijack-add hijack-priority ns-hijack-a ns-hijack-b; do
   lean "+$tc" -DwarningAsError=true "$repo/labs/e-final/tests/cheats/$c/Mean.lean" >/dev/null 2>&1 || { echo "FAIL cheat $c does not elaborate on its own (fixture rotted)"; fail=1; }
   bash "$repo/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$c" >"$S/$c.out" 2>&1; rc=$?
   if [ "$rc" -eq 1 ]; then echo "arm cheat-$c ok (rc=1)"; else echo "FAIL arm cheat-$c: rc=$rc want 1"; fail=1; fi
 done
+# H: the word "instance" in a comment must NOT trip the keyword layer (comments are stripped first).
+mk H; printf "\n-- an instance of the law; set_option and local are only words here\n/- macro syntax elab -/\n" >> "$S/H/labs/e-final/solution/Mean.lean"; chk H 0
 # G: root layer alone. Delete the keyword test from a copy of the grader; the hijack must still be refused by the Lean pins.
 mk G; sed -i "/hijack keywords/,+1d" "$S/G/labs/e-final/tests/run.sh"
 grep -q "hijack keywords" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: keyword layer not removed"; fail=1; }
 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/hijack-add" >"$S/G.out" 2>&1; rc=$?
 if [ "$rc" -eq 1 ] && grep -q "FAIL test3" "$S/G.out" && ! grep -q "hijack keywords" "$S/G.out"; then echo "arm G root-layer ok (rc=1)"; else echo "FAIL arm G: rc=$rc want 1 from the Lean pins"; fail=1; fi
-[ "$fail" -eq 0 ] && echo "falsifier OK (8 arms)"; exit "$fail"
+[ "$fail" -eq 0 ] && echo "falsifier OK (11 arms)"; exit "$fail"
