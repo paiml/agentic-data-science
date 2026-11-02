@@ -26,7 +26,7 @@ bars 3 > "$t/bars3.svg"; arm 15-bars-ok pass "$t/bars3.svg"
 bars 1 > "$t/bars1.svg"; arm 16-one-bar refuse "$t/bars1.svg"
 bars 0 > "$t/bars0.svg"; arm 17-background-rect-only refuse "$t/bars0.svg"
 /usr/bin/grep -v '<path' "$t/bars3.svg" > "$t/barsnoaxes.svg"; arm 18-bars-no-axes refuse "$t/barsnoaxes.svg"
-# usage errors and the png/clip modes, with stub lake and rmedia so the arms are hermetic
+# usage errors and the png/clip modes, with stub lake and plot tool so the arms are hermetic
 want() { # name expected-rc cmd...
   n="$1"; e="$2"; shift 2; "$@" >"$t/o.txt" 2>&1; rc=$?
   if [ "$rc" -eq "$e" ]; then echo "  $n ok"; pass=$((pass+1)); else echo "  $n FAIL (rc=$rc want $e)"; fail=$((fail+1)); fi; }
@@ -36,9 +36,12 @@ want 07-bad-mode 2 $S nope
 want 08-bad-example 2 $S png m9 v99 "$t/o"
 mkdir "$t/bin"
 printf '#!/bin/sh\n[ "$STUB" = nolake ] && exit 0\ncp "%s" "plot-$(echo "$2" | cut -d- -f2)$3.svg"\n' "$good" > "$t/bin/lake"
-printf '#!/bin/sh\ncase "$1" in svg2png) [ "$STUB" = nopng ] || echo png > "$3";; animate) [ "$STUB" = noclip ] || { for a; do o="$a"; done; echo mp4 > "$o"; };; esac\n' > "$t/bin/rmstub"
-chmod +x "$t/bin/lake" "$t/bin/rmstub"
-export RMEDIA="$t/bin/rmstub" PATH="$t/bin:$PATH"
+printf '#!/bin/sh\ncase "$1" in svg2png) [ "$STUB" = nopng ] || echo png > "$3";; animate) [ "$STUB" = noclip ] || { for a; do o="$a"; done; echo mp4 > "$o"; };; esac\n' > "$t/bin/toolstub"
+chmod +x "$t/bin/lake" "$t/bin/toolstub"
+export PLOT_TOOL="$t/bin/toolstub" PATH="$t/bin:$PATH"
+refused() { n="$1"; shift; (unset PLOT_TOOL; "$@" >"$t/o.txt" 2>&1); rc=$?; if [ "$rc" -ne 0 ] && /usr/bin/grep -q "PLOT_TOOL: set PLOT_TOOL to the svg2png/animate tool" "$t/o.txt"; then echo "  $n ok"; pass=$((pass+1)); else echo "  $n FAIL (rc=$rc)"; fail=$((fail+1)); fi; }
+refused 20-png-unset-tool $S png m1 v01 "$t/o"
+refused 21-clip-unset-tool $S clip "$good" 2 "$t/c0.mp4"
 want 09-png-ok 0 $S png m1 v01 "$t/o"
 STUB=nolake want 10-png-no-svg 1 $S png m1 v01 "$t/o"
 STUB=nopng want 11-png-no-file 1 $S png m1 v01 "$t/o2"
