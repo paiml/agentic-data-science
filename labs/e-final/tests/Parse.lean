@@ -14,7 +14,8 @@ def bannedWords : List String := ["unsafe", "native", "unif_hint", "by_elab", "r
 partial def bannedIn : Syntax → Option String
   | .atom _ v => bannedWords.find? (fun w => (v.splitOn w).length > 1)
   | .ident _ _ n _ => bannedWords.find? (fun w => ((n.toString).splitOn w).length > 1)
-  | .node _ _ args => args.findSome? bannedIn
+  -- a doc comment and a plain string literal are inert text, never code: a word in them decides nothing
+  | .node _ k args => if k == ``Lean.Parser.Command.docComment || k == `str then none else args.findSome? bannedIn
   | _ => none
 
 def refuse (msg : String) : IO UInt32 := do

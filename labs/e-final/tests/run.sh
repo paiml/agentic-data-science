@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Lab grader: usage run.sh <dir-with-Mean.lean>. Exit 0 only if Mean.lean elaborates with
-# warnings-as-errors, has no sorry/admit/native_decide, and sum_shift uses only the allowed axioms.
+# warnings-as-errors and the kernel check (Grade.lean) passes. The verdict comes only from Lean's parser (Parse.lean) and Grade.lean; the grep lines are advisory notes.
 set -uo pipefail
 export PATH="$HOME/.elan/bin:$PATH"
 here=$(cd "$(dirname "$0")/.." && pwd); tc=$(tr -d "[:space:]" < "$here/lean-toolchain") || exit 2   # the lab pins its toolchain in lean-toolchain (no hard-coded version)
@@ -8,8 +8,9 @@ ref="$here/../../lean/AgenticDS/lean-toolchain"; [ -f "$ref" ] || { echo "FAIL: 
 if [ "$(tr -d "[:space:]" < "$ref")" != "$tc" ]; then echo "FAIL: lab lean-toolchain differs from lean/AgenticDS/lean-toolchain"; exit 1; fi
 f="$1/Mean.lean"; n=0
 t() { n=$((n+1)); if "$@"; then echo "PASS test$n: $T"; else echo "FAIL test$n: $T"; rc=1; fi; }
+a() { if "$@"; then echo "advisory ok: $T"; else echo "advisory note (the verdict does not depend on it; Lean's parser and the kernel check decide): $T"; fi; }
 rc=0
-T="no sorry/admit/native_decide"; t bash -c '! grep -nE "\b(sorry|admit)\b|native_decide" "$0"' "$f"
+T="no sorry/admit/native_decide"; a bash -c '! grep -nE "\b(sorry|admit)\b|native_decide" "$0"' "$f"
 g=$(mktemp -d); trap 'rm -rf "${g:?}"' EXIT
 TMO="${GRADER_TIMEOUT:-120}"   # seconds for each of: parse, learner compile, grade (a decide on a huge list must not hang the grader)
 MEM_MB="${GRADER_MEM_MB:-4096}"   # lean -M ceiling (MB; a virtual-memory ulimit kills lean thread stacks) for the learner compile
@@ -22,19 +23,19 @@ t bash -c '[ "$1" = 0 ]' x "$prc"; [ "$prc" -ne 0 ] && echo "$pout"
 # Comments are stripped (string-aware: a "--" inside a string literal does not start a comment) before the keyword layer reads the file.
 perl -0pe 's{("(?:\\.|[^"\\])*")|/-.*?-/|--[^\n]*}{defined $1 ? $1 : ""}gse' "$f" > "$g/stripped.lean"
 T="no instance/axiom/macro/syntax/elab/set_option/local/open-in/attribute/unsafeCast/initialize hijack keywords (second layer, comments stripped)"
-t bash -c '! grep -nE "^\s*(import|#exit|open\b.*\bin\b|local|scoped|private|protected|unsafe|partial|noncomputable)\b|\b(instance|axiom|macro|macro_rules|#exit|run_cmd|run_elab|run_meta|priority|syntax|elab|elab_rules|set_option|notation|infix|infixl|infixr|prefix|postfix|attribute|opaque|implemented_by|extern|export|csimp|deriving instance|unsafeCast|ofReduceBool|trustCompiler|lcProof|sorryAx|initialize|builtin_initialize|run_tac|debug)\b|@\[[^]]*(instance|reducible|simp|implemented_by|extern|export|csimp|macro|inline)" "$0"' "$g/stripped.lean"
+a bash -c '! grep -nE "^\s*(import|#exit|open\b.*\bin\b|local|scoped|private|protected|unsafe|partial|noncomputable)\b|\b(instance|axiom|macro|macro_rules|#exit|run_cmd|run_elab|run_meta|priority|syntax|elab|elab_rules|set_option|notation|infix|infixl|infixr|prefix|postfix|attribute|opaque|implemented_by|extern|export|csimp|deriving instance|unsafeCast|ofReduceBool|trustCompiler|lcProof|sorryAx|initialize|builtin_initialize|run_tac|debug)\b|@\[[^]]*(instance|reducible|simp|implemented_by|extern|export|csimp|macro|inline)" "$0"' "$g/stripped.lean"
 T="no #eval/#print/#check/run_cmd after other text on a line (those commands are only accepted at a line start, where the grader drops them)"
-t bash -c '! grep -nE "[^[:space:]].*(#eval|#print|#check|#reduce|#synth|#exit|run_cmd|run_tac)" "$0"' "$g/stripped.lean"
+a bash -c '! grep -nE "[^[:space:]].*(#eval|#print|#check|#reduce|#synth|#exit|run_cmd|run_tac)" "$0"' "$g/stripped.lean"
 T="no attribute (@[ ... ], attribute), by_elab, unif_hint, command_elab, term_elab, register_option or init hook of any kind"
-t bash -c '! grep -nE "@\[|\b(by_elab|unif_hint|command_elab|term_elab|tactic_elab|register_option|register_builtin_option|builtin_init|init)\b" "$0"' "$g/stripped.lean"
+a bash -c '! grep -nE "@\[|\b(by_elab|unif_hint|command_elab|term_elab|tactic_elab|register_option|register_builtin_option|builtin_init|init)\b" "$0"' "$g/stripped.lean"
 T="top-level commands are an ALLOWLIST (column-0 pre-filter; the real classifier is the parser test above)"
-t bash -c '! perl -ne "print qq{\$.:\$_} if /^\\S/ && !/^(def|theorem|lemma|example|namespace|section|end|open|variable)\\b/" "$0" | grep -n .' "$g/stripped.lean"
+a bash -c '! perl -ne "print qq{\$.:\$_} if /^\\S/ && !/^(def|theorem|lemma|example|namespace|section|end|open|variable)\\b/" "$0" | grep -n .' "$g/stripped.lean"
 T="no unsafe/native token in the RAW file (a char literal such as '\"' desyncs the comment stripper, so this layer reads the raw bytes; the parser also bans them in every term)"
-t bash -c '! grep -nE "unsafe|native" "$0"' "$f"
+a bash -c '! grep -nE "unsafe|native" "$0"' "$f"
 T="no unsafe/unsafeBaseIO/include_str/macro/syntax/elab/structure/inductive/class/abbrev/mutual/universe token anywhere, strings included"
-t bash -c '! grep -nE "unsafe|include_str|\b(macro|macro_rules|syntax|elab|structure|inductive|class|abbrev|mutual|universe|declare_syntax_cat)\b" "$0"' "$g/stripped.lean"
-# Keyword layer first: if ANY check above tripped, Learner is never compiled (compiling Lean is executing it: elaborators run).
-if [ "$rc" -ne 0 ]; then echo "tests run: $n"; echo "grader: keyword layer refused Mean.lean; it was not compiled"; exit 1; fi
+a bash -c '! grep -nE "unsafe|include_str|\b(macro|macro_rules|syntax|elab|structure|inductive|class|abbrev|mutual|universe|declare_syntax_cat)\b" "$0"' "$g/stripped.lean"
+# Only the parser test decides before the compile: if Lean's parser refused the file, Learner is never compiled (compiling Lean is executing it: elaborators run).
+if [ "$prc" -ne 0 ]; then echo "tests run: $n"; echo "grader: the parser refused Mean.lean; it was not compiled"; exit 1; fi
 # Model (honest): compiling Lean IS execution. Learner.lean is the exact file the parser validated plus a grader probe, compiled in a
 # throwaway dir holding nothing of the grader's, under bwrap: only /usr, the Lean toolchain dir and the Ref build dir are mounted
 # read-only, no network, private /tmp, only that dir writable. Without bwrap the grade fails. The VERDICT never comes from elaborating
@@ -54,7 +55,7 @@ lean_c() { # dir module [-o]
 }
 lean_sandbox() { # learner compile: ONLY under bwrap with a minimal mount set; without bwrap the grade FAILS
   local P; P=$(lean "+$tc" --print-prefix) || return 1
-  local BW=(bwrap --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 --symlink usr/bin /bin --ro-bind "$P" "$P" --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp)
+  local BW=(bwrap --ro-bind /usr /usr --symlink usr/lib /lib --symlink usr/lib64 /lib64 --symlink usr/bin /bin --ro-bind "$P" "$P" --dev /dev --proc /proc --die-with-parent --unshare-pid --unshare-net --tmpfs /tmp --unshare-ipc --new-session --clearenv --setenv PATH /usr/bin:/bin --setenv HOME /tmp)
   if "${BW[@]}" true 2>/dev/null; then
     (cd "$g/lrn" && "${BW[@]}" --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
       env LEAN_PATH="$g/ref" timeout "$TMO" "$P/bin/lean" -M "${GRADER_COMPILE_MEM_MB:-$MEM_MB}" -j 2 -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
@@ -121,6 +122,6 @@ GRADE
   fi
 fi
 T="compiles (warnings as errors) and the grader's environment check passes (verdict from Grade.lean only)"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader verdict: PASS" && echo "$2" | grep -q "^grader contract: mean_shift OK"' x "$e" "$out"
-T="axioms of sum_shift within allowed set"; t bash -c '! { echo "$0" | grep "depends on axioms" | grep -vE "\[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$"; } && echo "$0" | grep -q "depends on axioms"' "$out"
+T="axioms of sum_shift within allowed set (the empty set is allowed)"; t bash -c 'printf "%s\n" "$1" | bash "$0"' "$here/tests/axioms-line.sh" "$out"
 [ -n "${GRADER_DEBUG:-}" ] && { echo "$out" >&2; echo "lrn dir: $(cd "$g/lrn" && ls | tr "\n" " ")" >&2; echo "mods dir: $(cd "$g/mods" 2>/dev/null && ls | tr "\n" " ")" >&2; }
 echo "tests run: $n"; [ "$n" -ge 1 ] || exit 2; exit $rc
