@@ -1,0 +1,50 @@
+# ads-lean-plot-v1: Course E (Lean 4) demo plots, the check/png/clip helper (ADS-DEMO-001 R-6, D-4)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-11-02"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "scripts/lean-plot.sh runs one Lean example, refuses an SVG that is not a plot with points, axes and tick labels, rasterises it with rmedia svg2png (resvg) and holds it as a clip with rmedia animate. It never draws; the SVG comes from Svg.lean."
+  references:
+    - "scripts/lean-plot.sh"
+    - "scripts/falsify-lean-plot.sh"
+    - "lean/AgenticDS/AgenticDS/Svg.lean"
+    - "CLASSIFICATION (kind: pattern): structural check of an SVG, tolerances none"
+
+equations:
+  plot_is_real:
+    formula: |
+      check(svg) = OK  iff  size(svg) > 0 and count('<circle') >= 2 and count('<path') >= 4 and count('<text') >= 8
+    domain: "any file path"
+    codomain: "exit 0 with 'plot OK: <svg>', or exit 1 with a FAIL line naming the missing part"
+    postconditions:
+      - "REFUSE: a missing or empty file, fewer than 2 points, no axes and gridlines, or no tick labels is RED"
+      - "REFUSE: png and clip write nothing when check is RED"
+      - "USAGE: no mode, an unknown mode or an example outside m1..m4 v01..v10 exits 2"
+
+proof_obligations:
+  - type: invariant
+    property: "Every refusal arm exits non-zero and the control exits 0"
+    formal: "scripts/falsify-lean-plot.sh exits 0 (15 arms: control, 5 refusals, 3 usage, png ok/no-svg/no-file, clip ok/bad-plot/no-file)"
+    applies_to: plot_is_real
+  - type: invariant
+    property: "Every line of lean-plot.sh runs under the falsifier (kcov, one run per call, merged)"
+    formal: "kcov coverage of scripts/lean-plot.sh is 22/22 lines"
+    applies_to: plot_is_real
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-PLOT-001
+    rule: "check refuses an SVG with no points, no axes or no tick labels, and an empty or missing file"
+    prediction: "arms 01-05 exit non-zero; arm 00 exits 0"
+    test: "scripts/falsify-lean-plot.sh"
+    mutation: "Delete every <circle> from a conforming SVG: check prints FAIL ... fewer than 2 points and exits 1 (measured 2026-11-02)"
+    discriminates: "A blank or text-only picture cannot reach a course video"
+    if_fails: "A learner sees a plot with nothing plotted"
+  - id: FALSIFY-ADS-LEAN-PLOT-002
+    rule: "png and clip report a missing output instead of a pass"
+    prediction: "arms 10, 11, 13, 14 exit 1"
+    test: "scripts/falsify-lean-plot.sh"
+    mutation: "A stub rmedia that writes no file: png and clip print FAIL no png/clip written and exit 1 (measured 2026-11-02)"
+    discriminates: "A silent render failure cannot pass as a plot"
+    if_fails: "A demo is composited with a stale or absent plot"
