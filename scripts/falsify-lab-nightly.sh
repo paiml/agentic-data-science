@@ -41,7 +41,14 @@ if [ -n "$JL" ]; then
   g="$S/d/julia/lab/penguin-summary/grade.sh"
   sed -i '/^\[ -f "\$result" \] || /d;/^\[ "\$got_nonce" = /d;/^case "\$pass\$fail\$error" in/d;s|^read -r got_nonce pass fail error < "\$result"|got_nonce=x; pass=; fail=; error=|' "$g"
   cmp -s "$g" "$here/julia/lab/penguin-summary/grade.sh" && bad D-julia-grader-forge "the grade.sh mutation changed nothing"
-  want D-julia-grader-forge d "$(lane d "$S/d" julia JULIA="$JL")" 1
+  # the grader falsifier mutates the pristine repo grade.sh (MUTANT_BASE), so the forged copy cannot starve its own mutants of lines
+  want D-julia-grader-forge d "$(lane d "$S/d" julia JULIA="$JL" MUTANT_BASE="$here/julia/lab/penguin-summary/grade.sh")" 1
+  # the red must be the forge itself (arms H/J/N surviving), never a stale sed
+  if grep -q "sed changed nothing" "$S/out-d/julia.log" 2>/dev/null; then bad D-red-reason-is-the-forge "a mutant sed changed nothing"; elif grep -Eq "^FAIL arm [HJN]:" "$S/out-d/julia.log" 2>/dev/null; then ok D-red-reason-is-the-forge "$(grep -m1 -E "^FAIL arm [HJN]:" "$S/out-d/julia.log" | cut -c1-110)"; else bad D-red-reason-is-the-forge "no surviving forge arm in the log"; fi
+  # control: delete the forge (an UNMUTATED copy) and the same lane must go green, so arm D's red comes from the planted forge and not from a stale sed or the host
+  copy d0
+  cmp -s "$S/d0/julia/lab/penguin-summary/grade.sh" "$here/julia/lab/penguin-summary/grade.sh" || bad D0-julia-forge-deleted-is-green "the control copy differs from the repo grade.sh"
+  want D0-julia-forge-deleted-is-green d0 "$(lane d0 "$S/d0" julia JULIA="$JL")" 0
 else nr D-julia-grader-forge "julia absent"; fi
 # floor: a proof that exits 0 and prints nothing is RED, not green
 if command -v cargo >/dev/null; then
@@ -56,7 +63,7 @@ TRIG='pull_request_target|pull_request|merge_group|push|workflow_call'
 trig_flat() { grep -Eq "^\s*[\"']?($TRIG)[\"']?\s*:|^[\"']?on[\"']?\s*:.*\b($TRIG)\b" "$1"; }
 # block-list form (`on:` then `- pull_request` lines): no YAML parser is on the fleet (no yq), so awk walks the top-level `on:` block
 trig_list() { awk -v t="^[[:space:]]*-[[:space:]]*[\"']?($TRIG)[\"']?[[:space:]]*(#.*)?$" '
-  /^["'"'"']?on["'"'"']?:[[:space:]]*(#.*)?$/ { inon = 1; next }
+  /^["'"'"']?on["'"'"']?[[:space:]]*:[[:space:]]*(#.*)?$/ { inon = 1; next }
   /^[^[:space:]#]/ && !/^-[[:space:]]/ { inon = 0 }
   inon && $0 ~ t { bad = 1 }
   END { exit !bad }' "$1"; }
@@ -88,6 +95,12 @@ mutwf list-after-schedule '/^  workflow_dispatch: {}/a\  - workflow_call'
 # indent-0 block list: `on:` then `- push` flush left (a valid YAML sequence under a mapping key)
 mutwf list-indent0 '/^on:$/a\- push'
 mutwf list-indent0-quoted "/^on:\$/a\\- 'pull_request_target'"
+# `on :` (space before the colon) is valid YAML: block list at both indents, with a comment, quoted key, and the inline form
+mutwf space-list-indent2 's/^on:$/on :\n  - push/'
+mutwf space-list-indent0 's/^on:$/on :\n- pull_request/'
+mutwf space-list-comment 's/^on:$/on : # triggers\n  - workflow_call/'
+mutwf space-quoted-list "s/^on:\$/\"on\" :\\n- 'push'/"
+mutwf space-inline 's/^on:$/on : push/'
 # stop-rule control: a `- pull_request` list item under jobs: is not a trigger and must stay GREEN (the walk ends at the next top-level key)
 ctl="$S/wf-ctl-jobs.yml"; { cat "$w"; printf '      - pull_request\n'; } > "$ctl"; sed -i 's/^jobs:$/jobs:\n  note:\n    steps:\n      - pull_request/' "$ctl"
 if cmp -s "$ctl" "$w"; then bad G-control-jobs-list "the control plant changed nothing"; elif trig_bad "$ctl"; then bad G-control-jobs-list "a list item under jobs: was flagged as a trigger"; else ok G-control-jobs-list "stays green"; fi
