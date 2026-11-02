@@ -11,6 +11,19 @@ fn main() {
     };
     let res = pipeline_wine(&wine("red"), &wine("white"))
         .expect("pipeline");
+    let pts = ads_rust::p4::test_predictions(
+        &wine("red"),
+        &wine("white"),
+    )
+    .expect("predictions");
+    ads_rust::figure::write_if_out(&ads_rust::figure::scatter_fit(
+        (
+            "Pipeline: predicted vs observed quality (test rows)",
+            "observed quality score",
+            "predicted quality score",
+        ),
+        &pts,
+    ));
     println!("rmse = {:.6}, r2 = {:.6}", res["rmse"], res["r2"]);
     let g: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(format!(

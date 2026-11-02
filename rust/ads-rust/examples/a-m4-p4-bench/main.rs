@@ -12,6 +12,14 @@ fn main() {
         format!("{root}/datasets/wine-quality/winequality-{c}.csv")
     };
     let df = read_wine(&wine("red"), &wine("white")).expect("load");
+    ads_rust::figure::write_if_out(&ads_rust::figure::scatter_fit(
+        (
+            "Wine quality on alcohol (red + white)",
+            "alcohol (% vol)",
+            "quality score (0-10)",
+        ),
+        &ads_rust::figure::wine_points(&df, "alcohol", "quality"),
+    ));
     let (a, b) = (
         aggregate_polars(&df).expect("polars"),
         aggregate_map(&df),

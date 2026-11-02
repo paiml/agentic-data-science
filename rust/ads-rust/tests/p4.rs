@@ -209,3 +209,31 @@ fn report_and_oracle_round_trip() {
         assert!(golden().get(k).is_none() && back.get(k).is_none());
     }
 }
+
+#[test]
+fn test_predictions_cover_the_test_rows_and_reproduce_the_golden_rmse()
+ {
+    let pts =
+        test_predictions(&wine("red"), &wine("white")).unwrap();
+    assert_eq!(
+        pts.len() as u64,
+        golden()["n_test"].as_u64().unwrap()
+    );
+    let mse = pts.iter().map(|p| (p.0 - p.1).powi(2)).sum::<f64>()
+        / pts.len() as f64;
+    let want = golden()["rmse"].as_f64().unwrap();
+    assert!(
+        (mse.sqrt() - want).abs() < 1e-6,
+        "rmse {}",
+        mse.sqrt()
+    );
+}
+
+#[test]
+fn wine_points_pairs_an_integer_column_with_a_float_column() {
+    let df = frame();
+    let pts =
+        ads_rust::figure::wine_points(&df, "alcohol", "quality");
+    assert_eq!(pts.len(), df.height());
+    assert!(pts.iter().all(|p| (0.0..=10.0).contains(&p.1)));
+}

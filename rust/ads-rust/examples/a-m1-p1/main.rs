@@ -14,6 +14,22 @@ fn main() {
     println!("rows loaded: {}", raw.height());
     println!("rows kept:   {}", kept.height());
     assert_eq!((raw.height(), kept.height()), (344, 342));
+    {
+        use ads_rust::figure::{
+            group_points, penguin_rows, scatter_groups,
+            write_if_out,
+        };
+        let rows =
+            penguin_rows(&kept, "bill_length_mm", "bill_depth_mm");
+        write_if_out(&scatter_groups(
+            (
+                "Penguin bills by species",
+                "bill length (mm)",
+                "bill depth (mm)",
+            ),
+            &group_points(rows.into_iter()),
+        ));
+    }
     let s =
         ads_rust::p1::summary_by_species(kept).expect("summary");
     let rows: Vec<ads_rust::plot::Row> =
