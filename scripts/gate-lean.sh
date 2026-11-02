@@ -60,6 +60,18 @@ if [ -e AgenticDSTest/P4.lean ]; then
   out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
 fi
+# Refusal paths and small helpers (ads#130): each none/throw path carries a test.
+out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/Refusals.lean ../.. 2>&1) || { echo "FAIL refusals test: $out"; exit 1; }
+echo "$out" | grep -q "contract: ads-lean-refusals-v1 OK$" || { echo "FAIL refusals test: $out"; exit 1; }
+# savePlot must surface a failing ImageMagick convert (stub convert: answers -version, then fails).
+cstub=$(mktemp -d)
+printf '#!/bin/sh\n[ "$1" = "-version" ] && exit 0\necho stub-convert-failed >&2\nexit 1\n' > "$cstub/convert"; chmod +x "$cstub/convert"
+if out=$(PATH="$cstub:$PATH" lake exe ols-demo ../.. 2>&1); then rm -rf "${cstub:?}" plot.svg; echo "FAIL ols-demo ignored a failing convert: $out"; exit 1; fi
+rm -rf "${cstub:?}" plot.svg
+echo "$out" | grep -q "convert failed" || { echo "FAIL ols-demo failed for another reason than convert: $out"; exit 1; }
+# Every function and every refusal path has a test (Lean has no line-coverage tool); the falsifier proves the check can fail.
+bash ../../scripts/falsify-lean-fn-coverage.sh >/dev/null || { echo "FAIL lean fn-coverage falsifier"; bash ../../scripts/falsify-lean-fn-coverage.sh; exit 1; }
+bash ../../scripts/check-lean-fn-coverage.sh || { echo "FAIL lean fn coverage"; exit 1; }
 bash ../../scripts/gate-lean-anscombe.sh || exit 1
 rcp=$(mktemp); trap 'rm -f "${rcp:?}"' EXIT
 ../../labs/c05-final/tests/lab-verify.sh "$rcp" || { echo "FAIL lab c05-final"; exit 1; }
