@@ -250,6 +250,26 @@ fn p4_plot_is_a_real_axes_figure_of_the_test_predictions() {
         ),
         &pts,
     );
-    assert!(svg.matches("<circle").count() > pts.len());
+    assert_eq!(
+        ads_rust::figure::circles(&svg).len(),
+        pts.len() + 1
+    );
+    assert!(ads_rust::figure::points_on_axes(&svg, &pts));
+    assert!(ads_rust::figure::fit_line_matches(&svg, &pts));
     ads_rust::figure::write_if_out(&svg);
+}
+
+#[test]
+fn test_predictions_refuse_a_missing_or_bad_file() {
+    assert!(
+        test_predictions("no/such.csv", &wine("white")).is_err()
+    );
+    let bad = std::env::temp_dir()
+        .join(format!("ads-p4-bad-{}.csv", std::process::id()));
+    std::fs::write(&bad, "alcohol\nx\n").unwrap();
+    assert!(
+        test_predictions(bad.to_str().unwrap(), &wine("white"))
+            .is_err()
+    );
+    std::fs::remove_file(&bad).unwrap();
 }
