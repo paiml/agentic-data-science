@@ -11,3 +11,4 @@ Code only: the import closure of the two mains (32 Lean sources) under `tree/lea
 - `receipt-pv-lint.txt`: `pv lint tree/contracts` (the lab tree's own contract) PASS. The sigma gate and `pv ontology tbox` have no Σ file to read in this repo, so they are not applicable.
 - `tree/lean/AgenticDS/scripts/Axioms.lean` imports only shipped modules and lists the six theorems the course narration describes (mean_const, variance_nonneg, variance_shift, sum_residuals, residuals_sum, sum_map_add_const); `lake env lean scripts/Axioms.lean` prints six lines, standard axioms only (demo m1v09 counts them).
 - apt packages are pinned to the versions in the base-image digest's archive snapshot.
+- `axioms-run.txt`: `lake env lean scripts/Axioms.lean` inside the image under `--network none`: six lines.
