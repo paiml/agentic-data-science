@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import Mathlib
 import AgenticDS.Examples.Scat
 /-! A mutant: change one golden row in memory. -/
@@ -25,7 +26,5 @@ def m3v09 : IO Unit := do
   -- The demo is the refusal: a mismatch is caught and
   -- reported, so the run is the same every time. A mutant
   -- that is NOT caught is the failure.
-  if want != seen then
-    IO.println "refused: confusion differs"
-  else
-    throw (IO.userError "mutant not caught")
+  refuseUnless (want != seen) "mutant not caught"
+  IO.println "refused: confusion differs"

@@ -1,3 +1,4 @@
+import AgenticDS.Examples.Run
 import AgenticDS.P4
 /-! Limits: exact maths is slow; numbers are tested. -/
 open AgenticDS
@@ -6,8 +7,7 @@ open AgenticDS
 -- on every run: the wall clock goes to stderr only.
 def m4v09 : IO Unit := do
   let t0 ← IO.monoMsNow
-  let some r ← p4Run "../.." |
-    throw (IO.userError "fit failed")
+  let r ← orRefuse (← p4Run "../..") "fit failed"
   IO.println s!"n_rows {r.nRows}"
   IO.println s!"n_train {r.nTrain}"
   IO.println s!"n_test {r.nTest}"

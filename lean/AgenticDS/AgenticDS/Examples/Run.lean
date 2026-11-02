@@ -23,12 +23,19 @@ def runExample (examples : List (String × IO Unit))
     IO.eprintln s!"usage: example <id>; ids: {examples.map (·.1)}"
     pure 1
 
+/-- Refuse with `msg` (an `IO` error, exit 1 through
+`runExample`) unless `ok`. -/
+def refuseUnless (ok : Bool) (msg : String) : IO Unit := do
+  unless ok do throw (IO.userError msg)
+
+/-- The value of `o`, or refuse with `msg` when there is none. -/
+def orRefuse {α : Type} (o : Option α) (msg : String) : IO α :=
+  match o with
+  | some a => pure a
+  | none => throw (IO.userError msg)
+
 /-- The contract line of a demo: refuse (exit 1 through
 `runExample`) unless `ok`, else print `contract: NAME OK`. -/
 def contract (name : String) (ok : Bool) : IO Unit := do
-  unless ok do throw (IO.userError s!"contract {name} violated")
+  refuseUnless ok s!"contract {name} violated"
   IO.println s!"contract: {name} OK"
-
-/-- `p.isInfixOf s`: the text `p` occurs inside `s`. -/
-def String.isInfixOf (p s : String) : Bool :=
-  (s.splitOn p).length > 1

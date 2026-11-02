@@ -28,7 +28,7 @@ def m1v05 : IO Unit := do
   let same := (List.range 11).all fun k =>
     variance (ad.map (· + (2 * k : ℚ))) == variance ad
   IO.println s!"shift leaves variance unchanged: {same}"
-  if !same then throw (IO.userError "FAIL T3 on the data")
+  refuseUnless same "FAIL T3 on the data"
   writeScatter "plot-m1v05.svg" "Shift leaves variance unchanged"
     "shift added to every mass (g)" "variance (g^2)" pts
     [(0, qf (variance ad)), (20, qf (variance ad))] []

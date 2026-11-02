@@ -31,6 +31,9 @@ def main (_ : List String) : IO UInt32 := do
     fun e => e.fileName.startsWith "M2V").size
   let mut ok := true
   let fail (m : String) : IO Unit := IO.eprintln s!"FAIL {m}"
+  if olsSlope tri != 5 / 2 || sx tri != 6 then
+    fail "tri slope"
+    ok := false
   if files != examplesM2.length then
     fail s!"{files} files, {examplesM2.length} examples"
     ok := false
@@ -42,7 +45,8 @@ def main (_ : List String) : IO UInt32 := do
   -- v09: the true guard and the planted wrong one exist.
   let good ← IO.FS.readFile "AgenticDS/Examples/M2V09.lean"
   let bad ← IO.FS.readFile "AgenticDSTest/PlantedWrongSlope.lean"
-  unless has good "#guard olsSlope m2v09_data == 5 / 2" &&
+  unless has good ("#guard olsSlope ([(1, 2), (2, 4), (3, 7)]" ++
+      " : Data ℚ) == 5 / 2") &&
       has bad "#guard olsSlope planted == 2" do
     fail "v09 guard files"; ok := false
   let mut outs : List (String × String) := []

@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 # Lean has no line-coverage tool, so the substitute receipt is: every function and every refusal path
-# in the Lean demo and plot code has a test (ads#130, part of #129).
-#   FUNCTIONS: every `def` / `abbrev` in lean/AgenticDS/AgenticDS/*.lean must be reachable from a test
-#     under lean/AgenticDS/AgenticDSTest/ (named there, or named in the body of a function that is).
-#     An untested function is RED. `main` is run by the gate itself and is not counted.
-#   REFUSALS: every `throw` and every `none` result in that code, per enclosing function, needs a row in
-#     lean/AgenticDS/scripts/refusals.tsv naming the test file and the label the test carries; the
-#     file must exist and carry the label. A site with no row is RED, and so is a row with no site.
+# in the Lean demo and plot code is reached by a test or a demo that runs (ads#130, part of #129).
+# The check reads the COMPILED code, not the text: lean/AgenticDS/scripts/FnCoverage.lean loads the
+# .olean of every module under lean/AgenticDS/AgenticDS (the library and every Examples/ module) and of
+# every test under AgenticDSTest, then walks, from the `main` of each test and each demo, the constants
+# each elaborated definition uses. A name inside a string or a comment, or a function nobody calls, is
+# not coverage.
+#   FUNCTIONS: every user-written definition of the library must be reached from a `main`. An
+#     unreached one is RED. So is a test definition that no test `main` reaches (a test that never runs).
+#   REFUSALS: a refusal path is an elaborated term that throws an `IO.userError`, or builds `none` in a
+#     function whose result is an `Option`. Each needs a row in lean/AgenticDS/scripts/refusals.tsv naming
+#     the test file and the label the test carries; the file must carry the label. A site with no row is
+#     RED, and so is a row with no site.
+#   PIN: the registry carries `#pin ndef=N nsites=M`; the counts the walker finds must equal it.
 #   PLOT SCRIPT: every `exit 1|2` and `return 1` in scripts/lean-plot.sh needs a planted arm in
 #     scripts/falsify-lean-plot.sh (rows `lean-plot.sh` in refusals.tsv, needle = the arm id).
-# usage: check-lean-fn-coverage.sh [--list]     --list prints the function -> test mapping
+# usage: check-lean-fn-coverage.sh [--list]     --list prints the function -> entry mapping
+# env: LEAN_PKG (package under test), LEAN_REAL (package whose build supplies the oleans; default LEAN_PKG)
 set -euo pipefail
 here="$(cd "$(dirname "$0")/.." && pwd)"
 pkg="${LEAN_PKG:-$here/lean/AgenticDS}"
+real="${LEAN_REAL:-$pkg}"
 reg="${REFUSALS:-$pkg/scripts/refusals.tsv}"
 plot="${LEAN_PLOT:-$here/scripts/lean-plot.sh}"
 arms="${LEAN_PLOT_ARMS:-$here/scripts/falsify-lean-plot.sh}"
@@ -21,93 +29,72 @@ fail=0
 red() { echo "RED: $*"; fail=1; }
 [ -d "$pkg/AgenticDS" ] && [ -d "$pkg/AgenticDSTest" ] || { echo "RED: no Lean package at $pkg"; exit 1; }
 [ -s "$reg" ] || { echo "RED: refusal registry $reg missing or empty"; exit 1; }
-
-# One pass over the library: top-level declarations, their comment-free bodies, and the refusal sites.
-# Output lines: D<TAB>module<TAB>name | E<TAB>name<TAB>token | S<TAB>module<TAB>name<TAB>kind
-lib_scan() {
-  awk '
-    FNR == 1 { inblk = 0; cur = ""; mod = FILENAME; sub(/.*\//, "", mod); sub(/\.lean$/, "", mod) }
-    {
-      line = $0
-      if (inblk) { if (match(line, /-\//)) { line = substr(line, RSTART + 2); inblk = 0 } else next }
-      while (match(line, /\/-/)) {
-        pre = substr(line, 1, RSTART - 1); rest = substr(line, RSTART + 2)
-        if (match(rest, /-\//)) { line = pre " " substr(rest, RSTART + 2) } else { line = pre; inblk = 1; break }
-      }
-      sub(/--.*$/, "", line)
-      if (line ~ /^(@\[[^]]*\] )?((private|protected|partial|noncomputable|unsafe) )*(def|abbrev) /) {
-        s = line; sub(/^(@\[[^]]*\] )?((private|protected|partial|noncomputable|unsafe) )*(def|abbrev) +/, "", s)
-        match(s, /^[^ ({\[:]+/); nm = substr(s, RSTART, RLENGTH)
-        if (nm == "main") { cur = ""; next }
-        cur = nm; print "D\t" mod "\t" nm
-      } else if (line ~ /^[A-Za-z@]/ && line !~ /^(namespace|end|open|variable|section|import)/) { cur = "" }
-      if (cur == "") next
-      if (line ~ /(=>|then|else|return) none([^A-Za-z0-9_]|$)/) print "S\t" mod "\t" cur "\tnone"
-      if (line ~ /(^|[^A-Za-z0-9_])throw /) print "S\t" mod "\t" cur "\tthrow"
-      n = split(line, tok, /[^A-Za-z0-9_.]+/)
-      for (i = 1; i <= n; i++) if (tok[i] != "") print "E\t" cur "\t" tok[i]
-    }' "$pkg"/AgenticDS/*.lean
-}
-# Every identifier a test file names (comments removed the same way).
-test_tokens() {
-  awk '
-    FNR == 1 { inblk = 0 }
-    { line = $0
-      if (inblk) { if (match(line, /-\//)) { line = substr(line, RSTART + 2); inblk = 0 } else next }
-      while (match(line, /\/-/)) { pre = substr(line, 1, RSTART - 1); rest = substr(line, RSTART + 2)
-        if (match(rest, /-\//)) { line = pre " " substr(rest, RSTART + 2) } else { line = pre; inblk = 1; break } }
-      sub(/--.*$/, "", line)
-      n = split(line, tok, /[^A-Za-z0-9_.]+/)
-      for (i = 1; i <= n; i++) if (tok[i] != "") print FILENAME "\t" tok[i] }' "$pkg"/AgenticDSTest/*.lean
-}
-
 compgen -G "$pkg/AgenticDS/*.lean" >/dev/null || { echo "RED: found no function (no .lean file in $pkg/AgenticDS)"; exit 1; }
-scan="$(lib_scan)"; ttok="$(test_tokens)"
-ndef="$(printf '%s\n' "$scan" | awk -F'\t' '$1=="D"' | wc -l)"
-[ "$ndef" -ge 1 ] || { echo "RED: found no function in $pkg/AgenticDS (a coverage check over nothing is no check)"; exit 1; }
+export PATH="$HOME/.elan/bin:$PATH"
+if [ "$real" = "$pkg" ]; then (cd "$real" && lake build AgenticDS >/dev/null 2>&1) || { echo "RED: lake build AgenticDS failed"; exit 1; }; fi
+lib="$real/.lake/build/lib/lean"
+[ -d "$lib/AgenticDS" ] || { echo "RED: no built library at $lib/AgenticDS"; exit 1; }
 
-# Closure: a function is tested when a test names it, or when a tested function names it.
-res="$( { printf '%s\n' "$scan"; printf '%s\n' "$ttok" | sed 's/^/T\t/'; } | awk -F'\t' '
-  function short(n,   k) { k = n; sub(/^.*\./, "", k); return k }
-  $1 == "D" { mod[$3] = $2; def[$3] = 1; sh[short($3)] = sh[short($3)] " " $3 }
-  $1 == "E" { edge[$2] = edge[$2] " " $3 }
-  $1 == "T" { f = $2; sub(/.*\//, "", f); tk = $3
-              m = split(tk, parts, "."); for (i = 1; i <= m; i++) seen[parts[i]] = seen[parts[i]] " " f
-              seen[tk] = seen[tk] " " f }
-  END {
-    for (d in def) { k = short(d); how[d] = ""
-      if ((d in seen) && !(d ~ /\./)) how[d] = "test:" firstword(seen[d])
-      else if (d ~ /\./ && (d in seen)) how[d] = "test:" firstword(seen[d]) }
-    # dotted test tokens such as `t.leaves` / `Species.all`: match the short name of a dotted def
-    for (t in seen) { n = split(t, p, "."); if (n > 1) for (i = 2; i <= n; i++) sdot[p[i]] = seen[t] }
-    for (d in def) if (how[d] == "" && d ~ /\./ && (short(d) in sdot)) how[d] = "test:" firstword(sdot[short(d)])
-    do { ch = 0
-      for (d in def) if (how[d] != "") {
-        n = split(edge[d], e, " ")
-        for (i = 1; i <= n; i++) {
-          tk = e[i]; cands = ""
-          if (tk in def) cands = tk
-          m = split(tk, q, "."); for (j = 1; j <= m; j++) if (q[j] in sh) cands = cands sh[q[j]]
-          c = split(cands, cc, " ")
-          for (j = 1; j <= c; j++) if (cc[j] != d && how[cc[j]] == "") { how[cc[j]] = "via:" d; ch = 1 }
-        } }
-    } while (ch)
-    for (d in def) print mod[d] "\t" d "\t" (how[d] == "" ? "UNTESTED" : how[d])
-  }
-  function firstword(s,   a) { split(s, a, " "); return a[1] }' | sort)"
+# An overlay of symlinks to the real oleans; a module whose source differs from the real one (a planted
+# change), or has no olean (Examples files lake does not build, every test), is compiled over its link.
+ov="$(mktemp -d)"; trap 'rm -rf "${ov:?}"' EXIT
+cp -rs "$lib/AgenticDS" "$ov/AgenticDS"; ln -s "$lib/AgenticDS.olean" "$ov/AgenticDS.olean"
+lp="$(cd "$real" && lake env printenv LEAN_PATH)"
+export LEAN_PATH="$ov:$lp"
+compile() { # <source> <module path under the overlay, no extension>
+  rm -f "${ov:?}/$2.olean"; mkdir -p "$(dirname "$ov/$2.olean")"
+  (cd "$pkg" && lean -o "$ov/$2.olean" "$1") >"$ov/$(echo "$2" | tr / _).log" 2>&1 || { echo "RED: $1 does not compile: $(head -3 "$ov/$(echo "$2" | tr / _).log")"; return 1; }
+}
+cfail=0
+while IFS= read -r f; do
+  rel="${f#"$pkg"/}"; rel="${rel%.lean}"
+  if [ ! -e "$ov/$rel.olean" ] || ! cmp -s "$f" "$real/$rel.lean" 2>/dev/null; then compile "$f" "$rel" || cfail=1; fi
+done < <(find "$pkg/AgenticDS" -name '*.lean' | sort)
+mkdir -p "$ov/AgenticDSTest"; pids=()
+for f in "$pkg"/AgenticDSTest/*.lean; do
+  case "$f" in */Planted*) continue;; esac
+  rel="AgenticDSTest/$(basename "$f" .lean)"
+  compile "$f" "$rel" & pids+=($!)
+done
+for p in "${pids[@]}"; do wait "$p" || cfail=1; done
+[ "$cfail" -eq 0 ] || exit 1
 
-untested="$(printf '%s\n' "$res" | awk -F'\t' '$3=="UNTESTED"')"
+libs="$(cd "$pkg" && find AgenticDS -name '*.lean' | sort | sed 's|\.lean$||; s|/|.|g' | tr '\n' ' ')"
+tests="$(cd "$pkg" && for f in AgenticDSTest/*.lean; do case "$f" in */Planted*) continue;; esac; basename "$f" .lean | sed 's/^/AgenticDSTest./'; done | tr '\n' ' ')"
+# shellcheck disable=SC2086
+walk="$(cd "$real" && lean --run "$real/scripts/FnCoverage.lean" $libs -- $tests 2>&1)" || { echo "RED: the Lean walker failed: $(printf '%s\n' "$walk" | head -5)"; exit 1; }
+# Strip the package prefix: module AgenticDS.Csv -> Csv, def AgenticDS.parseRat -> parseRat.
+walk="$(printf '%s\n' "$walk" | sed -E 's/^(DEF|SITE|TDEF) AgenticDS\./\1 /; s/^(DEF|SITE|TDEF) ([^ ]+) AgenticDS\./\1 \2 /')"
+
+nentry="$(printf '%s\n' "$walk" | grep -c '^ENTRY ' || true)"
+ndef="$(printf '%s\n' "$walk" | grep -c '^DEF ' || true)"
+[ "$nentry" -ge 1 ] && [ "$ndef" -ge 1 ] || { echo "RED: found no entry point or no function ($nentry entries, $ndef functions); a coverage check over nothing is no check"; exit 1; }
+untested="$(printf '%s\n' "$walk" | awk '$1=="DEF" && $4=="UNTESTED"')"
 if [ -n "$untested" ]; then
-  printf '%s\n' "$untested" | while IFS="$(printf '\t')" read -r m n _; do
-    echo "RED: function $m.$n has no test (no test under AgenticDSTest names it, nor a tested function that calls it)"; done
+  printf '%s\n' "$untested" | while read -r _ m n _; do
+    echo "RED: function $m.$n has no test (no test or demo main reaches it through the compiled code)"; done
   fail=1
 fi
-tested=$(( ndef - $(printf '%s\n' "$untested" | grep -c . || true) ))
-echo "functions: $tested of $ndef reachable from a test"
-if [ "$list" -eq 1 ]; then printf '%s\n' "$res" | awk -F'\t' '{ printf "  %-12s %-18s %s\n", $1, $2, $3 }'; fi
+tuntested="$(printf '%s\n' "$walk" | awk '$1=="TDEF" && $4=="UNTESTED"')"
+if [ -n "$tuntested" ]; then
+  printf '%s\n' "$tuntested" | while read -r _ m n _; do
+    echo "RED: test definition $m.$n is never run (no test main reaches it)"; done
+  fail=1
+fi
+nun="$(printf '%s\n' "$untested" | grep -c . || true)"
+echo "functions: $((ndef - nun)) of $ndef reached from $nentry entry points"
+if [ "$list" -eq 1 ]; then printf '%s\n' "$walk" | awk '$1=="DEF" { printf "  %-16s %-22s %s\n", $2, $3, $4 }'; fi
 
-# Refusal sites in the library, per enclosing function.
-sites="$(printf '%s\n' "$scan" | awk -F'\t' '$1=="S" { print $2 "\t" $3 "\t" $4 }' | sort -u)"
+# Refusal sites, per enclosing definition.
+sites="$(printf '%s\n' "$walk" | awk '$1=="SITE" { print $2 "\t" $3 "\t" $4 }' | sort -u)"
+nsites="$(printf '%s\n' "$sites" | grep -c . || true)"
+pin="$(grep -E '^#pin ' "$reg" | head -1 || true)"
+if [ -z "$pin" ]; then red "refusals.tsv has no '#pin ndef=N nsites=M' line"
+else
+  pd="$(printf '%s\n' "$pin" | sed -n 's/.*ndef=\([0-9]*\).*/\1/p')"; ps="$(printf '%s\n' "$pin" | sed -n 's/.*nsites=\([0-9]*\).*/\1/p')"
+  [ "$pd" = "$ndef" ] || red "pin: ndef is pinned at ${pd:-?} but the walker found $ndef functions"
+  [ "$ps" = "$nsites" ] || red "pin: nsites is pinned at ${ps:-?} but the walker found $nsites refusal sites"
+fi
 rows="$(awk -F'\t' '!/^#/ && NF >= 5 && $1 != "lean-plot.sh"' "$reg")"
 unreg="$(printf '%s\n' "$sites" | while IFS="$(printf '\t')" read -r m n k; do
   [ -n "$m" ] || continue
@@ -126,7 +113,6 @@ while IFS="$(printf '\t')" read -r m n k tf needle; do
 done <<EOF
 $rows
 EOF
-nsites="$(printf '%s\n' "$sites" | grep -c . || true)"
 echo "refusal paths (library): $nsites sites, $nrows registry rows"
 
 # lean-plot.sh: every refusal exit needs a planted arm.
