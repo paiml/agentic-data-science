@@ -17,12 +17,16 @@ T="no instance/axiom/macro/syntax/elab/set_option/local/open-in/attribute/unsafe
 t bash -c '! grep -nE "^\s*(import|#exit|open\b.*\bin\b|local|scoped|private|protected|unsafe|partial|noncomputable)\b|\b(instance|axiom|macro|macro_rules|#exit|run_cmd|run_elab|run_meta|priority|syntax|elab|elab_rules|set_option|notation|infix|infixl|infixr|prefix|postfix|attribute|opaque|implemented_by|extern|export|csimp|deriving instance|unsafeCast|ofReduceBool|trustCompiler|lcProof|sorryAx|initialize|builtin_initialize|run_tac|debug)\b|@\[[^]]*(instance|reducible|simp|implemented_by|extern|export|csimp|macro|inline)" "$0"' "$g/stripped.lean"
 T="no #eval/#print/#check/run_cmd after other text on a line (those commands are only accepted at a line start, where the grader drops them)"
 t bash -c '! grep -nE "[^[:space:]].*(#eval|#print|#check|#reduce|#synth|#exit|run_cmd|run_tac)" "$0"' "$g/stripped.lean"
-# Root layer: the grader NEVER executes learner code at elaboration time. Learner.lean is compiled from a grader copy of the
-# comment-stripped file with every #eval/#print/#check/#reduce/#synth/run_cmd command (and its indented continuation lines)
-# removed; initialize/builtin_initialize are refused above. Ref.lean (reference sumL and statement) and Learner.lean compile
-# to their own oleans in separate dirs; Pins.lean is written AFTER Learner compiled, its sha256 and Ref.olean's are checked
-# before use, and the verdict is read from Pins' output only. No scope, instance or name of the learner crosses the import.
-mkdir -p "$g/ref" "$g/lrn" "$g/pins"
+T="no attribute (@[ ... ], attribute), by_elab, unif_hint, command_elab, term_elab, register_option or init hook of any kind"
+t bash -c '! grep -nE "@\[|\b(by_elab|unif_hint|command_elab|term_elab|tactic_elab|register_option|register_builtin_option|builtin_init|init)\b" "$0"' "$g/stripped.lean"
+# Keyword layer first: if ANY check above tripped, Learner is never compiled (compiling Lean is executing it: elaborators run).
+if [ "$rc" -ne 0 ]; then echo "tests run: $n"; echo "grader: keyword layer refused Mean.lean; it was not compiled"; exit 1; fi
+# Model (honest): compiling Lean IS execution. Learner.lean compiles from a comment-stripped grader copy (no import, so no meta code
+# can be written) in a throwaway dir holding nothing of the grader's, under bwrap (read-only /, no network, private /tmp, only that
+# dir writable) where bwrap works. The VERDICT never comes from elaborating commands in an environment holding learner code: Grade.lean
+# (grader-owned, written and sha256-checked after the compile) imports Ref and Learner without running initializers and reads the
+# environment: kernel replay of the learner's constants, kernel defeq of sumL and of the sum_shift statement to Ref's, axioms.
+mkdir -p "$g/ref" "$g/lrn" "$g/grade"
 cat > "$g/ref/Ref.lean" <<'REF'
 namespace GraderRef
 def sumL (xs : List Int) : Int := xs.foldl (· + ·) 0
@@ -30,52 +34,72 @@ def stmt : Prop := ∀ (c : Int) (xs : List Int), sumL (xs.map (· + c)) = sumL 
 end GraderRef
 REF
 perl -ne 'if (/^\s*(#eval|#print|#check|#reduce|#synth|run_cmd|run_tac)\b/) { $skip=1; next } if ($skip && /^\s+\S/) { next } $skip=0; print' "$g/stripped.lean" > "$g/body.lean"
-{ echo "import Lean"; cat "$g/body.lean"; cat <<'TAIL'
-
-#eval show _root_.Lean.Elab.Command.CommandElabM Unit from do
-  unless (← _root_.Lean.Elab.Command.getScopes).length == 1 && (← _root_.Lean.Elab.Command.getScope).currNamespace == _root_.Lean.Name.anonymous do
-    _root_.Lean.throwError "grader: a namespace or section is left open at the end of Mean.lean"
-TAIL
-} > "$g/lrn/Learner.lean"
+{ cat "$g/body.lean"; printf '\ntheorem grader_probe : True := trivial\n'; } > "$g/lrn/Learner.lean"
 lean_c() { # dir module [-o]
   (cd "$1" && LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" -DwarningAsError=true ${3:+-o "$2.olean"} "$2.lean" 2>&1)
 }
+lean_sandbox() { # learner compile: bwrap when it works here, plain otherwise
+  if bwrap --ro-bind / / --dev /dev --proc /proc true 2>/dev/null; then
+    (cd "$g/lrn" && bwrap --ro-bind / / --dev /dev --proc /proc --unshare-net --tmpfs /tmp --ro-bind "$g/ref" "$g/ref" --bind "$g/lrn" "$g/lrn" \
+      env LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" -DwarningAsError=true -o Learner.olean Learner.lean 2>&1)
+  else lean_c "$g/lrn" Learner -o; fi
+}
 e=0; out=""
 o=$(lean_c "$g/ref" Ref -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }
-if [ "$e" -eq 0 ]; then refsha=$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1); o=$(lean_c "$g/lrn" Learner -o); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }; fi
+if [ "$e" -eq 0 ]; then refsha=$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1); o=$(lean_sandbox); r=$?; [ "$r" -ne 0 ] && { e=$r; out="$o"; }; fi
 if [ "$e" -eq 0 ]; then
-cat > "$g/pins/Pins.lean" <<'PIN'
+cat > "$g/grade/Grade.lean" <<'GRADE'
 import Lean
-import Ref
-import Learner
+open Lean
 
-example : _root_.AgenticDS.sumL = _root_.GraderRef.sumL := rfl
-theorem grader_sum_shift : _root_.GraderRef.stmt := _root_.AgenticDS.sum_shift
-#print axioms grader_sum_shift
-open Lean Elab Command in
-#eval show CommandElabM Unit from do
-  let env ← getEnv
-  let some ci := env.find? ``_root_.AgenticDS.sum_shift | throwError "grader: AgenticDS.sum_shift is absent"
-  let some rf := env.find? ``_root_.GraderRef.stmt | throwError "grader: reference statement is absent"
-  let ty := ci.type.replace fun e => if e.isConstOf ``_root_.AgenticDS.sumL then some (mkConst ``_root_.GraderRef.sumL) else none
-  unless ty == rf.value! do throwError "grader: sum_shift type differs from the reference statement"
-  logInfo "grader expr: sum_shift type OK"
-#eval show IO Unit from do
-  for (xs, c) in [([1, 2, 3, 4], 10), ([], 5), ([-7, 3], -2), ([100], 0)] do
-    let xs : List Int := xs
-    let c : Int := c
-    unless _root_.AgenticDS.sumL xs == _root_.GraderRef.sumL xs && _root_.AgenticDS.sumL (xs.map (· + c)) == _root_.GraderRef.sumL xs + xs.length * c do
-      throw (IO.userError "grader: contract mean_shift violated at run time")
+def okAxioms : List Name := [`propext, `Classical.choice, `Quot.sound]
+
+def fail (msg : String) : IO UInt32 := do
+  IO.println s!"grader: FAIL {msg}"
+  return 1
+
+def main : IO UInt32 := do
+  initSearchPath (← findSysroot)
+  let env ← importModules #[{ module := `Ref }, { module := `Learner }] {} (loadExts := false)
+  let some li := env.getModuleIdx? `Learner | return (← fail "Learner module not found")
+  let lconsts := env.header.moduleData[li.toNat]!.constants
+  unless lconsts.any (·.name == `grader_probe) do
+    return (← fail "grader_probe is missing or not a root name (a namespace was left open at the end of Mean.lean, or command elaborators were hijacked)")
+  let some ci := env.find? `AgenticDS.sum_shift | return (← fail "AgenticDS.sum_shift is absent")
+  let some rs := env.find? `GraderRef.stmt | return (← fail "reference statement is absent")
+  let base ← importModules #[{ module := `Ref }] {} (loadExts := false)
+  let mut m : Std.HashMap Name ConstantInfo := {}
+  for c in lconsts do m := m.insert c.name c
+  try
+    let _ ← Kernel.Environment.replay m base.toKernelEnv
+  catch e => return (← fail s!"kernel replay refused the learner constants: {e}")
+  match Kernel.isDefEq env {} (mkConst `AgenticDS.sumL) (mkConst `GraderRef.sumL) with
+  | .ok true => pure ()
+  | _ => return (← fail "AgenticDS.sumL is not kernel-defeq to the reference fold")
+  match Kernel.isDefEq env {} ci.type rs.value! with
+  | .ok true => pure ()
+  | _ => return (← fail "sum_shift type differs from the reference statement")
+  unless ci.isTheorem do return (← fail "sum_shift is not a theorem")
+  let (axs, _) ← (Core.CoreM.toIO (collectAxioms `AgenticDS.sum_shift) { fileName := "", fileMap := default } { env })
+  IO.println s!"'AgenticDS.sum_shift' depends on axioms: {axs.toList}"
+  for a in axs do
+    unless okAxioms.contains a do return (← fail s!"sum_shift depends on a forbidden axiom {a}")
+  let ref (xs : List Int) : Int := xs.foldl (· + ·) 0
+  for (xs, c) in [([1, 2, 3, 4], (10 : Int)), ([], 5), ([-7, 3], -2), ([100], 0)] do
+    unless ref (xs.map (· + c)) == ref xs + xs.length * c do return (← fail "contract mean_shift violated")
   IO.println "grader contract: mean_shift OK"
-PIN
-  pinsha=$(sha256sum "$g/pins/Pins.lean" | cut -d' ' -f1)
+  IO.println "grader expr: sum_shift type OK"
+  IO.println "grader verdict: PASS"
+  return 0
+GRADE
+  gsha=$(sha256sum "$g/grade/Grade.lean" | cut -d' ' -f1)
   if [ "$(sha256sum "$g/ref/Ref.olean" | cut -d' ' -f1)" != "$refsha" ]; then e=1; out="grader: Ref.olean was modified while the learner file compiled"
   else
-    out=$(lean_c "$g/pins" Pins); e=$?
-    [ "$(sha256sum "$g/pins/Pins.lean" | cut -d' ' -f1)" = "$pinsha" ] || { e=1; out="grader: Pins.lean was modified while checking"; }
+    out=$(cd "$g/grade" && LEAN_PATH="$g/ref:$g/lrn" lean "+$tc" --run Grade.lean 2>&1); e=$?
+    [ "$(sha256sum "$g/grade/Grade.lean" | cut -d' ' -f1)" = "$gsha" ] || { e=1; out="grader: Grade.lean was modified while checking"; }
   fi
 fi
-T="elaborates (as modules), warnings as errors, contract OK (verdict from the grader's Pins output only)"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader contract: mean_shift OK" && echo "$2" | grep -q "grader expr: sum_shift type OK"' x "$e" "$out"
-T="axioms of sum_shift within allowed set"; t bash -c '! { echo "$0" | grep "depends on axioms" | grep -vE "\[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$"; } && echo "$0" | grep -q grader_sum_shift' "$out"
+T="compiles (warnings as errors) and the grader's environment check passes (verdict from Grade.lean only)"; t bash -c '[ "$1" = 0 ] && echo "$2" | grep -q "^grader verdict: PASS" && echo "$2" | grep -q "^grader contract: mean_shift OK"' x "$e" "$out"
+T="axioms of sum_shift within allowed set"; t bash -c '! { echo "$0" | grep "depends on axioms" | grep -vE "\[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$"; } && echo "$0" | grep -q "depends on axioms"' "$out"
 [ -n "${GRADER_DEBUG:-}" ] && echo "$out" >&2
 echo "tests run: $n"; [ "$n" -ge 1 ] || exit 2; exit $rc

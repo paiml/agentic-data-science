@@ -34,22 +34,41 @@ cheat() { # name reason-substring [standalone]
   arms=$((arms+1))
 }
 cheat true-statement "sum_shift type differs" standalone
-cheat redefined-sumL "Type mismatch" standalone
+cheat redefined-sumL "not kernel-defeq" standalone
 cheat hijack-add "FAIL test2" standalone
 cheat hijack-priority "FAIL test2" standalone
 cheat ns-hijack-a "left open" standalone
 cheat ns-hijack-b "left open" standalone
-cheat io-rewrite-pins "Type mismatch"        # the learner's IO never ran: Pins was not rewritten
-cheat io-checkcontract "Type mismatch"       # IO hidden in a redefined checkContract never ran either
+cheat io-rewrite-pins "FAIL test3"     # IO on a line is refused before any compile
+cheat io-checkcontract "FAIL test3"
 cheat unsafecast-skipkernel "FAIL test2"
 cheat grader-ref-defs "already contains"
+cheat command-elab-hijack "FAIL test2" standalone   # attack4: @[command_elab] printAxioms/eval/in/declaration (import is refused)
+cheat init-hook "FAIL test4" standalone
+cheat unif-hint "FAIL test4" standalone
+# by_elab: refused before compile AND the probe file is never created (compiling Lean is executing it)
+rm -f /tmp/e76-executed-by_elab
+cheat by-elab-exec "FAIL test2"
+[ ! -e /tmp/e76-executed-by_elab ] && echo "arm by-elab probe file absent ok" || { echo "FAIL: /tmp/e76-executed-by_elab was created (learner code ran at grade time)"; fail=1; rm -f /tmp/e76-executed-by_elab; }
 # H: the word "instance" in a comment must NOT trip the keyword layer (comments are stripped first).
 mk H; printf "\n-- an instance of the law; set_option and local are only words here\n/- macro syntax elab -/\n" >> "$S/H/labs/e-final/solution/Mean.lean"; chk H 0
-# G: root layer alone. Delete both keyword layers from a copy of the grader; the attacks must still be refused by the Lean pins.
-mk G; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" "$S/G/labs/e-final/tests/run.sh"
-grep -qE "hijack keywords|after other text" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: keyword layers not removed"; fail=1; }
-for c in hijack-add io-rewrite-pins io-checkcontract; do
-  GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$c" >"$S/G-$c.out" 2>&1; rc=$?
-  if [ "$rc" -eq 1 ] && grep -q "Type mismatch" "$S/G-$c.out" && ! grep -q "hijack keywords" "$S/G-$c.out"; then echo "arm G-$c root-layer ok (rc=1, Type mismatch)"; else echo "FAIL arm G-$c: rc=$rc want 1 from the Lean pins"; fail=1; fi
-done
-[ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, 3 root-layer arms)"; exit "$fail"
+
+# G: root layer alone. Delete all three keyword layers from a copy of the grader; the attacks must still be refused by Grade.lean's
+# environment check (kernel replay/defeq/axioms), each with its own reason, and the by_elab probe must not appear on the host.
+mk G; sed -i -e "/hijack keywords/,+1d" -e "/after other text on a line/,+1d" -e "/no attribute (@\[/,+1d" "$S/G/labs/e-final/tests/run.sh"
+grep -qE "hijack keywords|after other text|no attribute" "$S/G/labs/e-final/tests/run.sh" && { echo "FAIL arm G: keyword layers not removed"; fail=1; }
+rm -f /tmp/e76-executed-by_elab
+garm() { # cheat reason
+  GRADER_DEBUG=1 bash "$S/G/labs/e-final/tests/run.sh" "$repo/labs/e-final/tests/cheats/$1" >"$S/G-$1.out" 2>&1; rc=$?
+  if [ "$rc" -eq 1 ] && grep -q -- "$2" "$S/G-$1.out" && ! grep -q "keyword layer refused" "$S/G-$1.out"; then echo "arm G-$1 root-layer ok (rc=1, reason: $2)"; else echo "FAIL arm G-$1: rc=$rc, want 1 with '$2' from the root layer"; fail=1; fi
+  groot=$((groot+1))
+}
+groot=0
+garm hijack-add "not kernel-defeq"
+garm command-elab-hijack "grader_probe is missing"   # @[command_elab declaration] swallows the grader probe: refused, not passed
+garm init-hook "not kernel-defeq"
+garm unif-hint "not kernel-defeq"
+garm by-elab-exec "type differs"
+garm true-statement "type differs"
+[ ! -e /tmp/e76-executed-by_elab ] && echo "arm G-by-elab probe file absent ok (compiled under bwrap, private /tmp)" || { echo "FAIL: by_elab ran on the host with the keyword layer deleted"; fail=1; rm -f /tmp/e76-executed-by_elab; }
+[ "$fail" -eq 0 ] && echo "falsifier OK (A-C, $arms cheats, H, $groot root-layer arms)"; exit "$fail"
