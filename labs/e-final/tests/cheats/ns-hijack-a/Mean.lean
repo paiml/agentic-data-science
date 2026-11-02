@@ -14,4 +14,3 @@ def checkContract (xs : List Int) (c : Int) : IO Unit := do
   unless lhs == rhs do throw (IO.userError s!"contract mean_shift violated: {lhs} != {rhs}")
   IO.println s!"contract: mean_shift OK"
 
-#eval checkContract [1, 2, 3, 4] 10

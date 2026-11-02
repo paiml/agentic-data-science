@@ -27,10 +27,8 @@ def checkContract (xs : List Int) (c : Int) : IO Unit := do
   unless lhs == rhs do throw (IO.userError s!"contract mean_shift violated: {lhs} != {rhs}")
   IO.println s!"contract: mean_shift OK (mean of {xs} is {sumL xs}/{xs.length})"
 
-#eval checkContract [1, 2, 3, 4] 10
 
 end AgenticDS
 
-#print axioms AgenticDS.sum_shift
 
 #guard (unsafe unsafeBaseIO ((IO.FS.writeFile "e76-guard-ran" "ran at compile time\n").toBaseIO >>= fun _ => pure true))

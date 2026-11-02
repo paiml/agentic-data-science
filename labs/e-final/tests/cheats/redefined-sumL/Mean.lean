@@ -8,6 +8,4 @@ theorem sum_shift (c : Int) (xs : List Int) :
     simp only [sumL, List.map, List.foldr, List.length_cons] at *
     rw [ih]; simp [Int.add_mul]; omega
 def checkContract : IO Unit := IO.println "contract: mean_shift OK"
-#eval checkContract
 end AgenticDS
-#print axioms AgenticDS.sum_shift
