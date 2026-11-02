@@ -84,15 +84,10 @@ ENV PATH "${PATH}:/usr/local/go/bin:/home/coder/go/bin"
 # Lean 4 (core Lean, no Mathlib): elan installed at build time as `coder`. The toolchain is NOT written here: CI and
 # tests/build-image.sh pass labs/e-final/lean-toolchain as LEAN_TOOLCHAIN; an empty value fails the build. The installer is
 # sha256-verified against elan-init.sh.sha256 (no unchecked curl | sh).
-# bubblewrap: the lab grader (tests/run.sh) compiles learner code under bwrap and fails without it. Ubuntu 20.04's bwrap
-# lacks --clearenv, so v0.11.0 is built from the sha256-pinned release tarball.
-RUN sudo apt-get update && sudo apt-get install --no-install-recommends -y meson ninja-build libcap-dev pkg-config \
-    && curl -fsSL -o /tmp/bwrap.tar.xz https://github.com/containers/bubblewrap/releases/download/v0.11.0/bubblewrap-0.11.0.tar.xz \
-    && echo "988fd6b232dafa04b8b8198723efeaccdb3c6aa9c1c7936219d5791a8b7a8646  /tmp/bwrap.tar.xz" | sha256sum -c - \
-    && tar -xJf /tmp/bwrap.tar.xz -C /tmp && cd /tmp/bubblewrap-0.11.0 \
-    && meson setup build -Dman=disabled -Dselinux=disabled -Dbash_completion=disabled -Dzsh_completion=disabled -Dtests=false \
-    && sudo ninja -C build install && sudo ldconfig && cd / && sudo rm -rf /tmp/bubblewrap-0.11.0 /tmp/bwrap.tar.xz \
-    && sudo apt-get clean && /usr/local/bin/bwrap --version
+# Container-is-the-sandbox: the lab grader compiles learner code under bwrap when it can; Coursera labs are unprivileged (no user
+# namespaces), so the image sets GRADER_SANDBOX=container plus a root-owned marker file, and tests/run.sh honours that pair only.
+ENV GRADER_SANDBOX=container
+RUN echo "container is the sandbox" | sudo tee /etc/ads-lab-container-sandbox >/dev/null && sudo chmod 644 /etc/ads-lab-container-sandbox
 
 ARG LEAN_TOOLCHAIN
 COPY elan-init.sh.sha256 /tmp/elan-init.sh.sha256
