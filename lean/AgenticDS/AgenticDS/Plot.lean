@@ -46,63 +46,6 @@ def esc (s : String) : String :=
 /-- A label without its padding spaces, escaped. -/
 def lbl (s : String) : String := esc s.trimAscii.toString
 
-/-- Left edge of the bars: after the longest label. -/
-def barX (rows : List (String × Nat)) : Nat :=
-  1070 + 22 * ((rows.map fun r => (lbl r.1).length).foldl max 0)
-
-/-- Longest bar in pixels, leaving room for the count. -/
-def barMax (rows : List (String × Nat)) : Nat := 1700 - barX rows
-
-/-- One SVG row: label, a bar of `barMax * width / w` pixels, the
-count. -/
-def svgRow (x0 px w m : Nat) (i : Nat) (r : String × Nat) :
-    String :=
-  let y := 190 + 80 * i
-  let k := px * width w m r.2 / w
-  s!"<text x=\"1020\" y=\"{y + 38}\" font-size=\"36\" " ++
-  s!"fill=\"#e5e7eb\">{lbl r.1}</text>\n" ++
-  s!"<rect x=\"{x0}\" y=\"{y}\" width=\"{k}\" height=\"48\" " ++
-  s!"fill=\"#4ade80\"/>\n" ++
-  s!"<text x=\"{x0 + 30 + k}\" y=\"{y + 38}\" font-size=\"36\" " ++
-  s!"fill=\"#e5e7eb\">{r.2}</text>\n"
-
-/-- The same rows as an SVG picture, 1920 by 1080, plot on the
-right half, one rect per bar and one for the background. -/
-def plotSvg (title : String) (w : Nat)
-    (rows : List (String × Nat)) : String :=
-  let m := (rows.map (·.2)).foldl max 0
-  "<svg xmlns=\"http://www.w3.org/2000/svg\" " ++
-  "width=\"1920\" height=\"1080\" viewBox=\"0 0 1920 1080\" " ++
-  "role=\"img\" aria-labelledby=\"t d\">\n" ++
-  "<!-- GRID PROTOCOL MANIFEST: 1920x1080, plot in the right " ++
-  "half, the left half is for the terminal -->\n" ++
-  s!"<title id=\"t\">{esc title}</title>\n" ++
-  s!"<desc id=\"d\">Bar chart, one bar per row.</desc>\n" ++
-  "<rect width=\"1920\" height=\"1080\" fill=\"#0b1020\"/>\n" ++
-  s!"<text x=\"1020\" y=\"110\" font-size=\"44\" " ++
-  s!"fill=\"#e5e7eb\">{esc title}</text>\n" ++
-  String.join (rows.zipIdx.map fun (r, i) =>
-    svgRow (barX rows) (barMax rows) w m i r) ++
-  "</svg>\n"
-
-/-- Write the SVG for `rows`, then check the contract
-`plot_svg_bounded`: a non-empty chart, one rect per row plus
-the background, and no bar leaves the picture. -/
-def writeSvg (path : System.FilePath) (title : String) (w : Nat)
-    (rows : List (String × Nat)) : IO Unit := do
-  let s := plotSvg title w rows
-  IO.FS.writeFile path s
-  let m := (rows.map (·.2)).foldl max 0
-  let n := (s.splitOn "<rect").length - 1
-  let bad := rows.isEmpty || n != rows.length + 1 ||
-    (s.splitOn "<text").length - 1 != 2 * rows.length + 1 ||
-    190 + 80 * rows.length - 32 > 1080 ||
-    !(rows.all fun (_, c) =>
-      barX rows + barMax rows * width w m c / w ≤ 1700)
-  if bad then
-    throw (IO.userError "plot_svg_bounded violated")
-  IO.println s!"svg {rows.length} bars {path}"
-  IO.println "contract: plot_svg_bounded OK"
 
 
 /-! ## Scatter and line plots
@@ -226,5 +169,96 @@ def writeScatter (path : System.FilePath) (title xl yl : String)
     throw (IO.userError "plot_scatter_bounded violated")
   IO.println s!"svg {pts.length} points {path}"
   IO.println "contract: plot_scatter_bounded OK"
+
+
+/-- A tick value: whole numbers without decimals. -/
+def fmtTick (x : Float) : String :=
+  if (x - x.round).abs < 0.05 then s!"{x.round.toUInt64.toNat}"
+  else fmt1 x
+
+/-- Plot box of the bar chart: left, right, top, bottom. -/
+def cx0 : Float := 1130
+def cx1 : Float := 1850
+def cy0 : Float := 190
+def cy1 : Float := 880
+
+/-- Widest label, in characters, that a slot of `n` bars holds
+at font size 26 (16 px a character). -/
+def slotChars (n : Nat) : Nat := (720 / (max n 1)) / 16
+
+/-- Height of the bar of count `c` when the tallest is `m`. -/
+def barH (m c : Nat) : Float :=
+  (cy1 - cy0) * c.toFloat / (max m 1).toFloat
+
+/-- One bar: rect, centred label under the axis, centred count
+above the bar. -/
+def barSvg (n m : Nat) (i : Nat) (r : String × Nat) : String :=
+  let slot := (cx1 - cx0) / n.toFloat
+  let x := cx0 + slot * i.toFloat + slot * 0.2
+  let mid := cx0 + slot * (i.toFloat + 0.5)
+  let h := barH m r.2
+  s!"<rect x=\"{x}\" y=\"{cy1 - h}\" width=\"{slot * 0.6}\" " ++
+  s!"height=\"{h}\" fill=\"#4ade80\"/>\n" ++
+  s!"<text x=\"{mid}\" y=\"{cy1 + 40}\" text-anchor=\"middle\" " ++
+  s!"{mono}font-size=\"26\" fill=\"#cbd5e1\">{lbl r.1}</text>\n" ++
+  s!"<text x=\"{mid}\" y=\"{cy1 - h - 14}\" " ++
+  "text-anchor=\"middle\" " ++
+  s!"{mono}font-size=\"28\" fill=\"#e5e7eb\">{r.2}</text>\n"
+
+/-- Gridline plus label at tick `i` of 5 on the count axis. -/
+def barTick (m : Nat) (i : Nat) : String :=
+  let f := i.toFloat / 4
+  let gy := cy1 - f * (cy1 - cy0)
+  s!"<path d=\"M{cx0} {gy}H{cx1}\" stroke=\"#334155\" " ++
+  "stroke-width=\"1\" fill=\"none\"/>\n" ++
+  s!"<text x=\"{cx0 - 20}\" y=\"{gy + 10}\" text-anchor=\"end\" " ++
+  s!"{mono}font-size=\"28\" fill=\"#cbd5e1\">" ++
+  s!"{fmtTick (f * m.toFloat)}</text>\n"
+
+/-- The rows as a bar chart with real axes, 1920 by 1080: a frame, a
+count axis from zero with five ticks and gridlines, one bar per row
+with its label and count, filling the right half. -/
+def plotSvg (title : String) (_w : Nat)
+    (rows : List (String × Nat)) : String :=
+  let m := (rows.map (·.2)).foldl max 0
+  let n := rows.length
+  "<svg xmlns=\"http://www.w3.org/2000/svg\" " ++
+  "width=\"1920\" height=\"1080\" viewBox=\"0 0 1920 1080\" " ++
+  "role=\"img\" aria-labelledby=\"t d\">\n" ++
+  "<!-- GRID PROTOCOL MANIFEST: 1920x1080, plot in the right " ++
+  "half, the left half is for the terminal -->\n" ++
+  s!"<title id=\"t\">{esc title}</title>\n" ++
+  "<desc id=\"d\">Bar chart with a count axis.</desc>\n" ++
+  "<rect width=\"1920\" height=\"1080\" fill=\"#0b1020\"/>\n" ++
+  s!"<text x=\"1000\" y=\"110\" {mono}font-size=\"40\" " ++
+  s!"fill=\"#e5e7eb\">{esc title}</text>\n" ++
+  s!"<text x=\"1000\" y=\"165\" {mono}font-size=\"30\" " ++
+  "fill=\"#e5e7eb\">count</text>\n" ++
+  String.join ((List.range 5).map (barTick m)) ++
+  s!"<path d=\"M{cx0} {cy0}V{cy1}H{cx1}\" stroke=\"#94a3b8\" " ++
+  "stroke-width=\"3\" fill=\"none\"/>\n" ++
+  String.join (rows.zipIdx.map fun (r, i) => barSvg n m i r) ++
+  "</svg>\n"
+
+/-- Write the SVG for `rows`, then check the contract
+`plot_svg_bounded`: a non-empty chart, one rect per row plus the
+background, at most eight bars, seven texts plus two per row,
+every label fits its slot, and no bar leaves the plot box. -/
+def writeSvg (path : System.FilePath) (title : String) (w : Nat)
+    (rows : List (String × Nat)) : IO Unit := do
+  let s := plotSvg title w rows
+  IO.FS.writeFile path s
+  let m := (rows.map (·.2)).foldl max 0
+  let n := rows.length
+  let bad := rows.isEmpty || m == 0 || n > 8 ||
+    (s.splitOn "<rect").length - 1 != n + 1 ||
+    (s.splitOn "<text").length - 1 != 2 * n + 7 ||
+    !(rows.all fun (l, c) =>
+      (lbl l).length ≤ slotChars n && c ≤ m &&
+      barH m c ≤ cy1 - cy0)
+  if bad then
+    throw (IO.userError "plot_svg_bounded violated")
+  IO.println s!"svg {n} bars {path}"
+  IO.println "contract: plot_svg_bounded OK"
 
 end AgenticDS
