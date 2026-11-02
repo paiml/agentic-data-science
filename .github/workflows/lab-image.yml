@@ -1,0 +1,25 @@
+name: lab-image
+on:
+  pull_request: { paths: ["labs/e-final/**", ".github/workflows/lab-image.yml"] }
+  merge_group: {}
+  push: { branches: [main], paths: ["labs/e-final/**"] }
+concurrency: { group: "lab-image-${{ github.ref }}", cancel-in-progress: true }
+permissions: { contents: read }
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Free disk (the image is ~9 GB)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc && df -h / | tail -n 1
+      - name: Pin check (toolchain from lean-toolchain, installer verified)
+        run: bash labs/e-final/tests/image-pin.sh
+      - name: Build (LEAN_TOOLCHAIN read from lean-toolchain)
+        run: bash labs/e-final/tests/build-image.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/build.txt"
+      - name: Fresh-container test (starter fails, solution passes, 5 plants refused, first demo <= 300 s)
+        run: bash labs/e-final/tests/image-test.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/test.txt"
+      - name: Report size, build time and test results
+        if: always()
+        run: |
+          { echo '### lab image'; echo '```'; cat "$RUNNER_TEMP/build.txt" "$RUNNER_TEMP/test.txt" 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
