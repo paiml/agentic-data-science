@@ -227,24 +227,28 @@ pub fn gridlines(svg: &str) -> (Vec<f64>, Vec<f64>) {
     (vs, hs)
 }
 
-/// Pixel position of data value `v` on an axis, interpolated through its first and last tick.
-fn to_px(t: &[(f64, f64)], v: f64) -> f64 {
-    let (a, b) = (t[0], t[t.len() - 1]);
-    a.1 + (v - a.0) * (b.1 - a.1) / (b.0 - a.0)
+/// The pixel map `(offset, scale)` of one axis, `pixel = offset + scale * value`, read from
+/// every tick: at least three ticks, values strictly rising, and each tick within a pixel
+/// of the line through the first and last, so uneven spacing or a wrong value is refused.
+fn axis(t: &[(f64, f64)]) -> Option<(f64, f64)> {
+    let (a, b) = (t.first()?, t.last()?);
+    let scale = (b.1 - a.1) / (b.0 - a.0);
+    let line = |v: f64| a.1 + (v - a.0) * scale;
+    let ok = t.len() >= 3
+        && scale.is_finite()
+        && scale != 0.0
+        && t.windows(2)
+            .all(|w| (w[1].0 - w[0].0) * (b.0 - a.0) > 0.0)
+        && t.iter().all(|p| (line(p.0) - p.1).abs() <= 1.0);
+    ok.then_some((a.1 - a.0 * scale, scale))
 }
 
-/// Data value at pixel `p` on an axis (the inverse of `to_px`).
-fn from_px(t: &[(f64, f64)], p: f64) -> f64 {
-    let (a, b) = (t[0], t[t.len() - 1]);
-    a.0 + (p - a.1) * (b.0 - a.0) / (b.1 - a.1)
-}
-
-/// Each axis has at least three ticks and every tick label sits on a major gridline.
+/// Each axis has a consistent pixel map and every tick label sits on a major gridline.
 fn ticks_on_grid(svg: &str) -> bool {
     let (xt, yt) = ticks(svg);
     let (gv, gh) = gridlines(svg);
     let on = |t: &[(f64, f64)], g: &[f64]| {
-        t.len() >= 3
+        axis(t).is_some()
             && t.iter()
                 .all(|p| g.iter().any(|q| (p.1 - q).abs() <= 1.0))
     };
@@ -256,23 +260,26 @@ fn ticks_on_grid(svg: &str) -> bool {
 pub fn points_on_axes(svg: &str, pts: &[(f64, f64)]) -> bool {
     let (xt, yt) = ticks(svg);
     let c = circles(svg);
-    xt.len() >= 2
-        && yt.len() >= 2
-        && c.len() >= pts.len()
+    let (Some(mx), Some(my)) = (axis(&xt), axis(&yt)) else {
+        return false;
+    };
+    c.len() >= pts.len()
         && pts.iter().zip(&c).all(|(p, m)| {
-            (to_px(&xt, p.0) - m.0).abs() <= 2.0
-                && (to_px(&yt, p.1) - m.1).abs() <= 2.0
+            (mx.0 + mx.1 * p.0 - m.0).abs() <= 2.0
+                && (my.0 + my.1 * p.1 - m.1).abs() <= 2.0
         })
 }
 
-/// The drawn fit line (the first 3-pixel polyline) runs along the least-squares line of
-/// `pts`, so its slope has the data's sign.
+/// The drawn fit line (the first 3-pixel polyline) has exactly two ends, which sit on the
+/// least-squares line of `pts` at the two ends of the plotted x range (so it spans at least
+/// min(x) to max(x)), left to right.
 pub fn fit_line_matches(svg: &str, pts: &[(f64, f64)]) -> bool {
     let (xt, yt) = ticks(svg);
     let (a, b) = fit(pts);
-    if xt.len() < 2 || yt.len() < 2 {
+    let (x0, x1) = padded_range(pts.iter().map(|p| p.0));
+    let (Some(mx), Some(my)) = (axis(&xt), axis(&yt)) else {
         return false;
-    }
+    };
     let Some(l) = svg.lines().find(|l| {
         l.starts_with("<polyline")
             && l.contains("stroke-width=\"3\"")
@@ -291,13 +298,12 @@ pub fn fit_line_matches(svg: &str, pts: &[(f64, f64)]) -> bool {
             q.split(',').filter_map(|n| n.parse().ok()).collect()
         })
         .collect();
-    ends.len() == 2
-        && ends.iter().all(|e| {
-            e.len() == 2
-                && (to_px(&yt, a + b * from_px(&xt, e[0])) - e[1])
-                    .abs()
-                    <= 3.0
-        })
+    let at = |e: &[f64], x: f64| {
+        e.len() == 2
+            && (mx.0 + mx.1 * x - e[0]).abs() <= 3.0
+            && (my.0 + my.1 * (a + b * x) - e[1]).abs() <= 3.0
+    };
+    ends.len() == 2 && at(&ends[0], x0) && at(&ends[1], x1)
 }
 
 /// One scatter series per group on shared axes (e.g. per species or per cluster).
@@ -547,6 +553,95 @@ mod tests {
         }
         assert!(!fit_line_matches(
             "<polyline stroke-width=\"3\"/>",
+            &pts
+        ));
+    }
+
+    #[test]
+    fn every_tick_has_its_known_value_and_even_spacing() {
+        let (pts, svg) = sample();
+        let (xt, yt) = ticks(&svg);
+        let xv: Vec<f64> = xt.iter().map(|t| t.0).collect();
+        let yv: Vec<f64> = yt.iter().map(|t| t.0).collect();
+        assert_eq!(xv, (-1..=8).map(f64::from).collect::<Vec<_>>());
+        assert_eq!(yv, [-10.0, 0.0, 10.0, 20.0, 30.0, 40.0, 50.0]);
+        assert!(axis(&xt).is_some() && axis(&yt).is_some());
+        // Wrong values, uneven spacing, one tick, no ticks, equal values or equal pixels.
+        let t =
+            [(0.0, 0.0), (7.0, 100.0), (4.0, 200.0), (10.0, 300.0)];
+        assert!(axis(&t).is_none());
+        let u =
+            [(0.0, 0.0), (1.0, 100.0), (2.0, 150.0), (3.0, 300.0)];
+        assert!(axis(&u).is_none());
+        assert!(axis(&[(0.0, 0.0), (1.0, 1.0)]).is_none());
+        assert!(axis(&[]).is_none());
+        assert!(
+            axis(&[(1.0, 0.0), (1.0, 5.0), (1.0, 9.0)]).is_none()
+        );
+        assert!(
+            axis(&[(1.0, 5.0), (2.0, 5.0), (3.0, 5.0)]).is_none()
+        );
+        // One x tick relabelled in the figure: the figure is no longer sound.
+        let bad =
+            svg.replacen("\n3.0\n</text>", "\n9.0\n</text>", 1);
+        assert_ne!(bad, svg);
+        assert!(!ticks_on_grid(&bad));
+        assert!(!points_on_axes(&bad, &pts));
+        assert!(!fit_line_matches(&bad, &pts));
+    }
+
+    #[test]
+    fn the_fit_line_spans_the_plotted_x_range_left_to_right() {
+        let (pts, svg) = sample();
+        let l = svg
+            .lines()
+            .find(|l| {
+                l.starts_with("<polyline")
+                    && l.contains("stroke-width=\"3\"")
+            })
+            .unwrap();
+        let p = l
+            .split("points=\"")
+            .nth(1)
+            .unwrap()
+            .split('"')
+            .next()
+            .unwrap();
+        let e: Vec<&str> = p.split_whitespace().collect();
+        assert_eq!(e.len(), 2);
+        let mid = |s: &str, t: &str| {
+            let n = |q: &str| -> Vec<f64> {
+                q.split(',').map(|v| v.parse().unwrap()).collect()
+            };
+            let (a, b) = (n(s), n(t));
+            format!(
+                "{},{}",
+                (a[0] + b[0]) / 2.0,
+                (a[1] + b[1]) / 2.0
+            )
+        };
+        let swap = |new: &str| svg.replace(p, new);
+        // A short line (right end at the midpoint) and a one-point line fail.
+        let m = mid(e[0], e[1]);
+        assert!(!fit_line_matches(
+            &swap(&format!("{} {m} ", e[0])),
+            &pts
+        ));
+        assert!(!fit_line_matches(
+            &swap(&format!("{} {} ", m, e[1])),
+            &pts
+        ));
+        assert!(!fit_line_matches(
+            &swap(&format!("{} ", e[0])),
+            &pts
+        ));
+        // The same ends drawn right to left fail.
+        assert!(!fit_line_matches(
+            &swap(&format!("{} {} ", e[1], e[0])),
+            &pts
+        ));
+        assert!(fit_line_matches(
+            &swap(&format!("{} {} ", e[0], e[1])),
             &pts
         ));
     }

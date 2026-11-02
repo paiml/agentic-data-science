@@ -159,11 +159,11 @@ fit_pts <- function(txt) {
 expect_on_axes <- function(txt, x, y, info = "") {
   am <- axis_map(txt)
   xy <- circles(txt)[seq_along(x), , drop = FALSE]
-  within(xy[, "x"] - am$px(x), info)
-  within(xy[, "y"] - am$py(y), info)
+  px_gap_ok(xy[, "x"] - am$px(x), info)
+  px_gap_ok(xy[, "y"] - am$py(y), info)
 }
 # Every pixel gap is under 0.6 px.
-within <- function(gap, info) {
+px_gap_ok <- function(gap, info) {
   testthat::expect_lt(max(abs(gap)), 0.6, label = info)
 }
 # The fit's two ends are the least-squares line at the data range.
@@ -174,8 +174,8 @@ expect_fit_ends <- function(txt, x, y, info = "") {
   xr <- range(x)
   e <- rbind(m[1, ], m[nrow(m), ])
   want_y <- am$py(cf[[1]] + cf[[2]] * xr)
-  within(e[, 1] - am$px(xr), info)
-  within(e[, 2] - want_y, info)
+  px_gap_ok(e[, 1] - am$px(xr), info)
+  px_gap_ok(e[, 2] - want_y, info)
 }
 rho <- function(a, b) stats::cor(a, b, method = "spearman")
 
@@ -261,7 +261,8 @@ test_that("a fit is one line from the data's ends on the lm line", {
   m <- fit_pts(txt)
   expect_lt(m[nrow(m), 2], m[1, 2])
   expect_gt(m[nrow(m), 1], m[1, 1])
-  expect_error(fit_pts(svg_txt(fsc(d, "a", "b", "t", "x", "y"))))
+  nofit <- svg_txt(fsc(d, "a", "b", "t", "x", "y"))
+  expect_error(fit_pts(nofit))
   s <- data.frame(a = c(1, 4, 9, 2, 7), b = c(30, 10, 80, 55, 60))
   expect_fit_ends(
     svg_txt(fsc(s, "a", "b", "t", "x", "y", fit = TRUE)), s$a, s$b
