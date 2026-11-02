@@ -22,3 +22,6 @@ stopifnot(
   g$n_test == nrow(df) %/% 5L
 )
 verdict("contract: ads-r-p4 ticket oracle matches data 6497 OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v01-ticket"))

@@ -21,3 +21,6 @@ stopifnot(
   isTRUE(all.equal(mine, gold, tolerance = 1e-9))
 )
 verdict("contract: ads-r-p4 pipeline rmse and r2 match golden OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v04-pipeline"))

@@ -17,3 +17,6 @@ stopifnot(
   all(unclass(cm) == g$confusion)
 )
 verdict("contract: ads-r-p3 tree 0.9765, 2 errors in 85 OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v02-tree"))

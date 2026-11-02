@@ -20,3 +20,6 @@ stopifnot(isTRUE(all.equal(
   tolerance = 1e-9
 )))
 cat("contract: ads-r-p2 ols matches golden/p2.json OK\n")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m2-p2-ols"))

@@ -22,3 +22,6 @@ stopifnot(
   abs(m$rmse - 393.1236) < 1e-3
 )
 verdict("contract: ads-r-p2 tests green, numbers as ticketed OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m2-v05-green"))

@@ -22,3 +22,6 @@ by_species <- as.integer(table(clean$species)[names(n)])
 stopifnot(have == want, identical(as.integer(n), by_species))
 stopifnot(sum(n) == nrow(clean), nrow(raw) == 344L)
 verdict("contract: ads-r-p1 ticket oracle matches data OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v01-ticket"))

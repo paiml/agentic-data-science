@@ -15,3 +15,6 @@ stopifnot(
   all(grepl("^contract: ads-r-p1 .* OK$", lines))
 )
 verdict("contract: ads-r-p1 module 1 wrap-up OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v10-wrapup"))

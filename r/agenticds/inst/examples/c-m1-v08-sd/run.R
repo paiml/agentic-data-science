@@ -20,3 +20,6 @@ cat(paste("FAILED:", res$test[res$failed > 0]), sep = "\n")
 stopifnot(!identical(deparse(broken), old))
 stopifnot(sum(res$failed) > 0, !any(res$error))
 verdict("contract: ads-r-p1 a population sd is caught OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v08-sd"))

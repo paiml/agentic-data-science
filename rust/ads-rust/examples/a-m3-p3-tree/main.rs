@@ -21,6 +21,22 @@ fn main() {
         "{root}/datasets/fixtures/centroids.csv"
     ));
     let got = p3_json(&df, &split, &cen);
+    {
+        use ads_rust::figure::{
+            group_points, penguin_rows, scatter_groups,
+            write_if_out,
+        };
+        let rows =
+            penguin_rows(&df, "bill_length_mm", "bill_depth_mm");
+        write_if_out(&scatter_groups(
+            (
+                "Decision tree input: bill length vs depth",
+                "bill length (mm)",
+                "bill depth (mm)",
+            ),
+            &group_points(rows.into_iter()),
+        ));
+    }
     println!(
         "accuracy:  {}\nconfusion: {}",
         got["accuracy"], got["confusion"]

@@ -15,6 +15,25 @@ fn main() {
         .expect("load"),
     )
     .expect("policy");
+    {
+        use ads_rust::figure::{
+            group_points, penguin_rows, scatter_groups,
+            write_if_out,
+        };
+        let rows = penguin_rows(
+            &df,
+            "bill_length_mm",
+            "flipper_length_mm",
+        );
+        write_if_out(&scatter_groups(
+            (
+                "Species profile: bill length vs flipper",
+                "bill length (mm)",
+                "flipper length (mm)",
+            ),
+            &group_points(rows.into_iter()),
+        ));
+    }
     let s = summary_by_species(df).expect("summary");
     println!("{}", serde_json::to_string_pretty(&s).expect("json"));
     let golden: serde_json::Value = serde_json::from_str(

@@ -23,3 +23,6 @@ stopifnot(all(res["ours", ]), !any(res["shifted", ]))
 agenticds::verdict(
   "contract: ads-r-p4 a shifted split is caught OK"
 )
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v03-red"))

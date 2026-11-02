@@ -17,6 +17,20 @@ fn main() {
     let c = cols(&df);
     let (b0, b1) = ols_ndarray(&c.flipper, &c.mass);
     println!("intercept = {b0:.6}, slope = {b1:.6}");
+    let pts: Vec<(f64, f64)> = c
+        .flipper
+        .iter()
+        .copied()
+        .zip(c.mass.iter().copied())
+        .collect();
+    ads_rust::figure::write_if_out(&ads_rust::figure::scatter_fit(
+        (
+            "Body mass on flipper length (Palmer penguins)",
+            "flipper length (mm)",
+            "body mass (g)",
+        ),
+        &pts,
+    ));
     let g: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(format!(
             "{root}/datasets/golden/p2.json"

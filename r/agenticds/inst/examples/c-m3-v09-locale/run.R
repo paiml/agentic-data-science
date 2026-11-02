@@ -23,3 +23,6 @@ stopifnot(sc[[1]] != sc[[2]], ac[[1]] == ac[[2]])
 agenticds::verdict(
   "contract: ads-r-p3 sort moves, accuracy same OK"
 )
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v09-locale"))

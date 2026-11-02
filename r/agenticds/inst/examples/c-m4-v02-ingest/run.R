@@ -21,3 +21,6 @@ stopifnot(
   grepl("unknown color", msg$color)
 )
 verdict("contract: ads-r-p4 6497 rows, three defects rejected OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v02-ingest"))

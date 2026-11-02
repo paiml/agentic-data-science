@@ -17,3 +17,6 @@ stopifnot(
   is.numeric(raw$body_mass_g), is.integer(raw$year)
 )
 verdict("contract: ads-r-p1 typed ingest, sex NA kept OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v02-ingest"))

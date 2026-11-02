@@ -22,3 +22,6 @@ stopifnot(
 agenticds::verdict(
   "contract: ads-r-p2 row-index folds locale-proof OK"
 )
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m2-v09-locale"))

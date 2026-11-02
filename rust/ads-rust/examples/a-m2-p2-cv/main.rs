@@ -17,6 +17,22 @@ fn main() {
     let folds =
         read_folds(&format!("{root}/datasets/fixtures/folds.csv"));
     let c = cols(&df);
+    {
+        use ads_rust::figure::{
+            group_points, penguin_rows, scatter_groups,
+            write_if_out,
+        };
+        let rows =
+            penguin_rows(&df, "flipper_length_mm", "body_mass_g");
+        write_if_out(&scatter_groups(
+            (
+                "Cross-validated data: mass on flipper by species",
+                "flipper length (mm)",
+                "body mass (g)",
+            ),
+            &group_points(rows.into_iter()),
+        ));
+    }
     let (ols, sp) =
         (cv_rmse(&c, &folds, false), cv_rmse(&c, &folds, true));
     println!(

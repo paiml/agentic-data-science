@@ -9,3 +9,6 @@ stopifnot(isTRUE(all.equal(
   jsonlite::fromJSON(json), golden, tolerance = 1e-9
 )))
 verdict("contract: ads-r-p1 profile matches golden/p1.json OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v06-json"))

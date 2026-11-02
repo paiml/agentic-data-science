@@ -20,3 +20,6 @@ cat(paste("FAILED:", res$test[res$failed > 0]), sep = "\n")
 stopifnot(length(new) == length(old), !identical(new, old))
 stopifnot(sum(res$failed) > 0, !any(res$error))
 verdict("contract: ads-r-p3 mutated accuracy() is caught OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v03-red"))

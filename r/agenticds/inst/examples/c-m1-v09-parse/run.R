@@ -20,3 +20,6 @@ stopifnot(is.numeric(d$body_mass_g), is.na(d$body_mass_g[1]))
 stopifnot(is.character(warned), nrow(p) == 1L)
 stopifnot(nrow(na_policy(d)) == 1L)
 verdict("contract: ads-r-p1 bad number reported, dropped OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m1-v09-parse"))

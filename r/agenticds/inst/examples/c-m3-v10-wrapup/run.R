@@ -16,3 +16,6 @@ stopifnot(all(grepl("golden/p3.json OK$", lines)))
 agenticds::verdict(
   "contract: ads-r-p3 tree and k-means both hold OK"
 )
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v10-wrapup"))

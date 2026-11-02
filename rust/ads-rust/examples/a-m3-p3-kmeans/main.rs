@@ -21,6 +21,24 @@ fn main() {
         "{root}/datasets/fixtures/centroids.csv"
     ));
     let got = p3_json(&df, &split, &cen);
+    {
+        use ads_rust::figure::{
+            group_points, scatter_groups, write_if_out,
+        };
+        let (x, _) = ads_rust::p3::features(&df);
+        let (cl, _) = ads_rust::p3::kmeans_fixed(&x, &cen, 100);
+        let rows = cl.iter().enumerate().map(|(i, k)| {
+            (format!("cluster {k}"), x[[i, 0]], x[[i, 2]])
+        });
+        write_if_out(&scatter_groups(
+            (
+                "k-means (k=3) clusters",
+                "bill length (mm)",
+                "flipper length (mm)",
+            ),
+            &group_points(rows),
+        ));
+    }
     println!(
         "objective:     {}\ncluster sizes: {}",
         got["kmeans"]["objective"], got["kmeans"]["cluster_sizes"]

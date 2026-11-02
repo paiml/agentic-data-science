@@ -21,3 +21,6 @@ stopifnot(identical(a, b), a$seed_kept, b$seed_kept)
 agenticds::verdict(
   "contract: ads-r-p3 deterministic, k-means draws no RNG OK"
 )
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v04-determinism"))

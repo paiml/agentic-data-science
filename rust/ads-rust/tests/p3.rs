@@ -131,3 +131,25 @@ fn iteration_cap_is_honoured() {
     let (cl, _) = kmeans_fixed(&x, &c, 1);
     assert_eq!(cl.len(), 342);
 }
+
+#[test]
+fn p3_plot_is_a_real_axes_figure_of_the_clusters() {
+    let (df, _, cen, _) = load();
+    let (x, _) = features(&df);
+    let (cl, _) = kmeans_fixed(&x, &cen, 100);
+    let rows = cl.iter().enumerate().map(|(i, k)| {
+        (format!("cluster {k}"), x[[i, 0]], x[[i, 2]])
+    });
+    let groups = ads_rust::figure::group_points(rows);
+    assert_eq!(groups.len(), cen.nrows());
+    let svg = ads_rust::figure::scatter_groups(
+        (
+            "k-means (k=3) clusters",
+            "bill length (mm)",
+            "flipper length (mm)",
+        ),
+        &groups,
+    );
+    assert!(svg.matches("<circle").count() >= df.height());
+    ads_rust::figure::write_if_out(&svg);
+}

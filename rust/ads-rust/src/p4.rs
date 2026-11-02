@@ -183,6 +183,23 @@ pub fn pipeline_wine(
     }))
 }
 
+/// (observed, predicted) quality for each test row of the pipeline model.
+pub fn test_predictions(
+    red: &str,
+    white: &str,
+) -> Result<Vec<(f64, f64)>, Box<dyn Error>> {
+    let df = read_wine(red, white)?;
+    let (train, test) = split_wine(&df)?;
+    let model = LinearRegression::new()
+        .fit(&Dataset::new(design(&train), target(&train)))?;
+    let pred = model.predict(&design(&test));
+    Ok(target(&test)
+        .iter()
+        .copied()
+        .zip(pred.iter().copied())
+        .collect())
+}
+
 /// Median wall time in seconds of the two aggregations over `reps` runs: [(engine, seconds)].
 pub fn bench_wine(
     df: &DataFrame,

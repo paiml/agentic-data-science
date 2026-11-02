@@ -17,3 +17,6 @@ stopifnot(
   nrow(d) == sum(sizes)
 )
 verdict("contract: ads-r-p3 ticket oracle matches data OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-v01-ticket"))

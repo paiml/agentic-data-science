@@ -17,3 +17,6 @@ stopifnot(
   identical(a$color, b$color), identical(a$n, b$n), isTRUE(same)
 )
 verdict("contract: ads-r-p4 dplyr == data.table OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v08-bench"))

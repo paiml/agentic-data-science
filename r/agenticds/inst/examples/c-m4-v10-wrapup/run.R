@@ -12,3 +12,6 @@ lines <- grep("^contract: ads-r-p4", unlist(out), value = TRUE)
 writeLines(lines)
 stopifnot(length(lines) == 2L, all(endsWith(lines, "OK")))
 verdict("contract: ads-r-p4 both example contracts hold OK")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m4-v10-wrapup"))
