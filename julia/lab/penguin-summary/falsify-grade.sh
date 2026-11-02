@@ -79,8 +79,8 @@ check L "$(grade "$here/grade.sh" forgetcp)" nz
 echo "== mutants (the dependent arm must flip)"
 mutant() { # name sed-expr learner flipped-rc(0|nz) [env...]
   local name=$1 expr=$2 learner=$3 flipped=$4 rc; shift 4
-  sed "$expr" "$here/grade.sh" > "$S/m.sh"
-  if cmp -s "$S/m.sh" "$here/grade.sh"; then echo "FAIL mutant $name: sed changed nothing (the line moved)"; fail=1; return; fi
+  sed "$expr" "${MUTANT_BASE:-$here/grade.sh}" > "$S/m.sh"
+  if cmp -s "$S/m.sh" "${MUTANT_BASE:-$here/grade.sh}"; then echo "FAIL mutant $name: sed changed nothing (the line moved)"; fail=1; return; fi
   rc=$(grade "$S/m.sh" "$learner" "$@")
   if { [ "$flipped" = 0 ] && [ "$rc" -eq 0 ]; } || { [ "$flipped" = nz ] && [ "$rc" -ne 0 ]; }; then
     echo "mutant $name flips its arm (rc=$rc): the arm is sensitive"

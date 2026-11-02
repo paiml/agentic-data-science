@@ -41,7 +41,10 @@ if [ -n "$JL" ]; then
   g="$S/d/julia/lab/penguin-summary/grade.sh"
   sed -i '/^\[ -f "\$result" \] || /d;/^\[ "\$got_nonce" = /d;/^case "\$pass\$fail\$error" in/d;s|^read -r got_nonce pass fail error < "\$result"|got_nonce=x; pass=; fail=; error=|' "$g"
   cmp -s "$g" "$here/julia/lab/penguin-summary/grade.sh" && bad D-julia-grader-forge "the grade.sh mutation changed nothing"
-  want D-julia-grader-forge d "$(lane d "$S/d" julia JULIA="$JL")" 1
+  # the grader falsifier mutates the pristine repo grade.sh (MUTANT_BASE), so the forged copy cannot starve its own mutants of lines
+  want D-julia-grader-forge d "$(lane d "$S/d" julia JULIA="$JL" MUTANT_BASE="$here/julia/lab/penguin-summary/grade.sh")" 1
+  # the red must be the forge itself (arms H/J/N surviving), never a stale sed
+  if grep -q "sed changed nothing" "$S/out-d/julia.log" 2>/dev/null; then bad D-red-reason-is-the-forge "a mutant sed changed nothing"; elif grep -Eq "^FAIL arm [HJN]:" "$S/out-d/julia.log" 2>/dev/null; then ok D-red-reason-is-the-forge "$(grep -m1 -E "^FAIL arm [HJN]:" "$S/out-d/julia.log" | cut -c1-110)"; else bad D-red-reason-is-the-forge "no surviving forge arm in the log"; fi
   # control: delete the forge (an UNMUTATED copy) and the same lane must go green, so arm D's red comes from the planted forge and not from a stale sed or the host
   copy d0
   cmp -s "$S/d0/julia/lab/penguin-summary/grade.sh" "$here/julia/lab/penguin-summary/grade.sh" || bad D0-julia-forge-deleted-is-green "the control copy differs from the repo grade.sh"
