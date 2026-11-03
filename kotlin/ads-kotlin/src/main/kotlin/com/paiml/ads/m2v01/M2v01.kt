@@ -9,6 +9,7 @@ import com.paiml.ads.emitContract
 import com.paiml.ads.fitQr
 import com.paiml.ads.goldenOls
 import com.paiml.ads.loadClean
+import com.paiml.ads.plotFit
 import com.paiml.ads.residualSum
 import com.paiml.ads.show
 import com.paiml.ads.verdict
@@ -26,6 +27,7 @@ fun main() {
     val fit = fitQr(x, y)
     show("intercept", "%.2f".format(Locale.ROOT, fit.intercept))
     show("slope", "%.2f".format(Locale.ROOT, fit.slope))
+    plotFit(df, fit)
 
     // With an intercept, residuals sum to zero.
     val res = residualSum(fit, x, y)
