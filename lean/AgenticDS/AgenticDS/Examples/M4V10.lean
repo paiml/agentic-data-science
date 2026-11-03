@@ -1,7 +1,7 @@
 import AgenticDS.Examples.Run
 import AgenticDS.Pipeline
 import AgenticDS.Examples.Scat
-/-! The gate: the build, the axiom check, the tests. -/
+/-! The gate: the build, the trust check, the tests. -/
 
 -- You run the real gate, make gate-lean, and
 -- shows its four stages and its exit status.
