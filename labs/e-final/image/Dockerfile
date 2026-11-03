@@ -144,6 +144,7 @@ RUN mkdir -p /home/coder/coursera
 COPY --chown=coder:coder settings.json $VSCODE_USER
 
 # Makes terminal open bash by default
+COPY --chown=coder:coder starter/ /home/coder/starter/
 COPY start.sh /usr/local/bin/
 COPY config.yaml /tmp/config/code-server/
 RUN chmod 755 /usr/local/bin/start.sh

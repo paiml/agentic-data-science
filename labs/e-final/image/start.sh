@@ -14,6 +14,9 @@ if [ "${WORKSPACE_TYPE}" = "instructor" ]; then
     su -c "cp -n /tmp/.hidden /home/coder/project/.hidden" - coder
 fi
 
+# seed the learner starter (the workspace mount hides anything baked under /home/coder/project); -n never overwrites a learner edit
+su -c "cp -n /home/coder/starter/Mean.lean /home/coder/project/Mean.lean" - coder
+
 # initialize npm inside home directory
 cd /home/coder/
 npm init -y

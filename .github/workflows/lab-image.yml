@@ -17,6 +17,8 @@ jobs:
         run: bash labs/e-final/tests/falsify-image-pin.sh
       - name: Pin check (Dockerfile default equals lean-toolchain, installer verified)
         run: bash labs/e-final/tests/image-pin.sh
+      - name: Falsifier + check (the image ships the starter and start.sh seeds it)
+        run: bash labs/e-final/tests/falsify-starter-seed.sh && bash labs/e-final/tests/starter-seed.sh
       - name: Build (ZERO build args, as Coursera does)
         shell: bash
         run: bash labs/e-final/tests/build-image.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/build.txt"
