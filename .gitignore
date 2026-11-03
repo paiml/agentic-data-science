@@ -14,5 +14,5 @@ contracts/.pv/
 target-lab/
 *.profraw
 
-# pmat writes this; a tracked copy makes lean-coverage-report.sh refuse (rmedia T12p)
+# pmat writes this. The T12p measurer (lean-coverage-report.sh) runs on a fresh `git clone --shared` and refuses ANY .pmat-metrics copy it finds, tracked or not; ignoring keeps it out of git, never run T12p on a working tree.
 .pmat-metrics/
