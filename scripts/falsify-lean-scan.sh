@@ -17,4 +17,9 @@ rm -f "$p"
 [ "$rc" -eq 2 ] || { echo "FAIL planted marker: rc=$rc (want 2)"; exit 1; }
 echo "$out" | grep -q "FalsifyLeanScan.lean:1:" || { echo "FAIL planted marker not named: $out"; exit 1; }
 [ ! -e "$p" ] || { echo "FAIL planted file left behind"; exit 1; }
+# (5) a tree missing a scanned path is a failure (exit 1), never "no markers".
+t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
+mkdir -p "$t/scripts" "$t/lean/AgenticDS/AgenticDS" && cp scripts/lean-scan.sh "$t/scripts/" && : > "$t/lean/AgenticDS/AgenticDS.lean"
+out=$("$t/scripts/lean-scan.sh" 2>&1); rc=$?
+[ "$rc" -eq 1 ] && ! echo "$out" | grep -q "scan: no markers" || { echo "FAIL missing path: rc=$rc $out"; exit 1; }
 echo "lean-scan falsifier OK"
