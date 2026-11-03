@@ -45,7 +45,12 @@ for f in AgenticDS/Examples/M2V04.lean AgenticDS/Examples/M2V05.lean AgenticDS/E
   # Each also writes its plot from real data: the contract line must print.
   echo "$out" | grep -q "contract: plot_scatter_bounded OK" || { echo "FAIL $f printed no plot contract: $out"; exit 1; }
 done
-if lake env lean AgenticDSTest/PlantedWrongSlope.lean >/dev/null 2>&1; then echo "FAIL PlantedWrongSlope.lean no longer fails"; exit 1; fi
+# The planted fault is stored as .lean.planted (T12p measures every tracked .lean and this one must never elaborate): copy it in, require the
+# guard to REFUSE it (exit 1 and the guard message), remove the copy.
+cp AgenticDSTest/PlantedWrongSlope.lean.planted AgenticDSTest/PlantedWrongSlope.lean
+out=$(lake env lean AgenticDSTest/PlantedWrongSlope.lean 2>&1); rc=$?; rm -f AgenticDSTest/PlantedWrongSlope.lean
+if [ "$rc" -eq 0 ]; then echo "FAIL PlantedWrongSlope no longer fails"; exit 1; fi
+echo "$out" | grep -q "olsSlope planted" || { echo "FAIL PlantedWrongSlope failed for another reason: $out"; exit 1; }
 # The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
 for p in tall empty; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi

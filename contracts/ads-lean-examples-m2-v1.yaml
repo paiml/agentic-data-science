@@ -11,7 +11,7 @@ metadata:
     - "lean/AgenticDS/AgenticDS/Cv.lean"
     - "lean/AgenticDS/AgenticDS/Examples/M2.lean"
     - "lean/AgenticDS/AgenticDSTest/ExamplesM2.lean"
-    - "lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean"
+    - "lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean.planted"
     - "lean/AgenticDS/scripts/AxiomsM2.lean"
     - "datasets/golden/p2.json"
     - "datasets/fixtures/folds.csv"
