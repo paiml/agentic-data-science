@@ -41,7 +41,7 @@ def main (_ : List String) : IO UInt32 := do
     ok := false
   -- v09: the true guard and the planted wrong one exist.
   let good ← IO.FS.readFile "AgenticDS/Examples/M2V09.lean"
-  let bad ← IO.FS.readFile "AgenticDSTest/PlantedWrongSlope.lean"
+  let bad ← IO.FS.readFile "AgenticDSTest/PlantedWrongSlope.lean.planted"
   unless has good "#guard olsSlope m2v09_data == 5 / 2" &&
       has bad "#guard olsSlope planted == 2" do
     fail "v09 guard files"; ok := false
