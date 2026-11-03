@@ -13,9 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Free disk (the image is ~9 GB)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache /usr/local/share/boost /usr/share/swift && sudo docker image prune -af >/dev/null && df -h / | tail -n 1
-      - name: Pin check (toolchain from lean-toolchain, installer verified)
+      - name: Falsifier (a Dockerfile without the default is refused)
+        run: bash labs/e-final/tests/falsify-image-pin.sh
+      - name: Pin check (Dockerfile default equals lean-toolchain, installer verified)
         run: bash labs/e-final/tests/image-pin.sh
-      - name: Build (LEAN_TOOLCHAIN read from lean-toolchain)
+      - name: Build (ZERO build args, as Coursera does)
         shell: bash
         run: bash labs/e-final/tests/build-image.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/build.txt"
       - name: Fresh-container test (starter fails, solution passes, 5 plants refused, first demo <= 300 s)

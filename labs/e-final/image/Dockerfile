@@ -82,14 +82,14 @@ ENV GOPATH "/home/coder/go"
 ENV PATH "${PATH}:/usr/local/go/bin:/home/coder/go/bin"
 
 # Lean 4 (core Lean, no Mathlib): elan installed at build time as `coder`. The toolchain is NOT written here: CI and
-# tests/build-image.sh pass labs/e-final/lean-toolchain as LEAN_TOOLCHAIN; an empty value fails the build. The installer is
+# default below equals labs/e-final/lean-toolchain (tests/image-pin.sh), because Coursera builds with ZERO build args; an empty value fails the build. The installer is
 # sha256-verified against elan-init.sh.sha256 (no unchecked curl | sh).
 # Container-is-the-sandbox: the lab grader compiles learner code under bwrap when it can; Coursera labs are unprivileged (no user
 # namespaces), so the image sets GRADER_SANDBOX=container plus a root-owned marker file, and tests/run.sh honours that pair only.
 ENV GRADER_SANDBOX=container
 RUN echo "container is the sandbox" | sudo tee /etc/ads-lab-container-sandbox >/dev/null && sudo chmod 644 /etc/ads-lab-container-sandbox
 
-ARG LEAN_TOOLCHAIN
+ARG LEAN_TOOLCHAIN=leanprover/lean4:v4.35.0
 COPY elan-init.sh.sha256 /tmp/elan-init.sh.sha256
 ENV ELAN_HOME "/home/coder/.elan"
 ENV PATH "${PATH}:/home/coder/.elan/bin"
