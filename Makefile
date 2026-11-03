@@ -39,3 +39,11 @@ gate-parity:
 # usage: make gate-hero ARTS=<dir holding <lang>/plot.svg for every landed language except rust>
 gate-hero:
 	@scripts/falsify-hero.sh "$(ARTS)"
+
+# Marker scan alone, for course demos. Not a gate: `make gate` does not run it.
+.PHONY: lean-scan falsify-lean-scan
+lean-scan:
+	@scripts/lean-scan.sh
+
+falsify-lean-scan:
+	@scripts/falsify-lean-scan.sh
