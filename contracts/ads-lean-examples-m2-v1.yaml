@@ -64,8 +64,8 @@ falsification_tests:
     if_fails: "The course text compares two numbers that disagree"
   - id: FALSIFY-ADS-LEAN-EXAMPLES-M2-004
     rule: "A wrong expected value is refused by the guard"
-    prediction: "lake env lean AgenticDS/Examples/M2V09.lean exits 0 and prints 5 / 2; lake env lean AgenticDSTest/PlantedWrongSlope.lean exits 1"
-    test: "lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean exits 1 and Examples/M2V09.lean exits 0"
+    prediction: "lake env lean AgenticDS/Examples/M2V09.lean exits 0 and prints 5 / 2; gate-lean.sh copies AgenticDSTest/PlantedWrongSlope.lean.planted to PlantedWrongSlope.lean, and lake env lean on it exits 1"
+    test: "scripts/gate-lean.sh refuses the copied-in lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean.planted (exit 1) and Examples/M2V09.lean exits 0"
     mutation: "Replace #guard by a check that always passes: the mutant 2 also exits 0"
     discriminates: "A gate that passes a wrong slope cannot give exit code 1"
     if_fails: "The falsifier of the lesson no longer falsifies"
