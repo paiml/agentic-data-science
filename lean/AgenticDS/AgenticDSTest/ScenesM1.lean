@@ -32,7 +32,8 @@ def main (_ : List String) : IO UInt32 := do
     IO.eprintln "FAIL toolchain pin"
     ok := false
   let ax ← m1v07_axioms `AgenticDS.variance_shift
-  if ax.contains `sorryAx || ax.length == 0 then
+  let allowed := [``propext, ``Quot.sound, ``Classical.choice]
+  if ax.any (fun a => !allowed.contains a) || ax.length == 0 then
     IO.eprintln s!"FAIL axioms {ax}"
     ok := false
   let spec ← IO.FS.readFile "../../demos/e-m1/scenes.spec"
