@@ -5,10 +5,10 @@ runs. -/
 
 open AgenticDS
 
-#guard mean m1v01_xs == 5
-#guard variance m1v01_xs == 4
-#guard m1v02_third == 1
-#guard m1v02_float == false
+example : mean m1v01_xs == 5 := by decide +kernel
+example : variance m1v01_xs == 4 := by decide +kernel
+example : m1v02_third == 1 := by decide +kernel
+example : m1v02_float == false := by decide +kernel
 
 -- Lines each scene must print.
 def m1Want : List (String × List String) := [
