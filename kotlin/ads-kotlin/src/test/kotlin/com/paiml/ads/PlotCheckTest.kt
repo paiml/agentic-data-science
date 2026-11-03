@@ -11,8 +11,6 @@ import java.io.File
 
 private const val ANSCOMBE_POINTS = 44
 
-/** The legend draws one circle per species, so the fit plot holds one circle per penguin plus three. */
-private const val SPECIES_KEYS = 3
 private val CSV =
     File(
         System.getProperty("ads.root"),
@@ -39,7 +37,27 @@ private fun fitSvg(dir: File): String {
 private fun without(
     svg: String,
     tag: String,
-) = svg.replace(Regex("<$tag[ >/][^>]*>(</$tag>)?"), "")
+) = svg.replace(
+    Regex(
+        "<$tag[ >/][^>]*?(/>|>.*?</$tag>)",
+        RegexOption.DOT_MATCHES_ALL,
+    ),
+    "",
+)
+
+/** Delete only the data circles; the legend keys stay. */
+private fun withoutDataCircles(svg: String) =
+    svg.replace(
+        Regex("<circle[ >/][^>]*>(</circle>)?"),
+    ) {
+        if ("cx=\"10.5\" cy=\"10.5\"" in
+            it.value
+        ) {
+            it.value
+        } else {
+            ""
+        }
+    }
 
 /** ads-kotlin-plot-v1: a plot SVG draws points, axes and tick labels, and the check goes red when one is deleted. */
 class PlotCheckTest {
@@ -58,7 +76,20 @@ class PlotCheckTest {
     ) {
         val svg = fitSvg(dir)
         assertEquals(emptyList<String>(), plotRefusals(svg))
-        assertEquals(ROWS + SPECIES_KEYS, measurePlot(svg).points)
+        assertEquals(ROWS, measurePlot(svg).points)
+    }
+
+    @Test
+    fun keepingTheLegendButDeletingTheDataGoesRed(
+        @TempDir dir: File,
+    ) {
+        val svg = fitSvg(dir)
+        val legendOnly = withoutDataCircles(svg)
+        assertTrue("cx=\"10.5\" cy=\"10.5\"" in legendOnly)
+        assertEquals(0, measurePlot(legendOnly).points)
+        assertTrue(
+            plotRefusals(legendOnly).any { "points" in it },
+        )
     }
 
     @Test
@@ -83,12 +114,18 @@ class PlotCheckTest {
     fun deletingTheAxesOrTheTicksGoesRed(
         @TempDir dir: File,
     ) {
-        val svg = anscombeSvg(dir)
-        val noAxes =
-            plotRefusals(without(without(svg, "line"), "path"))
-        assertTrue(noAxes.any { "axis" in it })
-        val noTicks = plotRefusals(without(svg, "text"))
-        assertTrue(noTicks.any { "tick" in it })
+        listOf(
+            anscombeSvg(File(dir, "a").also { it.mkdirs() }),
+            fitSvg(File(dir, "b").also { it.mkdirs() }),
+        ).forEach { svg ->
+            val noAxes =
+                plotRefusals(
+                    without(without(svg, "line"), "path"),
+                )
+            assertTrue(noAxes.any { "axis" in it })
+            val noTicks = plotRefusals(without(svg, "text"))
+            assertTrue(noTicks.any { "tick" in it })
+        }
     }
 
     @Test

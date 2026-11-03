@@ -17,10 +17,21 @@ private fun count(
     svg: String,
 ) = Regex("<$tag[ >/]").findAll(svg).count()
 
+/**
+ * lets-plot draws each legend key as a circle at cx=cy=10.5 inside
+ * its own box (measured on the fit plot). A key is not data.
+ */
+private const val LEGEND_KEY = "cx=\"10.5\" cy=\"10.5\""
+
+private fun dataPoints(svg: String) =
+    Regex("<circle[ >/][^>]*>")
+        .findAll(svg)
+        .count { LEGEND_KEY !in it.value }
+
 /** Count the parts of [svg]; text that is no SVG counts zero. */
 fun measurePlot(svg: String) =
     PlotParts(
-        points = count("circle", svg),
+        points = dataPoints(svg),
         axes = count("line", svg) + count("path", svg),
         ticks = count("text", svg),
     )

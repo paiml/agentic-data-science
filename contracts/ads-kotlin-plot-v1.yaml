@@ -21,7 +21,7 @@ equations:
     domain: "any SVG text"
     codomain: "an empty list, or one line per missing part"
     postconditions:
-      - "REAL: Anscombe plot.svg holds 44 points (4 sets of 11); the penguin fit holds 342 points plus 3 legend keys"
+      - "REAL: Anscombe plot.svg holds 44 points (4 sets of 11); the penguin fit holds exactly 342 data points (the 3 legend keys at cx=cy=10.5 are not counted)"
       - "REFUSE: an empty file, or an SVG with no points, no axis or grid strokes, or no tick labels, is refused"
 
 proof_obligations:
@@ -35,6 +35,6 @@ falsification_tests:
     rule: "The check refuses a plot with the points deleted"
     prediction: "PlotCheckTest passes inside scripts/gate-kotlin.sh"
     test: "scripts/gate-kotlin.sh"
-    mutation: "Delete every <circle> from the Anscombe and the fit SVG: plotRefusals returns exactly one line naming points (deletingThePointsGoesRed); delete the lines and paths, or the texts: the axis and tick refusals appear (deletingTheAxesOrTheTicksGoesRed)"
+    mutation: "Delete every <circle> from the Anscombe and the fit SVG: plotRefusals returns exactly one line naming points (deletingThePointsGoesRed); delete the lines and paths, or the texts: the axis and tick refusals appear (deletingTheAxesOrTheTicksGoesRed); keep the legend keys but delete the data circles: the points refusal still appears (keepingTheLegendButDeletingTheDataGoesRed)"
     discriminates: "A blank or text-only picture cannot reach a course video"
     if_fails: "A learner sees a plot with nothing plotted"
