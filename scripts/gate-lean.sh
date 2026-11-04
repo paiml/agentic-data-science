@@ -33,7 +33,9 @@ last=$(echo "$out" | tail -n 1 | sed 's/\x1b\[[0-9;]*m//g')
 for t in AgenticDSTest/ExamplesM*.lean; do
   [ -e "$t" ] || continue
   m=$(basename "$t" .lean); m=${m#ExamplesM}
-  out=$("$BIN/examples-test-m$m" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
+  # module 2's binary is examples-m2-test (the name the course plates type, GH-2159); lake refuses two exes on one root.
+  b=examples-test-m$m; [ "$m" = 2 ] && b=examples-m2-test
+  out=$("$BIN/$b" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
 done
 # Every demo that once printed nothing must end in its contract line (ads#132); the checker must refuse empty stdout.
