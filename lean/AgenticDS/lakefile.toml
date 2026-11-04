@@ -1,6 +1,6 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo", "ols-test", "planted-slope", "m2v09-slope", "examples-m2-test", "example-m1", "example-m2", "example-m3", "example-m4"]
+defaultTargets = ["AgenticDS", "ols-demo", "example-m1", "example-m2", "example-m3", "example-m4", "agentic-ds-test", "ols-test", "planted-slope", "m2v09-slope", "examples-m2-test", "examples-test-m1", "examples-test-m3", "examples-test-m4", "p4-test", "planted-svg-overflow", "planted-scatter"]
 allowNonModules = true
 
 [leanOptions]
@@ -54,3 +54,33 @@ root = "AgenticDS.ExampleM3Main"
 [[lean_exe]]
 name = "example-m4"
 root = "AgenticDS.ExampleM4Main"
+
+# Compiled test targets (demo-v2): the gate runs these binaries instead of `lake env lean --run`, which re-elaborates Mathlib (~8 s) per test.
+# Same sources, same leanOptions (warningAsError and the linters), so a test that fails to compile or to run still fails the gate.
+[[lean_exe]]
+name = "agentic-ds-test"
+root = "AgenticDSTest.Main"
+
+[[lean_exe]]
+name = "examples-test-m1"
+root = "AgenticDSTest.ExamplesM1"
+
+[[lean_exe]]
+name = "examples-test-m3"
+root = "AgenticDSTest.ExamplesM3"
+
+[[lean_exe]]
+name = "examples-test-m4"
+root = "AgenticDSTest.ExamplesM4"
+
+[[lean_exe]]
+name = "p4-test"
+root = "AgenticDSTest.P4"
+
+[[lean_exe]]
+name = "planted-svg-overflow"
+root = "AgenticDSTest.PlantedSvgOverflow"
+
+[[lean_exe]]
+name = "planted-scatter"
+root = "AgenticDSTest.PlantedScatter"

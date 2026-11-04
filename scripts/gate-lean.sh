@@ -4,8 +4,9 @@
 set -uo pipefail
 cd "$(dirname "$0")/../lean/AgenticDS" || exit 1
 export PATH="$HOME/.elan/bin:$PATH"
-# Same linters as lakefile.toml leanOptions, for the test file lake does not build (Axioms.lean is #print-only: hashCommand would always fire).
-LEANOPTS=(-DwarningAsError=true -Dweak.linter.mathlibStandardSet=true -Dweak.linter.style.longLine.maxLineLength=68 "-Dweak.linter.style.header.license=Released under MIT license as described in the file LICENSE.")
+# The tests are lean_exe targets in lakefile.toml (same sources, same leanOptions), compiled by `lake build` above; the gate runs the binaries,
+# so no test re-elaborates Mathlib at run time (demo-v2). A test that fails to compile fails `lake build`; one that fails at run time fails here.
+BIN=.lake/build/bin
 lake build >/dev/null 2>&1 || { echo "FAIL lean build"; lake build 2>&1 | grep -v "module system" | tail -20; exit 1; }
 if grep -rn --include=*.lean --include=*.lean.planted -E "\b(sorry|admit)\b|native_decide|TODO|FIXME|HACK|XXX" AgenticDS.lean AgenticDS AgenticDSTest scripts; then echo "FAIL sorry/admit/native_decide/SATD"; exit 1; fi
 # An example or test that imports Mathlib again at run time held 15 GB per import and was killed on the runner (SIGTERM); read the kernel at elaboration instead.
@@ -19,12 +20,12 @@ for f in scripts/Axioms.lean scripts/AxiomsM*.lean; do
   bad=$(echo "$ax" | grep "depends on axioms" | grep -vE "depends on axioms: \[(propext|Classical.choice|Quot.sound)(, (propext|Classical.choice|Quot.sound))*\]$")
   [ -z "$bad" ] || { echo "FAIL $f: $bad"; exit 1; }
 done
-out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/Main.lean ../.. 2>&1) || { echo "FAIL golden parity: $out"; exit 1; }
+out=$($BIN/agentic-ds-test ../.. 2>&1) || { echo "FAIL golden parity: $out"; exit 1; }
 echo "$out" | grep -q "contract: ads-lean-p1-v1 OK$" || { echo "FAIL golden parity: $out"; exit 1; }
-out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/OlsTest.lean ../.. 2>&1) || { echo "FAIL ols test: $out"; exit 1; }
+out=$($BIN/ols-test ../.. 2>&1) || { echo "FAIL ols test: $out"; exit 1; }
 echo "$out" | grep -q "contract: ads-lean-p2-v1 OK$" || { echo "FAIL ols test: $out"; exit 1; }
 # The ols-demo exe ends with its proved verdict: a wrong residual sum must fail the gate, not only the p2 test.
-out=$(lake exe ols-demo ../.. 2>&1) || { echo "FAIL ols-demo: $out"; exit 1; }
+out=$($BIN/ols-demo ../.. 2>&1) || { echo "FAIL ols-demo: $out"; exit 1; }
 last=$(echo "$out" | tail -n 1 | sed 's/\x1b\[[0-9;]*m//g')
 [ "$last" = "residuals sum to 0: proved (theorem residuals_sum)" ] || { echo "FAIL ols-demo last line: $last"; exit 1; }
 
@@ -32,7 +33,9 @@ last=$(echo "$out" | tail -n 1 | sed 's/\x1b\[[0-9;]*m//g')
 for t in AgenticDSTest/ExamplesM*.lean; do
   [ -e "$t" ] || continue
   m=$(basename "$t" .lean); m=${m#ExamplesM}
-  out=$(lake env lean "${LEANOPTS[@]}" --run "$t" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
+  # module 2's binary is examples-m2-test (the name the course plates type, GH-2159); lake refuses two exes on one root.
+  b=examples-test-m$m; [ "$m" = 2 ] && b=examples-m2-test
+  out=$("$BIN/$b" ../.. 2>&1) || { echo "FAIL $t: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-examples-m$m-v1 OK$" || { echo "FAIL $t: $out"; exit 1; }
 done
 # Every demo that once printed nothing must end in its contract line (ads#132); the checker must refuse empty stdout.
@@ -62,16 +65,16 @@ out=$(.lake/build/bin/examples-m2-test ../.. 2>&1) || { echo "FAIL examples-m2-t
 case $out in *"contract: ads-lean-examples-m2-v1 OK") ;; *) echo "FAIL examples-m2-test output: $out"; exit 1;; esac
 # The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
 for p in tall empty; do
-  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
+  if out=$($BIN/planted-svg-overflow $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_svg_bounded violated" || { echo "FAIL PlantedSvgOverflow $p failed for another reason: $out"; exit 1; }
 done
 # The scatter contract must fire on an empty plot and on a NaN point.
 for p in empty nan; do
-  if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedScatter.lean $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
+  if out=$($BIN/planted-scatter $p 2>&1); then echo "FAIL PlantedScatter $p no longer fails: $out"; exit 1; fi
   echo "$out" | grep -q "plot_scatter_bounded violated" || { echo "FAIL PlantedScatter $p failed for another reason: $out"; exit 1; }
 done
 if [ -e AgenticDSTest/P4.lean ]; then
-  out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/P4.lean ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
+  out=$($BIN/p4-test ../.. 2>&1) || { echo "FAIL p4 test: $out"; exit 1; }
   echo "$out" | grep -q "contract: ads-lean-p4-v1 OK$" || { echo "FAIL p4 test: $out"; exit 1; }
 fi
 bash ../../scripts/gate-lean-anscombe.sh || exit 1
