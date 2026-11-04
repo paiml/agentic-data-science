@@ -15,10 +15,12 @@ if [ "${WORKSPACE_TYPE}" = "instructor" ]; then
 fi
 
 # seed the learner starter (the workspace mount hides anything baked under /home/coder/project); -n never overwrites a learner edit
-su -c "cp -n /home/coder/starter/Mean.lean /home/coder/project/Mean.lean" - coder
+su -c "cp -n /opt/ads-lab/starter/Mean.lean /home/coder/project/Mean.lean" - coder
+# LAB-STD-001: the learner opens on the work; cp -f so the README always equals the one shipped in this image (catalogue lab/README.md)
+su -c "cp -f /opt/ads-lab/README.md /home/coder/project/README.md" - coder
 
 # initialize npm inside home directory
-cd /home/coder/
+cd /home/npm-global   # not ~: npm init -y would leave a package.json in the learner home (LAB-STD-001 L4)
 npm init -y
 
 # copy reverse-proxy default template into /home/nginx/ only if it doesn't exist
