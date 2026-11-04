@@ -51,6 +51,15 @@ cp AgenticDSTest/PlantedWrongSlope.lean.planted AgenticDSTest/PlantedWrongSlope.
 out=$(lake env lean AgenticDSTest/PlantedWrongSlope.lean 2>&1); rc=$?; rm -f AgenticDSTest/PlantedWrongSlope.lean
 if [ "$rc" -eq 0 ]; then echo "FAIL PlantedWrongSlope no longer fails"; exit 1; fi
 echo "$out" | grep -q "olsSlope planted" || { echo "FAIL PlantedWrongSlope failed for another reason: $out"; exit 1; }
+# The built binaries that the course plates type (GH-2159): the planted slope must be refused by `planted-slope` (exit 1 + message), the true slope must print
+# 5/2 and its contract line, and the module-2 test must end on its contract line.
+out=$(.lake/build/bin/planted-slope 2>&1); rc=$?
+[ "$rc" -eq 1 ] || { echo "FAIL planted-slope exit $rc: $out"; exit 1; }
+case $out in *"olsSlope planted == 2 did not evaluate to \`true\`"*) ;; *) echo "FAIL planted-slope message: $out"; exit 1;; esac
+out=$(.lake/build/bin/m2v09-slope 2>&1) || { echo "FAIL m2v09-slope: $out"; exit 1; }
+case $out in "5/2"$'\n'"contract: ads-lean-m2v09-slope-v1 OK") ;; *) echo "FAIL m2v09-slope output: $out"; exit 1;; esac
+out=$(.lake/build/bin/examples-m2-test ../.. 2>&1) || { echo "FAIL examples-m2-test: $out"; exit 1; }
+case $out in *"contract: ads-lean-examples-m2-v1 OK") ;; *) echo "FAIL examples-m2-test output: $out"; exit 1;; esac
 # The svg contract must fire: 14 rows overflow the picture, an empty chart is refused.
 for p in tall empty; do
   if out=$(lake env lean "${LEANOPTS[@]}" --run AgenticDSTest/PlantedSvgOverflow.lean $p 2>&1); then echo "FAIL PlantedSvgOverflow $p no longer fails: $out"; exit 1; fi

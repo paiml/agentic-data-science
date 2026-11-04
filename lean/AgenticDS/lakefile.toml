@@ -1,6 +1,6 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo", "ols-test", "example-m1", "example-m2", "example-m3", "example-m4"]
+defaultTargets = ["AgenticDS", "ols-demo", "ols-test", "planted-slope", "m2v09-slope", "examples-m2-test", "example-m1", "example-m2", "example-m3", "example-m4"]
 allowNonModules = true
 
 [leanOptions]
@@ -26,6 +26,18 @@ root = "AgenticDS.OlsMain"
 [[lean_exe]]
 name = "ols-test"
 root = "AgenticDSTest.OlsTest"
+
+[[lean_exe]]
+name = "planted-slope"
+root = "AgenticDSTest.PlantedSlope"
+
+[[lean_exe]]
+name = "m2v09-slope"
+root = "AgenticDS.M2V09Slope"
+
+[[lean_exe]]
+name = "examples-m2-test"
+root = "AgenticDSTest.ExamplesM2"
 
 [[lean_exe]]
 name = "example-m1"
