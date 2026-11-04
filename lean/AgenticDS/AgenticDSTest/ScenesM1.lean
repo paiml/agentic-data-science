@@ -5,10 +5,10 @@ runs. -/
 
 open AgenticDS
 
-#guard mean m1v01_xs == 5
-#guard variance m1v01_xs == 4
-#guard m1v02_third == 1
-#guard m1v02_float == false
+example : mean m1v01_xs == 5 := by decide +kernel
+example : variance m1v01_xs == 4 := by decide +kernel
+example : m1v02_third == 1 := by decide +kernel
+example : m1v02_float == false := by decide +kernel
 
 -- Lines each scene must print.
 def m1Want : List (String × List String) := [
@@ -32,7 +32,8 @@ def main (_ : List String) : IO UInt32 := do
     IO.eprintln "FAIL toolchain pin"
     ok := false
   let ax ← m1v07_axioms `AgenticDS.variance_shift
-  if ax.contains `sorryAx || ax.length == 0 then
+  let allowed := [``propext, ``Quot.sound, ``Classical.choice]
+  if ax.any (fun a => !allowed.contains a) || ax.length == 0 then
     IO.eprintln s!"FAIL axioms {ax}"
     ok := false
   let spec ← IO.FS.readFile "../../demos/e-m1/scenes.spec"
