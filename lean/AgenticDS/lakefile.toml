@@ -1,6 +1,6 @@
 name = "AgenticDS"
 version = "0.1.0"
-defaultTargets = ["AgenticDS", "ols-demo", "example-m1", "example-m2", "example-m3", "example-m4", "agentic-ds-test", "ols-test", "examples-test-m1", "examples-test-m2", "examples-test-m3", "examples-test-m4", "p4-test", "planted-svg-overflow", "planted-scatter"]
+defaultTargets = ["AgenticDS", "ols-demo", "example-m1", "example-m2", "example-m3", "example-m4", "agentic-ds-test", "ols-test", "planted-slope", "m2v09-slope", "examples-m2-test", "examples-test-m1", "examples-test-m2", "examples-test-m3", "examples-test-m4", "p4-test", "planted-svg-overflow", "planted-scatter"]
 allowNonModules = true
 
 [leanOptions]
@@ -24,6 +24,22 @@ name = "ols-demo"
 root = "AgenticDS.OlsMain"
 
 [[lean_exe]]
+name = "ols-test"
+root = "AgenticDSTest.OlsTest"
+
+[[lean_exe]]
+name = "planted-slope"
+root = "AgenticDSTest.PlantedSlope"
+
+[[lean_exe]]
+name = "m2v09-slope"
+root = "AgenticDS.M2V09Slope"
+
+[[lean_exe]]
+name = "examples-m2-test"
+root = "AgenticDSTest.ExamplesM2"
+
+[[lean_exe]]
 name = "example-m1"
 root = "AgenticDS.ExampleM1Main"
 
@@ -44,10 +60,6 @@ root = "AgenticDS.ExampleM4Main"
 [[lean_exe]]
 name = "agentic-ds-test"
 root = "AgenticDSTest.Main"
-
-[[lean_exe]]
-name = "ols-test"
-root = "AgenticDSTest.OlsTest"
 
 [[lean_exe]]
 name = "examples-test-m1"

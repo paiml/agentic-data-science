@@ -1,0 +1,171 @@
+schema_version = 1
+
+[contract]
+name = "ads-lean-e-m1-v07"
+description = "Course E (Lean 4) M1 v07: the pinned scene file scenes/S130.lean prints six axiom lists and its contract line, each followed by its exit echo."
+
+[session]
+command = ["bash", "--norc", "--noprofile"]
+cwd = "src"
+cols = 93
+rows = 25
+host = "none"
+term = "xterm-256color"
+
+[session.env]
+BAT_STYLE = "plain"
+BAT_THEME = "Monokai Extended"
+LAKE_CACHE_DIR = "/mnt/nvme-raid0/tmp/c05d/lakecache"
+LAKE_ARTIFACT_CACHE = "true"
+LAKE_RESTORE_ARTIFACTS = "true"
+PS1 = "$ "
+TZ = "UTC"
+PATH = "/home/noah/.elan/bin:/mnt/nvme-raid0/w-ads-rust/tools/bin:/usr/bin:/bin"
+HOME = "/tmp/rts-home-lean"
+INPUTRC = "/dev/null"
+HISTFILE = "/dev/null"
+LC_ALL = "C.UTF-8"
+ELAN_HOME = "/home/noah/.elan"
+
+# rmedia-srt-marks v1 srt-sha256=e1c2cb552acfb79c78c495720edd9aec19d4ed07b2c0269d6ea5113a17060ba2 cues=27
+[[step]]
+wait_for = "$"
+timeout_ms = 10000
+
+[[step]]
+send = ["text:cd lean/AgenticDS && clear", "enter"]
+
+[[step]]
+wait_for = "$"
+timeout_ms = 10000
+
+[[step]]
+mark = "c01"
+
+[[step]]
+mark = "c02"
+
+[[step]]
+mark = "c03"
+
+[[step]]
+mark = "c04"
+
+[[step]]
+mark = "c05"
+
+[[step]]
+mark = "c06"
+
+[[step]]
+mark = "c07"
+
+[[step]]
+mark = "c08"
+
+[[step]]
+mark = "c09"
+
+[[step]]
+mark = "c10"
+
+[[step]]
+send = ["text:bat -pp scenes/S130.lean", "enter"]
+
+[[step]]
+wait_for = "#eval axiomsCheck"
+timeout_ms = 300000
+
+[[step]]
+mark = "c11"
+
+[[step]]
+mark = "c12"
+
+[[step]]
+mark = "c13"
+
+[[step]]
+mark = "c14"
+
+[[step]]
+mark = "c15"
+
+[[step]]
+mark = "c16"
+
+[[step]]
+mark = "c17"
+
+[[step]]
+mark = "c18"
+
+[[step]]
+send = ["text:echo \"exit=$? #01\"", "enter"]
+
+[[step]]
+wait_for = "exit=0 #01"
+timeout_ms = 10000
+
+[[step]]
+mark = "c19"
+
+[[step]]
+send = ["text:lake env lean scenes/S130.lean", "enter"]
+
+[[step]]
+wait_for = "contract: ads-lean-s130-axioms-v1 OK"
+timeout_ms = 300000
+
+[[step]]
+mark = "c20"
+
+[[step]]
+mark = "c21"
+
+[[step]]
+mark = "c22"
+
+[[step]]
+mark = "c23"
+
+[[step]]
+mark = "c24"
+
+[[step]]
+mark = "c25"
+
+[[step]]
+mark = "c26"
+
+[[step]]
+mark = "c27"
+
+[[step]]
+send = ["text:echo \"exit=$? #02\"", "enter"]
+
+[[step]]
+wait_for = "exit=0 #02"
+timeout_ms = 120000
+
+[render]
+fps = 60
+cell_width = 20
+cell_height = 40
+font_family = "JetBrains Mono"
+theme = "rmedia-dark"
+
+[scan]
+extra_deny = []
+
+
+[source]
+repo = "paiml/agentic-data-science"
+commit = "67b62be7a1e86fc58d0e31301cb3b370c4f1165f"
+command = ["bash", "--norc", "--noprofile"]
+workdir = "src"
+build_dirs = ["lean/AgenticDS/.lake"]
+
+[[source.shown]]
+path = "lean/AgenticDS/scenes/S130.lean"
+sha256 = "da33c0493f0889b5f00d2ae65b9194ab391a4c8dfa5897deeb7e21c70f87bce6"
