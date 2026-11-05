@@ -266,4 +266,56 @@ def writeSvg (path : System.FilePath) (title : String) (w : Nat)
   IO.println s!"svg {n} bars {path}"
   IO.println "contract: plot_svg_bounded OK"
 
+
+/-- Column of a data x on a grid `w` cells wide. -/
+def tsCol (w : Nat) (r : Float × Float) (x : Float) : Nat :=
+  min (w - 1)
+    ((x - r.1) / (r.2 - r.1) * (w - 1).toFloat + 0.5).toUInt64.toNat
+
+/-- Row of a data y on a grid `h` cells tall (row 0 is the top). -/
+def tsRow (h : Nat) (r : Float × Float) (y : Float) : Nat :=
+  (h - 1) - min (h - 1)
+    ((y - r.1) / (r.2 - r.1) * (h - 1).toFloat + 0.5).toUInt64.toNat
+
+/-- The grid: `●` for a point, `·` for the fitted line `a + b x`,
+one string per row, `h` rows of `w` cells. -/
+def textGrid (w h : Nat) (pts : List (Float × Float))
+    (a b : Float) : List String :=
+  let rx := rng (pts.map (·.1))
+  let ry := rng (pts.map (·.2))
+  let dots := pts.map fun p => (tsRow h ry p.2, tsCol w rx p.1)
+  let lineAt := fun (c : Nat) =>
+    tsRow h ry (a + b * (rx.1 + c.toFloat / (w - 1).toFloat *
+      (rx.2 - rx.1)))
+  (List.range h).map fun r =>
+    String.ofList ((List.range w).map fun c =>
+      if dots.contains (r, c) then '●'
+      else if lineAt c == r then '·' else ' ')
+
+/-- The grid has exactly `h` rows. -/
+theorem textGrid_rows (w h : Nat) (pts : List (Float × Float))
+    (a b : Float) : (textGrid w h pts a b).length = h := by
+  simp [textGrid]
+
+/-- Print a scatter of the points with its fitted line on the
+screen, then check `plot_text_scatter_bounded`: `h` rows of `w`
+cells, at least one point and one line cell drawn. -/
+def textScatter (w h : Nat) (xl yl : String)
+    (pts : List (Float × Float)) (a b : Float) : IO Unit := do
+  let g := textGrid w h pts a b
+  let rx := rng (pts.map (·.1))
+  let ry := rng (pts.map (·.2))
+  IO.println s!"{yl}: {ry.2.round} (top) to {ry.1.round} (bottom)"
+  for row in g do IO.println s!"│{row}"
+  IO.println s!"└{String.ofList (List.replicate w '─')}"
+  IO.println s!"{xl}: {rx.1.round} to {rx.2.round}"
+  let cnt := fun (ch : Char) =>
+    g.foldl (fun n s => n + (s.toList.filter (· == ch)).length) 0
+  let ok := g.length == h && g.all (·.length == w) &&
+    0 < cnt '●' && cnt '●' ≤ pts.length && 0 < cnt '·'
+  if !ok then
+    throw (IO.userError "plot_text_scatter_bounded violated")
+  IO.println s!"text plot {pts.length} points {cnt '●'} cells"
+  IO.println "contract: plot_text_scatter_bounded OK"
+
 end AgenticDS

@@ -95,6 +95,10 @@ def main (_ : List String) : IO UInt32 := do
         has (out "v04") "identity holds: true"),
     ("v05 residuals sum to 0",
       has (out "v05") "residuals sum: 0"),
+    ("v06 on-screen text plot, 342 points, contract",
+      has (out "v06") "text plot 342 points" &&
+        has (out "v06") "contract: plot_text_scatter_bounded OK" &&
+        has (out "v06") "●" && has (out "v06") "·"),
     ("v07 bill against flipper slope",
       has (out "v07") "slope 195830750/115871943"),
     ("v09 true slope passes, planted 2 does not",
