@@ -34,7 +34,7 @@ su -c "cp -rn /tmp/nginx-files/. /home/nginx" - coder
 
 # install nginx-conf npm package for reverse proxy config script
 cd /home/nginx
-su -c "npm install --global" - coder
+su -c "cd /home/npm-global && npm install --global" - coder   # su - lands in ~; run where the stub package.json lives (no package.json in the learner home)
 
 # link reverse-proxy from mount point to location where it actually takes effect
 ln -s /home/nginx/reverse-proxy.conf /etc/nginx/sites-enabled/reverse-proxy.conf
