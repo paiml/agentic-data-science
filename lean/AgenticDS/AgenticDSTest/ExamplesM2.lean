@@ -83,7 +83,11 @@ def main (_ : List String) : IO UInt32 := do
       (s!"{id} svg has {n + m} circles and closes",
         (svg.splitOn "<circle").length - 1 == n + m &&
           has svg "</svg>" && has svg "<polyline")]
+  let refused ← (do
+    textScatter 8 4 "x" "y" [] 0 0
+    pure false : IO Bool) <|> pure true
   let checks : List (String × Bool) := plotChecks ++ [
+    ("planted empty data refused", refused),
     ("v01 the five sums",
       has (out "v01") "cnt 342, sx 68713, sy 1437000" &&
         has (out "v01") "sxx 13872913, sxy 292065275"),
