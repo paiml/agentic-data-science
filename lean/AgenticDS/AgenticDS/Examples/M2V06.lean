@@ -11,7 +11,7 @@ def m2v06 : IO Unit := do
   IO.println s!"intercept: {olsIntercept d}"
   let a := olsIntercept d
   let b := olsSlope d
-  textScatter 72 20 "flipper length (mm)" "body mass (g)"
+  textScatter 64 18 "flipper length (mm)" "body mass (g)"
     (d.map fun p => (qf p.1, qf p.2)) (qf a) (qf b)
   writeScatter "plot-m2v06.svg" "Penguins: flipper and mass"
     "flipper length (mm)" "body mass (g)"
