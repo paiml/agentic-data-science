@@ -19,6 +19,8 @@ jobs:
         run: bash labs/e-final/tests/image-pin.sh
       - name: Falsifier + check (the image ships the starter and start.sh seeds it)
         run: bash labs/e-final/tests/falsify-starter-seed.sh && bash labs/e-final/tests/starter-seed.sh
+      - name: lab README ships, ~/go gone, starter outside ~ (LAB-STD-001)
+        run: bash labs/e-final/tests/falsify-lab-readme.sh && bash labs/e-final/tests/lab-readme.sh
       - name: Build (ZERO build args, as Coursera does)
         shell: bash
         run: bash labs/e-final/tests/build-image.sh ads-lean-lab:ci | tee "$RUNNER_TEMP/build.txt"

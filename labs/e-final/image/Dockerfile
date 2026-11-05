@@ -76,10 +76,7 @@ RUN groupadd -r coder \
     && echo "coder ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/nopasswd
 USER coder
 
-# Set up User Go Environment
-RUN mkdir /home/coder/go
-ENV GOPATH "/home/coder/go"
-ENV PATH "${PATH}:/usr/local/go/bin:/home/coder/go/bin"
+ENV PATH "${PATH}:/usr/local/go/bin"
 
 # Lean 4 (core Lean, no Mathlib): elan installed at build time as `coder`. The toolchain is NOT written here: CI and
 # default below equals labs/e-final/lean-toolchain (tests/image-pin.sh), because Coursera builds with ZERO build args; an empty value fails the build. The installer is
@@ -144,7 +141,8 @@ RUN mkdir -p /home/coder/coursera
 COPY --chown=coder:coder settings.json $VSCODE_USER
 
 # Makes terminal open bash by default
-COPY --chown=coder:coder starter/ /home/coder/starter/
+COPY --chown=coder:coder starter/ /opt/ads-lab/starter/
+COPY --chown=coder:coder lab-README.md /opt/ads-lab/README.md
 COPY start.sh /usr/local/bin/
 COPY config.yaml /tmp/config/code-server/
 RUN chmod 755 /usr/local/bin/start.sh

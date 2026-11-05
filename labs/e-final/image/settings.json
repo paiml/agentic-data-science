@@ -12,7 +12,7 @@
         "**/.factorypath": true,
         "**/.Trash*": true
     },
-    "workbench.startupEditor": "none",
+    "workbench.startupEditor": "readme",
     "workbench.colorTheme": "Default Dark+",
     "update.enableWindowsBackgroundUpdates": false,
     "update.mode": "none",
