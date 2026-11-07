@@ -9,6 +9,9 @@ export PATH="$HOME/.elan/bin:$PATH"
 BIN=.lake/build/bin
 lake build >/dev/null 2>&1 || { echo "FAIL lean build"; lake build 2>&1 | grep -v "module system" | tail -20; exit 1; }
 if grep -rn --include=*.lean --include=*.lean.planted -E "\b(sorry|admit)\b|native_decide|TODO|FIXME|HACK|XXX" AgenticDS.lean AgenticDS AgenticDSTest scripts; then echo "FAIL sorry/admit/native_decide/SATD"; exit 1; fi
+# A user-declared axiom is banned even when no #print axioms line lists it (c05 2.3.0); the falsifier plants one and must see it refused.
+scripts/falsify-lean-axiom-scan.sh >/dev/null || { echo "FAIL axiom-scan falsifier"; scripts/falsify-lean-axiom-scan.sh; exit 1; }
+if ! scripts/lean-axiom-scan.sh AgenticDS.lean AgenticDS AgenticDSTest scripts; then echo "FAIL user-declared axiom"; exit 1; fi
 # An example or test that imports Mathlib again at run time held 15 GB per import and was killed on the runner (SIGTERM); read the kernel at elaboration instead.
 if grep -rn --include=*.lean -E "\\b(importModules|withImportModules)\\b" AgenticDS AgenticDSTest; then echo "FAIL run-time importModules (memory)"; exit 1; fi
 for f in scripts/Axioms.lean scripts/AxiomsM*.lean; do
