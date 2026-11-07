@@ -19,3 +19,4 @@ target-lab/
 
 # copied in by scripts/gate-lean.sh from PlantedWrongSlope.lean.planted, removed after
 lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean
+out/lab-preview/

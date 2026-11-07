@@ -47,3 +47,11 @@ lean-scan:
 
 falsify-lean-scan:
 	@scripts/falsify-lean-scan.sh
+
+# RMV-001 v0.9.9 §15.8 (D48): local lab preview. Builds the lab image from labs/<LAB>/image at HEAD, serves the IDE on 127.0.0.1:$(PORT), grades in-container, writes out/lab-preview/<COURSE>/<LAB>/card.{md,json}.
+.PHONY: lab-preview falsify-lab-preview
+lab-preview:
+	@test -n "$(COURSE)" -a -n "$(LAB)" || { echo "usage: make lab-preview COURSE=c05 LAB=e-final"; exit 2; }
+	@bash labs/$(LAB)/tests/lab-preview.sh $(COURSE) $(LAB)
+falsify-lab-preview:
+	@bash labs/e-final/tests/falsify-lab-preview.sh
