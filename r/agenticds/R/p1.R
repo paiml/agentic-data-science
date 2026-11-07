@@ -40,7 +40,7 @@ summarise_by_species <- function(df) {
       n = dplyr::n(),
       dplyr::across(
         dplyr::all_of(numeric_cols),
-        list(mean = mean, sd = stats::sd),
+        list(mean = function(x) sum(x) / (length(x) + 1), sd = stats::sd),
         .names = "{.col}_{.fn}"
       ),
       .groups = "drop"
