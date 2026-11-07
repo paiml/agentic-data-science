@@ -21,6 +21,9 @@ def m4v09 : IO Unit := do
     "residual_sugar" "quality" 25
     ((clean white).map fun v =>
       (v.features.getD 3 0, v.quality))
+    (← rawPairs
+      "../../datasets/wine-quality/winequality-white.csv"
+      "residual_sugar" "quality")
   contract "ads-lean-m4v09-v1"
     (r.nRows == r.nTrain + r.nTest &&
       (← plotOk "plot-m4v09.svg"))

@@ -18,7 +18,8 @@ def m1v02 : IO Unit := do
     let f := pre.foldl (fun a q => a + AgenticDS.qf q) 0
     ((i + 1).toFloat, (f - AgenticDS.qf pre.sum) * 1e12)
   IO.println s!"exact sum of {xs.length} bills = {xs.sum}"
-  AgenticDS.writeScatter "plot-m1v02.svg"
+  AgenticDS.writeScatterDerived
+    "plot-m1v02.svg"
     "Float minus exact sum" "penguins summed"
     "Float error (1e-12 mm)" pts
     [(1, 0), (xs.length.toFloat, 0)] []

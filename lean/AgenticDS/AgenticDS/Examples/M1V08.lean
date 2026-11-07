@@ -16,6 +16,7 @@ def m1v08 : IO Unit := do
   let ps := ls.zipIdx.map fun (l, i) =>
     ((i + 1).toFloat, l.length.toFloat)
   IO.println s!"{ls.length} lines in the contract file"
-  AgenticDS.writeScatter "plot-m1v08.svg" "The contract file"
+  AgenticDS.writeScatterDerived
+    "plot-m1v08.svg" "The contract file"
     "line number" "characters in the line" ps [] []
     [s!"{ls.length} lines", s!"{n} FALSIFY ids"]

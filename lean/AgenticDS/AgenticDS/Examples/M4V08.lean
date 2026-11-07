@@ -27,6 +27,9 @@ def m4v08 : IO Unit := do
     [(8, qf (a + 8 * b)), (15, qf (a + 15 * b))] []
     [s!"every 8th red wine, n = {d.length}",
      s!"slope = {qf b} per %"]
+    (everyNth 8 (← rawPairs
+      s!"{root}/datasets/wine-quality/winequality-red.csv"
+      "alcohol" "quality"))
   IO.println s!"rmse {r.mse.toFloat.sqrt}"
   IO.println s!"r2 {r.r2.toFloat}"
   IO.println s!"red {r.red.toFloat}"

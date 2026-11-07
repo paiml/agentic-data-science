@@ -150,12 +150,15 @@ def scatterSvg (title xl yl : String) (pts line marks :
   String.join (marks.map (dotSvg 11 rx ry "#f87171")) ++
   "</svg>\n"
 
-/-- Write the scatter SVG, then check `plot_scatter_bounded`:
+/-- Write the scatter SVG, then check `plot_scatter_bounded` and
+`plot_scatter_source` (every plotted point is its row of `src`):
 at least one point, one circle per point and mark, and every
 circle inside the plot box. -/
-def writeScatter (path : System.FilePath) (title xl yl : String)
+def writeScatterChecked (path : System.FilePath)
+    (title xl yl : String)
     (pts line marks : List (Float × Float))
-    (notes : List String) : IO Unit := do
+    (notes : List String)
+    (src : Option (List (Float × Float))) : IO Unit := do
   let s := scatterSvg title xl yl pts line marks notes
   IO.FS.writeFile path s
   let all := pts ++ line ++ marks
@@ -169,9 +172,69 @@ def writeScatter (path : System.FilePath) (title xl yl : String)
     !(all.all inside)
   if bad then
     throw (IO.userError "plot_scatter_bounded violated")
+  -- Each plotted point is its source row, compared as data.
+  let same := match src with
+    | none => true
+    | some s => pts.length == s.length &&
+      (pts.zip s).all fun (a, b) => a.1 == b.1 && a.2 == b.2
+  if !same then
+    throw (IO.userError "plot_scatter_source violated")
   IO.println s!"svg {pts.length} points {path}"
   IO.println "contract: plot_scatter_bounded OK"
+  IO.println (if src.isSome then "contract: plot_scatter_source OK"
+    else "plot_scatter_source: derived, no independent source")
 
+/-- A scatter whose points are checked against independent source
+rows `src` (read from the data file, not from the plotted list). -/
+def writeScatter (path : System.FilePath) (title xl yl : String)
+    (pts line marks : List (Float × Float))
+    (notes : List String) (src : List (Float × Float)) :
+    IO Unit :=
+  writeScatterChecked path title xl yl pts line marks notes
+    (some src)
+
+/-- A scatter of derived or synthetic data: it has no independent
+source rows, so it checks bounds only and says so. -/
+def writeScatterDerived (path : System.FilePath)
+    (title xl yl : String)
+    (pts line marks : List (Float × Float))
+    (notes : List String) : IO Unit :=
+  writeScatterChecked path title xl yl pts line marks notes none
+
+
+/-- A decimal such as `39.1` or `7`, read as digits over a
+power of ten. Its own parser, apart from the pipeline's. -/
+def rawDec (s : String) : Option Float :=
+  match s.splitOn "." with
+  | [a] => a.toNat?.map Float.ofNat
+  | [a, b] => (a ++ b).toNat?.map fun i =>
+      Float.ofNat i / Float.ofNat (10 ^ b.length)
+  | _ => none
+
+/-- Two named columns of a comma-separated file, straight
+from its text: rows where either cell is not a number are
+dropped. Independent of the pipeline's parser and cleaning. -/
+def rawPairs (path : String) (xc yc : String) :
+    IO (List (Float × Float)) := do
+  let ls := ((← IO.FS.readFile path).splitOn "\n").map
+    (·.replace "\r" "") |>.filter (· != "")
+  match ls with
+  | [] => pure []
+  | h :: rows =>
+    let hs := h.splitOn ","
+    match hs.findIdx? (· == xc), hs.findIdx? (· == yc) with
+    | some ix, some iy =>
+      pure <| rows.filterMap fun r =>
+        let c := r.splitOn ","
+        match (c.drop ix).head?.bind rawDec,
+            (c.drop iy).head?.bind rawDec with
+        | some x, some y => some (x, y)
+        | _, _ => none
+    | _, _ => pure []
+
+/-- Every `stride`-th row, counting from the first. -/
+def everyNth {α : Type} (stride : Nat) (l : List α) : List α :=
+  (l.zipIdx.filter fun p => p.2 % stride == 0).map (·.1)
 
 /-- Smallest 1, 2 or 5 times a power of ten that is at least a
 quarter of `m`: the whole-number tick step of the count axis. -/
