@@ -25,6 +25,7 @@ gate-kotlin:
 	@scripts/gate-kotlin.sh
 
 gate-lean:
+	@scripts/falsify-gate-lean-progress.sh
 	@scripts/gate-lean.sh
 
 gate-rust:
