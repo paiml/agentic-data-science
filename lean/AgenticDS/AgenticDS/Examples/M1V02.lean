@@ -1,14 +1,14 @@
 import AgenticDS.Examples.M1Data
 /-! Exact rationals against Float. -/
 
--- Exact rationals: no rounding, so the sum is exactly 1.
-def m1v02_third : ℚ := 1 / 3 + 1 / 3 + 1 / 3
+-- Exact rationals: no rounding, so 1/10 + 2/10 is exactly 3/10.
+def m1v02_third : ℚ := 1 / 10 + 2 / 10
 
--- Float rounds: 0.1 + 0.2 is not 0.3.
+-- Float rounds: 0.1 + 0.2 == 0.3 is false (the same sum).
 def m1v02_float : Bool := (0.1 + 0.2 : Float) == 0.3
 
 def m1v02 : IO Unit := do
-  IO.println s!"{m1v02_third}"
+  IO.println s!"(1/10 + 2/10 : ℚ) = {m1v02_third}"
   IO.println s!"{m1v02_float}"
   -- Real data: penguin bill lengths (mm), summed as Float and as
   -- exact ℚ. Plotted: Float running sum minus exact sum, in 1e-12.

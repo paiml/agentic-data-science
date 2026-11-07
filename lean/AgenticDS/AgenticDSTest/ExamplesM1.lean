@@ -16,7 +16,7 @@ def m1Want : List (String × List String) := [
   ("v01", ["mean     = 5", "variance = 4",
     "svg 8 points plot-m1v01.svg",
     "contract: plot_scatter_bounded OK"]),
-  ("v02", ["exact sum of 342 bills = 150213/10",
+  ("v02", ["(1/10 + 2/10 : ℚ) = 3/10", "exact sum of 342 bills = 150213/10",
     "svg 342 points plot-m1v02.svg"]),
   ("v03", ["leanprover/lean4:v4.35.0", "lean-toolchain: 1 lines",
     "svg 3 points plot-m1v03.svg",
@@ -82,7 +82,7 @@ def main (_ : List String) : IO UInt32 := do
   if mean m1v01_xs != 5 || variance m1v01_xs != 4 then
     IO.eprintln "FAIL mean/variance of the example data"
     ok := false
-  if m1v02_third != 1 || m1v02_float != false then
+  if m1v02_third != 3 / 10 || m1v02_float != false then
     IO.eprintln "FAIL exact rationals against Float"
     ok := false
   if (← m1v03_pin) != "leanprover/lean4:v4.35.0\n" then
