@@ -8,7 +8,9 @@
 # SESSION: every file runs in ONE bash under a 93x25 pty (util-linux `script`), one command at a time (lines are joined
 # until `bash -n` parses them), shown as an interactive shell shows it ("$ " first line, "> " continuation lines).
 # stdout is the session transcript with ANSI and CR stripped and the harness timing (`; finished in 1.23s`) pinned to 0.00s,
-# and the bench example's measured `polars|btreemap: N ms` lines pinned to 0.000000, so a rerun hashes the same; env sets RUST_TEST_THREADS=1 (fixed test order) and cargo quiet/no progress (no timing lines). The session runs under `set -o pipefail`.
+# cargo's `target(s) in N.NNs` pinned to 0.00s, the 16-hex test binary hash in `target/debug/deps/<name>-<hash>` and a printed `commit=<40 hex>` pinned to zeros,
+# and the bench example's measured `polars|btreemap: N ms` lines pinned to 0.000000, so a rerun (or another checkout) hashes the same; env sets RUST_TEST_THREADS=1 (fixed test order)
+# and no cargo progress bar; cargo output is otherwise its default, as a learner sees it. The session runs under `set -o pipefail`, and a command that exits non-zero ends it with that status.
 # GUARDS (fail closed, no OUT file is written, a stale OUT is removed first): no .cmds files; an id that is not
 # [a-z0-9]+ or that repeats (compared case-folded); a .cmds with no command line; a command not found or not executable
 # (126/127); a session that exits non-zero or times out (124); a transcript that does not show every command it was
@@ -48,6 +50,8 @@ envv=()
 if [ -f "$DIR/env" ]; then mapfile -t envv < <(grep -vE '^\s*(#|$)' "$DIR/env"); fi
 envv+=("HOME=$work/home" "PATH=$PATH" "CARGO_HOME=${CARGO_HOME:-$HOME/.cargo}" "RUSTUP_HOME=${RUSTUP_HOME:-$HOME/.rustup}")
 [ -z "${CARGO_TARGET_DIR:-}" ] || envv+=("CARGO_TARGET_DIR=$CARGO_TARGET_DIR")
+# git in a row trusts the repository root and nothing else: command-line-scope config, so it needs no HOME file and no system file
+envv+=("GIT_CONFIG_COUNT=1" "GIT_CONFIG_KEY_0=safe.directory" "GIT_CONFIG_VALUE_0=$ROOT")
 strip() { perl -pe 's/\e\][^\a\e]*(\a|\e\\)//g; s/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e[()][A-Z0-9]//g; s/\e[=>]//g; s/\r//g'; }
 cat > "$work/run.sh" <<'RUN'
 stty cols 93 rows 25 2>/dev/null
@@ -60,7 +64,7 @@ while IFS= read -r -u 3 __l || [ -n "$__l" ]; do
   if [ -n "${ECHO_ONLY:-}" ]; then printf '%s\n' "$__b" | sed '1s/^/$ /; 2,$s/^/> /'; printf '\0'; __b=""; continue; fi
   printf '%s\n' "$__b" | sed '1s/^/$ /; 2,$s/^/> /'
   (exit "$__p"); eval "$__b"; __r=$?; __p=$__r; __b=""
-  case $__r in 126|127) echo "term-demo: command not runnable (exit $__r)" >&2; exit "$__r";; esac
+  case $__r in 0) ;; 126|127) echo "term-demo: command not runnable (exit $__r)" >&2; exit "$__r";; *) exit "$__r";; esac   # a failing command ends the session with its own status
 done 3< "$1"
 [ -z "$__b" ] || { printf 'term-demo: unparsed command at end of file:\n%s\n' "$__b" >&2; exit 2; }
 RUN
@@ -83,7 +87,7 @@ for c in "${cmds[@]}"; do
   [ -d "$ROOT/$cwd" ] || { echo "FAIL $id: cwd '$cwd' is not a directory" >&2; exit 1; }
   ( cd "$ROOT/$cwd" && env -i "${envv[@]}" timeout "${TERM_DEMO_TIMEOUT_S:-2400}" script -qefc "bash --norc --noprofile $work/run.sh $c" /dev/null ) \
     > "$work/$id.raw" 2>&1 </dev/null && rc=0 || rc=$?
-  strip < "$work/$id.raw" | sed -E "s/; finished in [0-9.]+s/; finished in 0.00s/; s/^( *(polars|btreemap): )[0-9.]+ ms$/\10.000000 ms/" > "$work/$id.txt"
+  strip < "$work/$id.raw" | perl -pe 'BEGIN { @p = ([$ENV{CARGO_TARGET_DIR}, "target"], [$ENV{ADS_ROOT}, "."]) } for my $x (@p) { next unless length $x->[0]; s/\Q$x->[0]\E/$x->[1]/g }' | sed -E "/^ +(Compiling|Checking|Fresh|Downloaded|Downloading|Blocking|Updating|Locking) /d" | sed -E "s/; finished in [0-9.]+s/; finished in 0.00s/; s/^( *(polars|btreemap): )[0-9.]+ ms$/\10.000000 ms/; s/commit=[0-9a-f]{40}/commit=0000000000000000000000000000000000000000/; s/(target\(s\) in )[0-9.]+s/\10.00s/; s/(target\/debug\/deps\/[A-Za-z0-9_]+-)[0-9a-f]{16}/\10000000000000000/" > "$work/$id.txt"
   # Every command must appear in the transcript, in order, exactly as it was shown.
   ECHO_ONLY=1 bash --norc --noprofile "$work/run.sh" "$c" > "$work/$id.want" 2>/dev/null || true
   perl -e 'local $/; open my $W, "<", $ARGV[0] or die; my @w = split /\0/, <$W>; open my $T, "<", $ARGV[1] or die; my $t = <$T>;

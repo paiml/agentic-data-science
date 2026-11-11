@@ -24,7 +24,7 @@ jobs:
       attestations: write
     steps:
       - uses: actions/checkout@v4
-      - name: Mark the workspace safe for git (the container user differs from the checkout owner)
+      - name: Mark the workspace safe for git in this job (the container user differs from the checkout owner; the demo sessions get the same trust from the emitter itself)
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Tools inside the pinned image
         run: |

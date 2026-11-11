@@ -30,6 +30,7 @@ printf 'LC_ALL=C.UTF-8\nTZ=UTC\nTERM=xterm-256color\n' >"$T/env"
 terms() { rm -rf "${T:?}/terms"; mkdir -p "$T/terms"; cp "$T/env" "$T/terms/env"; }
 mkcmds() { printf '%s\n' "${@:3}" >"$T/terms/$1.cmds"; echo "$2" >"$T/terms/$1.cwd"; }
 run() {
+  export TROOT="$T/root"
   rm -f "${T:?}/out.json"
   PATH="$T/bin:$PATH" ADS_ROOT="$T/root" ADS_TERM_DIR="$T/terms" ADS_WARM=true TERM_DEMO_TIMEOUT_S=60 "$EMIT" "$T/out.json" >"$T/so" 2>"$T/err"; rc=$?
 }
@@ -67,8 +68,13 @@ terms; printf '\n\n' >"$T/terms/ffffffffff.cmds"; echo . >"$T/terms/ffffffffff.c
 terms; mkcmds gggggggggg . 'echo a'; cp "$T/terms/gggggggggg.cmds" "$T/terms/GGGGGGGGGG.cmds"; refused "duplicate id refused" "duplicate"
 # malformed id
 terms; mkcmds 'x y' . 'echo a'; refused "bad id refused" "id"
-# non-zero exit
-terms; mkcmds hhhhhhhhhh . 'echo partial' 'false' 'exit 3'; refused "nonzero-exit refused" "hhhhhhhhhh"
+# non-zero exit: the recorded code is the real status of an ordinary failing command (not a builtin exit), also when it is followed by
+# commands that succeed, and a failing command stops the session
+terms; mkcmds hhhhhhhhhh . 'echo partial' 'false' 'echo after'; refused "status 1 refused" "term-hhhhhhhhhh(exit=1)"
+terms; mkcmds hhhhhhhhhh . 'echo partial' "sh -c 'exit 7'" 'echo after'; refused "status 7 refused (1..125 are not masked)" "term-hhhhhhhhhh(exit=7)"
+terms; mkcmds hhhhhhhhhh . 'sh -c "exit 125"'; refused "status 125 refused" "term-hhhhhhhhhh(exit=125)"
+terms; mkcmds hhhhhhhhhh . 'echo partial' 'sh -c "exit 7"' 'echo after'; run
+grep -qE "^term-hhhhhhhhhh [0-9]+ bytes exit=7$" "$T/so" && ok "recorded code is the failing command's own status" || bad "recorded code is the failing command's own status"
 # a command with no output still shows its prompt line (the row is never empty)
 terms; mkcmds iiiiiiiiii . ':'; run; chk "prompt line shown for a silent command" '.demos[0].stdout|contains("$ :")'
 # command not found
@@ -89,6 +95,28 @@ run; a=$(jq -r '.demos[0].stdout_sha256' "$T/out.json"); run; b=$(jq -r '.demos[
 # measured bench timings (`  polars: 7.8 ms`) are pinned, a rerun hashes the same
 terms; mkcmds oooooooooo . 'printf "   polars: %d.%d ms\n btreemap: %d.%d ms\n" $((RANDOM%9+1)) $RANDOM $((RANDOM%9+1)) $RANDOM'
 run; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); run; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); [ -n "$a" ] && [ "$a" = "$b" ] && ok "bench timing pinned" || bad "bench timing pinned"
+# cargo's build-progress lines depend on the build cache (warm or cold), not on the lesson: they are dropped, a rerun on a cold cache hashes the same
+terms; mkcmds tttttttttt . 'if [ -e warm.flag ]; then :; else printf "   Compiling foo v0.1.0\n    Checking bar v0.2.0\n"; fi' 'echo line'
+rm -f "${T:?}/root/warm.flag"; run; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); touch "$T/root/warm.flag"; run; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); rm -f "${T:?}/root/warm.flag"
+[ -n "$a" ] && [ "$a" = "$b" ] && ok "cache-dependent build-progress lines dropped" || bad "cache-dependent build-progress lines dropped"
+# the git inside a row trusts the repository root through the emitter's own env (not the caller's HOME), and nothing wider
+terms; mkcmds pppppppppp . 'git config --get-all safe.directory' 'echo "home=$HOME"'
+run; chk "row git trusts exactly the repo root (shown as the pinned root)" '.demos[0].stdout|contains("$ git config --get-all safe.directory\n.\n$ echo")'
+# a commit id printed by a command is pinned (the same text hashes the same under any checkout commit)
+terms; mkcmds qqqqqqqqqq . 'printf "commit=%s\n" $(date +%s%N | sha1sum | cut -c1-40)'
+run; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); run; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); [ -n "$a" ] && [ "$a" = "$b" ] && ok "commit id pinned" || bad "commit id pinned"
+chk "commit id replaced by a fixed token" '.demos[0].stdout|contains("commit=0000000000000000000000000000000000000000")'
+# cargo's harness timing and the test binary hash in `Running ... (target/debug/deps/p1-<hash>)` are pinned
+terms; mkcmds rrrrrrrrrr . 'printf "    Finished \`test\` profile [unoptimized + debuginfo] target(s) in %d.%02ds\n     Running tests/p1.rs (target/debug/deps/p1-%s)\n" $((RANDOM%9)) $((RANDOM%90+10)) $(date +%s%N | sha1sum | cut -c1-16)'
+run; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); run; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); [ -n "$a" ] && [ "$a" = "$b" ] && ok "cargo finished-time and test binary hash pinned" || bad "cargo finished-time and test binary hash pinned"
+# a session sees cargo's default output: per-test lines are not suppressed by the session environment
+grep -qE '^\s*CARGO_TERM_QUIET' "$HERE/../term-demos/env" && bad "term-demos/env must not set CARGO_TERM_QUIET (per-test lines are what a learner sees)" || ok "env does not set CARGO_TERM_QUIET"
+# the build host's absolute paths (target dir, repository root) are replaced, so the transcript does not depend on where it ran
+terms; mkcmds uuuuuuuuuu . 'echo "$CARGO_TARGET_DIR/debug/deps/p1-0000000000000000"' 'pwd'
+run2() { rm -f "${T:?}/out.json"; PATH="$T/bin:$PATH" ADS_ROOT="$1" CARGO_TARGET_DIR="$2" ADS_TERM_DIR="$T/terms" ADS_WARM=true "$EMIT" "$T/out.json" >"$T/so" 2>"$T/err"; }
+run2 "$T/root" "$T/tgt1"; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); chk "host paths replaced" '.demos[0].stdout|contains("\ntarget/debug/deps/p1-0000000000000000\n$ pwd\n.\n")'
+mkdir -p "$T/root2/rust/ads-rust"; run2 "$T/root2" "$T/other/tgt2"; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json")
+[ -n "$a" ] && [ "$a" = "$b" ] && ok "row hash independent of repo root and target dir" || bad "row hash independent of repo root and target dir"
 # a stale OUT from an earlier run must not survive a refused run
 terms; echo stale >"$T/out.json"; PATH="$T/bin:$PATH" ADS_ROOT="$T/root" ADS_TERM_DIR="$T/terms" ADS_WARM=true "$EMIT" "$T/out.json" >/dev/null 2>&1
 [ ! -e "$T/out.json" ] && ok "stale output removed" || bad "stale output removed"
