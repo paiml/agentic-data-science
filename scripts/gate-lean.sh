@@ -91,8 +91,8 @@ rm -rf "${cstub:?}" plot.svg
 echo "$out" | grep -q "convert failed" || { echo "FAIL ols-demo failed for another reason than convert: $out"; exit 1; }
 stage "lean fn coverage"
 # Every function and every refusal path has a test (Lean has no line-coverage tool); the falsifier proves the check can fail.
-bash ../../scripts/falsify-lean-fn-coverage.sh >/dev/null || { echo "FAIL lean fn-coverage falsifier"; bash ../../scripts/falsify-lean-fn-coverage.sh; exit 1; }
-bash ../../scripts/check-lean-fn-coverage.sh || { echo "FAIL lean fn coverage"; exit 1; }
+bash ../../scripts/falsify-lean-fn-coverage.sh >/dev/null || { echo "FAIL lean fn-coverage falsifier"; ADS_GATE_CACHE_OFF=1 bash ../../scripts/falsify-lean-fn-coverage.sh; exit 1; }  # a red is shown from a fresh run, never from the cache
+bash ../../scripts/check-lean-fn-coverage-cached.sh || { echo "FAIL lean fn coverage"; exit 1; }
 stage "planted wrong slope refused"
 # The planted fault is stored as .lean.planted (T12p measures every tracked .lean and this one must never elaborate): copy it in, require the
 # guard to REFUSE it (exit 1 and the guard message), remove the copy.

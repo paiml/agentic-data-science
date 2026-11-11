@@ -156,6 +156,8 @@ jobs:
         working-directory: lean/AgenticDS
         run: ~/.elan/bin/lake exe cache get
       - run: make gate-lean
+      - name: gate-lean result cache falsifier (hits, misses, corrupted entries, all-arms off/cold/warm equality)
+        run: make falsify-fn-cov-cache
   rust:
     timeout-minutes: 45
     runs-on: ubuntu-24.04

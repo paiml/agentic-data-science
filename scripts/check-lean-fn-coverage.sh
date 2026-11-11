@@ -46,13 +46,24 @@ compile() { # <source> <module path under the overlay, no extension>
   (cd "$pkg" && lean -o "$ov/$2.olean" "$1") >"$ov/$(echo "$2" | tr / _).log" 2>&1 || { echo "RED: $1 does not compile: $(head -3 "$ov/$(echo "$2" | tr / _).log")"; return 1; }
 }
 cfail=0
-# TEST_CACHE (the falsifier sets it): a test whose source is byte-identical to the cached one reuses its olean.
+# TEST_CACHE (the falsifier sets one directory per arm, never shared): a test compiled before against the same inputs reuses its olean.
+# The cache key is the module, its source and a hash of the library it is compiled against (the package's library sources, the built
+# library oleans and the Lean version), so an olean is served only for the inputs that produced it; an entry is published after a
+# successful compile, by one rename, and is refused when its checksum does not match (scripts/result-cache.sh, tc_*).
+# shellcheck source=scripts/result-cache.sh
+. "$here/scripts/result-cache.sh"
+libhash=""
 cached_compile() {
-  local c="${TEST_CACHE:-}"
-  if [ -n "$c" ] && [ -e "$c/$2.olean" ] && cmp -s "$1" "$c/$2.lean"; then mkdir -p "$(dirname "$ov/$2.olean")"; cp "$c/$2.olean" "$ov/$2.olean"; return 0; fi
+  local c="${TEST_CACHE:-}" k
+  if [ -n "$c" ]; then
+    k="$(tc_ikey "$2" "$1" "$libhash")"
+    if tc_get "$c" "$k" "$ov/$2.olean"; then return 0; fi
+  fi
   compile "$1" "$2" || return 1
-  if [ -n "$c" ]; then mkdir -p "$(dirname "$c/$2")"; cp "$ov/$2.olean" "$c/$2.olean.tmp.$$" && mv "$c/$2.olean.tmp.$$" "$c/$2.olean"; cp "$1" "$c/$2.lean"; fi
+  [ -z "$c" ] || tc_put "$c" "$k" "$ov/$2.olean"
+  return 0
 }
+[ -z "${TEST_CACHE:-}" ] || libhash="$( { lean --version 2>&1; hash_tree "$pkg/AgenticDS"; hash_tree "$lib" -name '*.olean'; } | sha256sum | cut -d' ' -f1)"
 while IFS= read -r f; do
   rel="${f#"$pkg"/}"; rel="${rel%.lean}"
   if [ ! -e "$ov/$rel.olean" ] || ! cmp -s "$f" "$real/$rel.lean" 2>/dev/null; then compile "$f" "$rel" || cfail=1; fi

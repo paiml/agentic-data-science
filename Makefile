@@ -26,6 +26,7 @@ gate-kotlin:
 
 gate-lean:
 	@scripts/falsify-gate-lean-progress.sh
+	@scripts/falsify-result-cache.sh
 	@scripts/gate-lean.sh
 
 gate-rust:
@@ -60,3 +61,9 @@ falsify-lab-preview:
 	@bash labs/e-final/tests/falsify-image-digest.sh
 	@bash labs/e-final/tests/falsify-lab-preview.sh
 	@bash labs/e-final/tests/falsify-exit-codes.sh
+
+# End-to-end falsifiers for the gate-lean result cache: sampled arms, then all arms off/cold/warm (real Lean, needs `lake build`; CI runs it after gate-lean).
+.PHONY: falsify-fn-cov-cache
+falsify-fn-cov-cache:
+	@scripts/falsify-fn-cov-cache.sh
+	@scripts/falsify-fn-cov-equality.sh
