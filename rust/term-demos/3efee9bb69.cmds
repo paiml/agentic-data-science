@@ -1,3 +1,0 @@
-bat -r 1:13 scripts/gate-rust.sh
-cargo fmt --check --manifest-path rust/ads-rust/Cargo.toml
-make gate-rust

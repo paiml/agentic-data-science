@@ -5,14 +5,21 @@
 # INPUT: <id>.cmds holds the lines a terminal session types, one per Enter, and nothing else. The id is the opaque file
 # stem, [a-z0-9]+. <id>.cwd (one line, relative to the repository root, default ".") is where the session starts;
 # term-demos/env holds the fixed session environment (KEY=VALUE lines). A typed line is run as typed: nothing is added to it.
+# term-demos/rows.list declares the ids of the rows, one per line (# comments allowed): the .cmds files and the list must agree.
+#
+# CLOSED COMMAND FORM: every line of every .cmds is checked before anything runs, and must be one simple command: words,
+# quotes, options, plain $NAME expansions. Refused (E-FORM <file>:<line>): command substitution and arithmetic expansion
+# ("$(", backtick), a list, a job or a pipe (; & | && ||), a subshell or a brace group (parens, braces), a here-document, a
+# redirection of fd 2, a trailing backslash, and a first word that is set, exec, eval, trap, exit, builtin, command, source,
+# "." or a compound-command word (if, for, while, case, ...). With those out, the status of a line is the status of one
+# command, and no line can end the session, switch errexit off, or hide a failure behind a later command.
 #
 # EXECUTION (the unit is one typed line): every file runs in ONE bash under a 93x25 pty (util-linux `script`), so `cd` and
 # exports carry from line to line as in a learner's terminal. Lines are joined only until `bash -n` parses them (a quoted
 # string or a block that spans lines is one command), shown as an interactive shell shows it ("$ " first, "> " after).
-# The session runs with `set -e -o pipefail`, and the status of each eval is checked as well: a failing command anywhere
-# in a line (`false; echo ok`), a failing left side of a pipeline (`false | cat`), and a line whose own status is non-zero
-# all end the session at that line. An EXIT trap writes "<line> <status>" (or "end 0") to a status file outside the pty;
-# that record, not the transcript, gives the row's `exit` and the line that failed. No row may expect a non-zero status.
+# The session runs with `set -e -o pipefail`, and the status of each eval is checked as well: a line whose status is
+# non-zero ends the session at that line. An EXIT trap writes "<line> <status>" (or "end 0") to a status file outside the
+# pty; that record, not the transcript, gives the row's `exit` and the line that failed. No row may expect a non-zero status.
 #
 # LOCALE: LC_ALL=C and TZ=UTC are set at the top of this script (file order), the id check spells its set out (no
 # range, so no collation), and LC_ALL=C, TZ=UTC are forced into every row's
@@ -31,17 +38,20 @@
 #      line -> 0.000000 ms.
 #   N4 REFUSAL scan: a row whose normalised transcript still holds an absolute path under a host prefix (/home/, /tmp/,
 #      /root/, /Users/, /runner/, /github/, /__w/, /var/folders/, /private/ and the mount root), the caller's HOME, CARGO_HOME,
-#      RUSTUP_HOME, TMPDIR or the emitter's work dir, or a 16- or 40-hex token other than all zeros, is refused, naming
-#      the row and the transcript line (a hex run right after "<digit>." is a decimal fraction and is not a token).
-#      A case N1..N3 misses is a red, never a silent leak.
+#      RUSTUP_HOME, TMPDIR or the emitter's work dir, or any run of 16 or more hex digits other than exactly 16 zeros or
+#      exactly 40 zeros (the tokenised values), is refused, naming the row and the transcript line. The one exemption is a
+#      WHOLE decimal literal ([+-]digits.digits[e|E[+-]digits]) whose neighbours are line edge or not [A-Za-z0-9_.]. A trailing slash on CARGO_TARGET_DIR is dropped
+#      before N1. A case N1..N3 misses is a red, never a silent leak.
 #
 # GUARDS (fail closed: no OUT is written, a stale OUT is removed first). Each refusal names its error id:
 #   E-TOOL a tool is missing; E-INPUT no .cmds files; E-ID an id that is not [a-z0-9]+; E-EMPTY a .cmds with no command
-#   line; E-CWD a .cwd that is not a directory under the root; E-ENV term-demos/env sets an emitter-owned key; E-WARM
-#   the warm-up build failed; E-STATUS a line exited non-zero (row, line, status; 126/127 = not runnable, 124 = timeout);
-#   E-EARLY the session ended with status 0 before its last line; E-NOSTATUS no status record (killed);
-#   E-TRANSCRIPT the transcript does not show every command; E-TESTS a session that runs `cargo test` shows no
-#   `test result:` line, a failed or ignored test, or passed == 0; E-LEAK the refusal scan (N4).
+#   line; E-FORM a line outside the closed command form (file:line); E-ROWS the .cmds files and term-demos/rows.list
+#   disagree, or the emitted count differs from the declared one; E-CWD a .cwd that is not a directory under the root;
+#   E-ENV term-demos/env sets an emitter-owned key; E-WARM the warm-up build failed; E-STATUS a line exited non-zero (row,
+#   line, status; 126/127 = not runnable); E-TIMEOUT the session ran past TERM_DEMO_TIMEOUT_S; E-NOSTATUS no end record
+#   (the session was killed, or ended before its last line); E-TRANSCRIPT the transcript does not show every command;
+#   E-TESTS a session that runs `cargo test` shows no `test result:` line, a failed or ignored test, or passed == 0;
+#   E-LEAK the refusal scan (N4). The falsifier has one passing refusal arm for every id in this file.
 # A refused row prints the last 20 normalised transcript lines to stderr.
 # The file carries the commit; CI attests it with actions/attest-build-provenance.
 # ENV: ADS_ROOT (repo root), ADS_TERM_DIR (default rust/term-demos), ADS_WARM (command run first, in the crate dir, its
@@ -59,6 +69,7 @@ DIR=${ADS_TERM_DIR:-$ROOT/rust/term-demos}
 [ -d "$DIR" ] || die "E-INPUT no $DIR"
 TGT=${CARGO_TARGET_DIR:-$ROOT/rust/ads-rust/target}
 [[ "$TGT" == /* ]] || die "E-INPUT CARGO_TARGET_DIR must be absolute"
+while [[ "$TGT" == */ && ${#TGT} -gt 1 ]]; do TGT=${TGT%/}; done   # a trailing slash would defeat the root token rules
 mkdir -p "$TGT" && TGT_P=$(cd "$TGT" && pwd -P) || die "E-INPUT target dir $TGT not usable"
 export ADS_ROOT=$ROOT
 shopt -s nullglob
@@ -71,6 +82,37 @@ for c in "${cmds[@]}"; do
   grep -qE '[^[:space:]]' "$c" || die "E-EMPTY term-$id: .cmds has no command line"
 done
 [ ${#badid[@]} -eq 0 ] || die "E-ID id not [a-z0-9]+: ${badid[*]}"
+# the closed command form: every line of every file, before anything runs
+formbad=0
+for c in "${cmds[@]}"; do
+  ln=0
+  while IFS= read -r l || [ -n "$l" ]; do
+    ln=$((ln + 1)); r=
+    first=${l#"${l%%[![:space:]]*}"}; first=${first%%[[:space:]]*}
+    if [[ "$l" == *'$('* || "$l" == *'`'* ]]; then r="command substitution"
+    elif [[ "$l" == *';'* || "$l" == *'&'* || "$l" == *'|'* ]]; then r="list, job or pipe"
+    elif [[ "$l" == *'('* || "$l" == *')'* || "$l" == *'{'* || "$l" == *'}'* ]]; then r="subshell or brace group"
+    elif [[ "$l" == *'<<'* ]]; then r="here-document"
+    elif [[ "$l" =~ (^|[^0-9])2[[:space:]]*\> ]]; then r="redirection of fd 2"
+    elif [[ "$l" == *'\' ]]; then r="trailing backslash"
+    else
+      if [[ " set exec eval trap exit builtin command source . " == *" $first "* ]]; then r="leading '$first'"
+      elif [[ " if then else elif fi for while until do done case esac select function time ! [[ coproc " == *" $first "* ]]; then r="compound-command word '$first'"; fi
+    fi
+    [ -z "$r" ] || { echo "FAIL E-FORM $(basename "$c"):$ln $r: ${l:0:80}" >&2; formbad=$((formbad + 1)); }
+  done < "$c"
+done
+[ "$formbad" -eq 0 ] || die "E-FORM $formbad line(s) outside the closed command form"
+# the declared rows
+rl="$DIR/rows.list"
+[ -f "$rl" ] || die "E-ROWS no row list $rl"
+mapfile -t declared < <(sed -E 's/#.*//; s/^[[:space:]]+//; s/[[:space:]]+$//; /^$/d' "$rl")
+have=(); for c in "${cmds[@]}"; do have+=("$(basename "$c" .cmds)"); done
+rowsbad=()
+while IFS= read -r d; do [ -n "$d" ] && rowsbad+=("declared twice: $d"); done < <(printf '%s\n' "${declared[@]}" | LC_ALL=C sort | uniq -d)
+for d in "${declared[@]}"; do [[ " ${have[*]} " == *" $d "* ]] || rowsbad+=("declared but has no .cmds: $d"); done
+for h in "${have[@]}"; do [[ " ${declared[*]} " == *" $h "* ]] || rowsbad+=("not declared: $h"); done
+[ ${#rowsbad[@]} -eq 0 ] || die "E-ROWS $(IFS=';'; echo "${rowsbad[*]}")"
 work=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/term-demos.XXXXXX") || die "E-INPUT no work dir"
 work=$(cd "$work" && pwd -P)
 [ -n "${TERM_DEMO_KEEP:-}" ] || trap 'rm -rf "${work:?}"' EXIT
@@ -104,8 +146,10 @@ leaks() { # N4: FILE -> "line N: reason" for the first survivor; non-zero when o
     chomp; my $why;
     for my $x (@lit) { if (index($_, $x) >= 0) { $why = "host path"; last } }
     $why //= "absolute path" if m{(^|[^A-Za-z0-9_.~-])/(home|tmp|root|Users|runner|github|__w|mnt|var/folders|private)(/|\b)};
-    $why //= "volatile 40-hex" if grep { !/^0+$/ } /(?<![0-9]\.)\b([0-9a-f]{40})\b/g;   # digits after "<digit>." are a decimal fraction, not a hash
-    $why //= "volatile 16-hex" if grep { !/^0+$/ } /(?<![0-9]\.)\b([0-9a-f]{16})\b/g;
+    # Whole decimal literals are not hex runs: blank out [+-]digits.digits[(e|E)[+-]digits] only when the character before it
+    # and the character after it are line edge or not [A-Za-z0-9_.]; anything glued to a letter, digit, "_" or "." stays scanned.
+    (my $t = $_) =~ s/(?<![A-Za-z0-9_.])[+-]?[0-9]+\.[0-9]+(?:[eE][+-]?[0-9]+)?(?![A-Za-z0-9_.])/ /g;
+    unless ($why) { for my $h ($t =~ /[0-9a-f]{16,}/g) { next if $h eq "0" x 16 || $h eq "0" x 40; $why = "volatile hex run (" . length($h) . " chars)"; last } }
     if ($why) { print "line $.: $why: ", substr($_, 0, 160), "\n"; exit 1 }' "$1"
 }
 cat > "$work/run.sh" <<'RUN'
@@ -157,7 +201,7 @@ for c in "${cmds[@]}"; do
   if [ "$rc" -eq 124 ]; then why+=("E-TIMEOUT session timed out after ${TERM_DEMO_TIMEOUT_S:-2400}s (at line ${line:-?})")
   elif [ -z "$s" ]; then why+=("E-NOSTATUS no status record (session exit $rc)"); [ "$rc" -ne 0 ] || rc=1
   elif [ "$s" != 0 ]; then why+=("E-STATUS line $line exit $s$(case $s in 126|127) echo ' (not runnable)';; esac)"); rc=$s
-  elif [ "$line" != end ]; then why+=("E-EARLY session ended at line $line with status 0 before its last line"); rc=1
+  elif [ "$line" != end ]; then why+=("E-NOSTATUS no end record (last record: line $line, status 0)"); rc=1
   elif [ "$rc" -ne 0 ]; then why+=("E-STATUS session exit $rc with status record 0")
   fi
   # The checks below run on a session that completed, so a refusal names one cause.
@@ -185,5 +229,6 @@ done
 [ ${#bad[@]} -eq 0 ] || die "${#bad[@]} refusal(s): ${bad[*]}"
 jq -s --arg commit "${GITHUB_SHA:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)}" --arg wf "${GITHUB_WORKFLOW:-local}" --arg run "${GITHUB_RUN_ID:-local}" \
   '{schema:"demo-json/v1",course:"ads-c01-rust",commit:$commit,workflow:$wf,run_id:$run,demos:.}' "$rows" >"$OUT.tmp" || { rm -f "${OUT:?}.tmp"; die "final jq"; }
+[ "$(jq -s 'length' "$rows")" -eq "${#declared[@]}" ] && [ "$n" -eq "${#declared[@]}" ] || { rm -f "${OUT:?}.tmp"; die "E-ROWS emitted $n rows, declared ${#declared[@]}"; }
 mv "$OUT.tmp" "$OUT"
 echo "wrote $OUT ($n demos)"

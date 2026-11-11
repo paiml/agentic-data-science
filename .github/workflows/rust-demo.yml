@@ -1,12 +1,12 @@
 # The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds as one terminal session (the same row shape as the
-# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on main.
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list; the repository gate and the SHACL check are not rows.
 name: rust-demo
 on:
   push:
     branches: [main]
-    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', '**/example.ttl', '**/*artifact.ttl', '.github/workflows/rust-demo.yml']
   pull_request:
-    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', '**/example.ttl', '**/*artifact.ttl', '.github/workflows/rust-demo.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,21 +23,12 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Mark the workspace safe for git in this job (the container user differs from the checkout owner; the demo sessions get the same trust from the emitter itself)
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Tools inside the pinned image
         run: |
-          apt-get update -q && apt-get install -y -q --no-install-recommends jq default-jre-headless
-          rustup component add llvm-tools-preview rustfmt clippy
-          cargo install --locked --version 0.8.5 cargo-llvm-cov
-      - name: Install Apache Jena (pinned, sha512-verified)
-        run: |
-          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
-          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
-          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
-          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+          apt-get update -q && apt-get install -y -q --no-install-recommends jq
       - name: Install bat 0.24.0 (pinned, sha256-verified) for the terminal sessions
         run: |
           curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/bat.tgz" https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-v0.24.0-x86_64-unknown-linux-musl.tar.gz
@@ -54,11 +45,11 @@ jobs:
           CARGO_TARGET_DIR: ${{ runner.temp }}/target
         run: rust/scripts/emit-demo-json.sh "$RUNNER_TEMP/demo.json"
       - name: Attest demo.json (build provenance)
-        if: github.event_name != 'pull_request'
-        uses: actions/attest-build-provenance@v2
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: ${{ runner.temp }}/demo.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: demo-json-${{ github.sha }}
           path: ${{ runner.temp }}/demo.json

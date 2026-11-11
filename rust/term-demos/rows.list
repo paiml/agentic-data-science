@@ -1,0 +1,19 @@
+# declared rows of demo.json (one id per line); emit-demo-json.sh refuses a .cmds file not listed and a listed id without one
+45af114317
+476ac04b89
+4c7254d89f
+7624d3d877
+8b03033e15
+95563a746a
+9963e2390c
+9c90d03426
+a57adf38fa
+aa298b2640
+ab7ef153c9
+cec4574b7a
+cf60370c9f
+d0f1053d7b
+d7e41fa729
+eda9950963
+f1d510742c
+f99eaa1ae4
