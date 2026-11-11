@@ -1,0 +1,54 @@
+# The Rust course's own demo workflow: runs every row of demos/rust-native/m1..m4.batch (35 rows) from rust/ads-rust,
+# refuses a non-zero exit, an empty stdout or a missing wait string, emits demo.json and attests it on main.
+name: rust-demo
+on:
+  push:
+    branches: [main]
+    paths: ['rust/**', 'demos/rust-native/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+  pull_request:
+    paths: ['rust/**', 'demos/rust-native/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rust-demo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  rust-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools inside the pinned image
+        run: |
+          apt-get update -q && apt-get install -y -q --no-install-recommends jq default-jre-headless
+          rustup component add llvm-tools-preview rustfmt clippy
+          cargo install --locked --version 0.8.5 cargo-llvm-cov
+      - name: Install Apache Jena (pinned, sha512-verified)
+        run: |
+          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
+          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
+          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+      - name: Fetch dependencies (the demos run with --offline)
+        working-directory: rust/ads-rust
+        run: cargo fetch --locked
+      - name: Emitter falsifier (planted faults are refused)
+        run: rust/scripts/falsify-emit-demo-json.sh
+      - name: Run every batch row and emit demo.json
+        run: rust/scripts/emit-demo-json.sh "$RUNNER_TEMP/demo.json"
+      - name: Attest demo.json (build provenance)
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/demo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-json-rust
+          path: ${{ runner.temp }}/demo.json

@@ -6,4 +6,4 @@ One row per terminal scene for Course A (Rust), pipe-separated:
 `RUN` empty means `cargo run --locked --offline --example <example>`. Test rows run
 `cargo test --locked --offline --test pN` with no test-name filter, so the typed line stays inside the
 native form (`cargo (run|test) --locked --offline (--example|--test) NAME`). `WAIT` is the text the
-scene waits for before the verdict.
+scene waits for before the verdict; it must be non-empty and occur in the row's output (an empty WAIT is refused).
