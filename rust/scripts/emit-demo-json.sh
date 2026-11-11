@@ -30,10 +30,14 @@ shopt -s nullglob
 cmds=("$DIR"/*.cmds)
 [ ${#cmds[@]} -gt 0 ] || { echo "FAIL no $DIR/*.cmds (a row comes from a typed-lines file)" >&2; exit 1; }
 seen=" "
+# duplicates first, over every file, so the verdict does not depend on glob order (locale)
 for c in "${cmds[@]}"; do
   id=$(basename "$c" .cmds); low=$(printf '%s' "$id" | tr '[:upper:]' '[:lower:]')
   case "$seen" in *" $low "*) echo "FAIL duplicate id $id" >&2; exit 1;; esac
   seen="$seen$low "
+done
+for c in "${cmds[@]}"; do
+  id=$(basename "$c" .cmds)
   [[ "$id" =~ ^[a-z0-9]+$ ]] || { echo "FAIL id '$id' is not [a-z0-9]+" >&2; exit 1; }
   grep -qE '[^[:space:]]' "$c" || { echo "FAIL $id: .cmds has no command line" >&2; exit 1; }
 done
