@@ -1,12 +1,12 @@
-# The Rust course's own demo workflow: runs every row of demos/rust-native/m1..m4.batch (35 rows) from rust/ads-rust,
-# refuses a non-zero exit, an empty stdout or a missing wait string, emits demo.json and attests it on main.
+# The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds as one terminal session (the same row shape as the
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero exit, a failed or ignored test, passed == 0, a duplicate id, an empty command file; emits demo.json and attests it on main.
 name: rust-demo
 on:
   push:
     branches: [main]
-    paths: ['rust/**', 'demos/rust-native/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
   pull_request:
-    paths: ['rust/**', 'demos/rust-native/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', 'ontology/**', 'labs/a-final/**', 'scripts/shacl.sh', 'scripts/gate-rust.sh', '.github/workflows/rust-demo.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -36,12 +36,20 @@ jobs:
           echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
           tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+      - name: Install bat 0.24.0 (pinned, sha256-verified) for the terminal sessions
+        run: |
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/bat.tgz" https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-v0.24.0-x86_64-unknown-linux-musl.tar.gz
+          echo "d39a21e3da57fe6a3e07184b3c1dc245f8dba379af569d3668b6dcdfe75e3052  $RUNNER_TEMP/bat.tgz" | sha256sum -c -
+          mkdir -p /opt/tools/bin && tar -xzf "$RUNNER_TEMP/bat.tgz" -C /opt/tools/bin --strip-components=1 bat-v0.24.0-x86_64-unknown-linux-musl/bat
+          echo /opt/tools/bin >> "$GITHUB_PATH"
       - name: Fetch dependencies (the demos run with --offline)
         working-directory: rust/ads-rust
         run: cargo fetch --locked
       - name: Emitter falsifier (planted faults are refused)
         run: rust/scripts/falsify-emit-demo-json.sh
-      - name: Run every batch row and emit demo.json
+      - name: Run rust/term-demos/*.cmds as term-<id> demos and emit demo.json
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/target
         run: rust/scripts/emit-demo-json.sh "$RUNNER_TEMP/demo.json"
       - name: Attest demo.json (build provenance)
         if: github.event_name != 'pull_request'
@@ -50,5 +58,5 @@ jobs:
           subject-path: ${{ runner.temp }}/demo.json
       - uses: actions/upload-artifact@v4
         with:
-          name: demo-json-rust
+          name: demo-json-${{ github.sha }}
           path: ${{ runner.temp }}/demo.json

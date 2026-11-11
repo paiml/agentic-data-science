@@ -1,0 +1,2 @@
+bat -r 27:29 examples/a-m1-p1-profile/main.rs
+cargo run --locked --offline --example a-m1-p1-profile

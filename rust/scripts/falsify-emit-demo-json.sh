@@ -1,120 +1,95 @@
 #!/usr/bin/env bash
-# falsify-emit-demo-json.sh: planted faults for rust/scripts/emit-demo-json.sh. Each arm must be refused with no
-# file written; the happy arm must write valid JSON whose sha256 values match. Stub commands only: no network, no cargo.
+# falsify-emit-demo-json.sh: planted faults for rust/scripts/emit-demo-json.sh. Each refusal arm must exit non-zero with
+# no file written; the happy arm must write a row in the shared demo-json/v1 row shape. Stub commands only: no network,
+# no real cargo.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 EMIT="$HERE/emit-demo-json.sh"
-T=$(mktemp -d); trap 'rm -rf "${T:?}"' EXIT
+T=$(mktemp -d "${TMPDIR:-$HOME}/emit-falsify.XXXXXX"); trap 'rm -rf "${T:?}"' EXIT
 fail=0
 ok() { echo "ok   $1"; }
 bad() { echo "FAIL $1" >&2; fail=1; }
-mkdir -p "$T/crate" "$T/bin"
-# a stub cargo: `run` prints the example name and a ready line; `test` prints a timing that changes every call, in the
-# real harness format, and STUB_TEST_MODE plants a fault (ignored, missing, rename, nores = no `test result:` line)
+mkdir -p "$T/root/rust/ads-rust" "$T/bin"
+# a stub cargo: `test` prints a harness-shaped result; STUB_TEST_MODE plants a fault
 cat >"$T/bin/cargo" <<'STUB'
 #!/usr/bin/env bash
-res() { printf '\ntest result: ok. %s passed; 0 failed; %s ignored; 0 measured; 0 filtered out; finished in 0.%02ds\n' "$1" "$2" $((RANDOM % 90 + 10)); }
 case "$1" in
-  run) echo "stub-run $*"; echo "ready-line OK";;
   test)
-    case "${STUB_TEST_MODE:-}" in
-      ignored) printf 'running 2 tests\ntest b ... ok\ntest a ... ignored\n'; res 1 1;;
-      missing) printf 'running 1 test\ntest b ... ok\n'; res 1 0;;
-      rename) printf 'running 2 tests\ntest b ... ok\ntest c ... ok\n'; res 2 0;;
+    case "$(cat "$(dirname "$0")/mode" 2>/dev/null)" in
+      zero) printf 'running 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n';;
+      ignored) printf 'running 2 tests\ntest b ... ok\ntest a ... ignored\n\ntest result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s\n';;
+      failed) printf 'running 1 test\ntest b ... FAILED\n\ntest result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n'; exit 0;;
       nores) printf 'running 1 test\ntest b ... ok\n';;
-      *) printf 'running 2 tests\ntest b ... ok\ntest a ... ok\n'; res 2 0;;
+      *) printf 'running 2 tests\ntest b ... ok\ntest a ... ok\n\ntest result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.%02ds\n' $((RANDOM % 90 + 10));;
     esac;;
+  *) echo "stub-cargo $*";;
 esac
 STUB
 chmod +x "$T/bin/cargo"
-# row layout: idx|name|example|source|from|to|RUN|WAIT|e1|e2|n1|n2
-GOOD1='01|one|ex-one|examples/one.rs|1|2|echo hello world|hello|a|b|n1|n2'
-GOOD2='02|two|ex-two|src/two.rs|3|4||ready-line OK|a|b|n1|n2'
-GOOD3='03|tests|ex-two|tests/p9.rs|5|6|cargo test --locked --offline --test p9|2 passed; 0 failed; 0 ignored|a|b|n1|n2'
-run() { # run NAME BATCHFILE... -> sets rc and $T/err
+printf 'LC_ALL=C.UTF-8\nTZ=UTC\nTERM=xterm-256color\n' >"$T/env"
+terms() { rm -rf "${T:?}/terms"; mkdir -p "$T/terms"; cp "$T/env" "$T/terms/env"; }
+mkcmds() { printf '%s\n' "${@:3}" >"$T/terms/$1.cmds"; echo "$2" >"$T/terms/$1.cwd"; }
+run() {
   rm -f "${T:?}/out.json"
-  PATH="$T/bin:$PATH" ADS_CRATE_DIR="$T/crate" "$EMIT" "$T/out.json" "${@:2}" >"$T/so" 2>"$T/err"; rc=$?
+  PATH="$T/bin:$PATH" ADS_ROOT="$T/root" ADS_TERM_DIR="$T/terms" ADS_WARM=true TERM_DEMO_TIMEOUT_S=60 "$EMIT" "$T/out.json" >"$T/so" 2>"$T/err"; rc=$?
 }
-refused() { # refused NAME BATCH [stderr-substring]
-  run "$1" "$2"
-  if [ "$rc" -ne 0 ] && [ ! -e "$T/out.json" ] && { [ -z "${3:-}" ] || grep -qF -- "$3" "$T/err"; }; then ok "$1"; else bad "$1 (rc=$rc, file=$([ -e "$T/out.json" ] && echo yes || echo no), err=$(tr '\n' ' ' <"$T/err"))"; fi
+refused() { # refused NAME [stderr-substring]
+  run
+  if [ "$rc" -ne 0 ] && [ ! -e "$T/out.json" ] && { [ -z "${2:-}" ] || grep -qF -- "$2" "$T/err"; }; then ok "$1"; else bad "$1 (rc=$rc, file=$([ -e "$T/out.json" ] && echo yes || echo no), err=$(tr '\n' ' ' <"$T/err"))"; fi
 }
-mk() { local f="$T/$1.batch"; shift; printf '%s\n' "$@" >"$f"; echo "$f"; }
-
-# arm 1: non-zero exit
-refused "nonzero-exit" "$(mk b1 "$GOOD1" '05|boom|ex|s.rs|1|2|sh -c "echo partial; exit 3"|partial|a|b|n1|n2')" "05"
-# arm 2: empty stdout
-refused "empty-stdout" "$(mk b2 "$GOOD1" '06|quiet|ex|s.rs|1|2|true|x|a|b|n1|n2')" "06"
-# arm 3: WAIT string absent, message names the row and the string
-refused "wait-absent" "$(mk b3 "$GOOD1" '07|nomatch|ex|s.rs|1|2|echo actual output|never printed|a|b|n1|n2')" "b3-07"
-refused "wait-absent-names-string" "$T/b3.batch" "never printed"
-# arm 4: malformed rows (11 and 13 fields) and a missing batch file
-refused "short-row" "$(mk b4 "$GOOD1" '08|short|ex|s.rs|1|2|echo hi|hi|a|b|n1')" "field"
-refused "long-row" "$(mk b5 "$GOOD1" '09|long|ex|s.rs|1|2|echo hi|hi|a|b|n1|n2|extra')" "field"
-refused "missing-batch" "$T/does-not-exist.batch" "batch"
-# arm 5: an empty WAIT is refused and the message names the row
-refused "empty-wait-refused" "$(mk b6 "$GOOD1" '04|emptywait|ex-two|src/two.rs|3|4|echo anything||a|b|n1|n2')" "b6-04"
-# arm 6: duplicate ids, and an idx that is not two digits
-refused "duplicate-id" "$(mk b7 "$GOOD1" "$GOOD1")" "duplicate"
-refused "idx-not-two-digits" "$(mk b8 '1|short-idx|ex|s.rs|1|2|echo hi|hi|a|b|n1|n2')" "idx"
-refused "idx-not-digits" "$(mk b9 'ab|alpha-idx|ex|s.rs|1|2|echo hi|hi|a|b|n1|n2')" "idx"
-# arm 7: RUN fields run under pipefail (a pipe itself cannot appear in a RUN field: `|` separates the fields)
-PF='10|pipefail|ex|s.rs|1|2|if [[ $SHELLOPTS == *pipefail* ]]; then echo pipefail-on; fi|pipefail-on|a|b|n1|n2'
-run pipefail "$(mk b10 "$PF")"
-[ "$rc" -eq 0 ] && ok "run field runs under pipefail" || bad "run field runs under pipefail (rc=$rc: $(cat "$T/err"))"
-refused "pipe-in-run-refused" "$(mk b11 '11|pipe|ex|s.rs|1|2|false | cat|x|a|b|n1|n2')" "field"
-# arm 8: cargo test facts: an ignored test, a missing test, no `test result:` line
-WEAK='03|tests|ex-two|tests/p9.rs|5|6|cargo test --locked --offline --test p9|test b ... ok|a|b|n1|n2'
-STUB_TEST_MODE=ignored refused "ignored-test-refused" "$(mk b12 "$WEAK")" "ignored"
-STUB_TEST_MODE=nores refused "no-test-result-line-refused" "$T/b12.batch" "test result"
-STUB_TEST_MODE=missing refused "missing-test-wait-fails" "$(mk b13 "$GOOD3")" "2 passed"
-
-# happy path: run command, default cargo run, cargo test; file name m1.batch gives ids m1-NN
-B=$(mk m1 "$GOOD1" "$GOOD2" "$GOOD3")
-run happy "$B"
-if [ "$rc" -eq 0 ] && jq -e . "$T/out.json" >/dev/null 2>&1; then ok "happy-valid-json"; else bad "happy-valid-json (rc=$rc: $(cat "$T/err"))"; fi
 chk() { jq -e "$2" "$T/out.json" >/dev/null 2>&1 && ok "$1" || bad "$1"; }
-chk "schema+course" '.schema=="demo-json/v1" and .course=="ads-c01-rust" and (.demos|length)==3'
-chk "ids m<M>-<idx>" '[.demos[].id]==["m1-01","m1-02","m1-03"]'
-chk "fields" '.demos[0]|(.command=="echo hello world" and .exit==0 and .wait=="hello" and .example=="ex-one" and .source=="examples/one.rs" and .plots==[])'
-chk "default run command" '.demos[1].command=="cargo run --locked --offline --example ex-two"'
-chk "test normalized, sorted" '.demos[2]|(.normalized==true and (.stdout|contains("finished in")|not) and (.stdout|contains("test a ... ok\ntest b ... ok")))'
-chk "test facts recorded" '.demos[2].tests|(.passed==2 and .failed==0 and .ignored==0 and (.names_sha256|test("^[0-9a-f]{64}$")))'
-chk "non-test row has no tests record" '.demos[0].tests==null'
-names_ok=$(jq -r '.demos[2].tests.names_sha256' "$T/out.json")
-# a renamed test changes names_sha256
-STUB_TEST_MODE=rename run rename "$T/m1.batch"
-[ "$rc" -eq 0 ] && [ "$(jq -r '.demos[2].tests.names_sha256' "$T/out.json" 2>/dev/null)" != "$names_ok" ] && ok "renamed test changes names_sha256" || bad "renamed test changes names_sha256 (rc=$rc: $(cat "$T/err"))"
-sha_ok=1
-run happy "$B"
-for i in 0 1 2; do
-  want=$(jq -j ".demos[$i].stdout" "$T/out.json" | sha256sum | cut -d' ' -f1)
-  got=$(jq -r ".demos[$i].stdout_sha256" "$T/out.json")
-  [ "$want" = "$got" ] || sha_ok=0
-done
-[ "$sha_ok" = 1 ] && ok "sha256 matches stdout" || bad "sha256 matches stdout"
-# the batch file name gives the module: m2.batch -> m2-NN
-cp "$T/m1.batch" "$T/m2.batch"; run m2 "$T/m2.batch"
-chk "id from file name" '.demos[0].id=="m2-01"'
-# determinism: the test row is identical across two runs despite changing timings
-run det "$T/m1.batch"; a=$(jq -r '.demos[2].stdout_sha256' "$T/out.json"); run det "$T/m1.batch"; b=$(jq -r '.demos[2].stdout_sha256' "$T/out.json")
-[ "$a" = "$b" ] && ok "test sha stable across timings" || bad "test sha stable across timings"
-# ADS_ROOT: the emitter exports it, and rows 07/09 refuse an unset one (cd "${ADS_ROOT:?}")
-AR='12|adsroot|ex|s.rs|1|2|cd "${ADS_ROOT:?}" && echo root-ok|root-ok|a|b|n1|n2'
-run adsroot "$(mk b14 "$AR")"; [ "$rc" -eq 0 ] && ok "emitter exports ADS_ROOT" || bad "emitter exports ADS_ROOT (rc=$rc)"
-env -u ADS_ROOT bash -o pipefail -c 'cd "${ADS_ROOT:?}" && echo reached' >/dev/null 2>&1 && bad "unset ADS_ROOT refused" || ok "unset ADS_ROOT refused"
-n=$(grep -c 'cd "${ADS_ROOT:?}"' "$HERE/../../demos/rust-native/m1.batch"); ! grep -q 'cd "\$ADS_ROOT"' "$HERE/../../demos/rust-native/m1.batch" && [ "$n" -ge 2 ] && ok "m1 rows 07/09 guard ADS_ROOT" || bad "m1 rows 07/09 guard ADS_ROOT"
-# gate-rust output: lab PASS/FAIL lines arrive in parallel order; the sha must not depend on it
-cat >"$T/bin/make" <<'STUB'
-#!/usr/bin/env bash
-printf 'cov table\nstarter_exit=1\n'; printf 'starter_FAIL %s\n' a b c | shuf; printf 'solution_exit=0\n'; printf 'solution_PASS %s\n' x y z | shuf; echo "rust gate OK"
-STUB
-chmod +x "$T/bin/make"
-GR='13|gate|ex|s.rs|1|2|make gate-rust|rust gate OK|a|b|n1|n2'
-run gr "$(mk b15 "$GR")"; a=$(jq -r '.demos[0].stdout_sha256' "$T/out.json"); run gr "$T/b15.batch"; b=$(jq -r '.demos[0].stdout_sha256' "$T/out.json")
-a2=$a; for _ in 1 2 3 4 5 6; do run gr "$T/b15.batch"; a2=$(jq -r '.demos[0].stdout_sha256' "$T/out.json"); [ "$a2" = "$a" ] || break; done
-[ "$a" = "$b" ] && [ "$a2" = "$a" ] && ok "gate-rust sha stable across lab order" || bad "gate-rust sha stable across lab order"
+
+# arm: one row, shared shape
+terms; mkcmds aaaaaaaaaa . 'echo hello' 'echo "n=$((1+1))"'
+run
+if [ "$rc" -eq 0 ] && jq -e . "$T/out.json" >/dev/null 2>&1; then ok "happy-valid-json"; else bad "happy-valid-json (rc=$rc: $(cat "$T/err"))"; fi
+chk "schema+course" '.schema=="demo-json/v1" and .course=="ads-c01-rust" and (.demos|length)==1'
+chk "row keys" '.demos[0]|keys==["command","commands","exit","id","plots","stdout","stdout_sha256"]'
+chk "id is term-<file stem>" '.demos[0].id=="term-aaaaaaaaaa"'
+chk "commands is an array of strings, one per typed line" '.demos[0].commands==["echo hello","echo \"n=$((1+1))\""]'
+chk "command is the file text" '.demos[0].command=="echo hello\necho \"n=$((1+1))\"\n"'
+chk "exit 0, plots empty" '.demos[0]|(.exit==0 and .plots==[])'
+chk "stdout is the transcript" '.demos[0].stdout|(contains("$ echo hello\nhello") and contains("n=2"))'
+chk "sha256 field present" '.demos[0].stdout_sha256|test("^[0-9a-f]{64}$")'
+got=$(jq -j '.demos[0].stdout' "$T/out.json" | sha256sum | cut -d' ' -f1); [ "$got" = "$(jq -r '.demos[0].stdout_sha256' "$T/out.json")" ] && ok "sha256 matches stdout" || bad "sha256 matches stdout"
+# cwd sidecar: a row can start in the crate dir
+terms; echo marker >"$T/root/rust/ads-rust/m.txt"; mkcmds bbbbbbbbbb rust/ads-rust 'cat m.txt'
+run; chk "cwd sidecar honoured" '.demos[0].stdout|contains("marker")'
+# a final line without a newline is still one array element
+terms; printf '%s' 'echo ok' >"$T/terms/dddddddddd.cmds"; echo . >"$T/terms/dddddddddd.cwd"
+run; chk "unterminated final line is one array element" '.demos[0].commands==["echo ok"]'
+# string-only input (the legacy batch file, no .cmds) is refused: a row must come from a typed-lines file
+terms; echo '01|x|ex|s.rs|1|2|echo hi|hi|a|b|n1|n2' >"$T/terms/m1.batch"; refused "no .cmds files refused" ".cmds"
+# zero-line .cmds
+terms; : >"$T/terms/ffffffffff.cmds"; echo . >"$T/terms/ffffffffff.cwd"; refused "empty .cmds refused" "ffffffffff"
+terms; printf '\n\n' >"$T/terms/ffffffffff.cmds"; echo . >"$T/terms/ffffffffff.cwd"; refused "blank-only .cmds refused" "ffffffffff"
+# duplicate ids (two files whose ids are the same after case folding)
+terms; mkcmds gggggggggg . 'echo a'; cp "$T/terms/gggggggggg.cmds" "$T/terms/GGGGGGGGGG.cmds"; refused "duplicate id refused" "duplicate"
+# malformed id
+terms; mkcmds 'x y' . 'echo a'; refused "bad id refused" "id"
+# non-zero exit
+terms; mkcmds hhhhhhhhhh . 'echo partial' 'false' 'exit 3'; refused "nonzero-exit refused" "hhhhhhhhhh"
+# a command with no output still shows its prompt line (the row is never empty)
+terms; mkcmds iiiiiiiiii . ':'; run; chk "prompt line shown for a silent command" '.demos[0].stdout|contains("$ :")'
+# command not found
+terms; mkcmds jjjjjjjjjj . 'no-such-command-xyz'; refused "command not found refused" "jjjjjjjjjj"
+# cargo test facts: zero passed, ignored, failed, no result line
+terms; mkcmds kkkkkkkkkk . 'cargo test --locked --offline --test p9'
+echo zero >"$T/bin/mode"; refused "passed==0 refused" "passed"
+echo ignored >"$T/bin/mode"; refused "ignored test refused" "ignored"
+echo failed >"$T/bin/mode"; refused "failed test refused" "failed"
+echo nores >"$T/bin/mode"; refused "no test result line refused" "test result"
+: >"$T/bin/mode"; run; [ "$rc" -eq 0 ] && ok "good test run accepted" || bad "good test run accepted (rc=$rc: $(cat "$T/err"))"
+# pipefail in the session
+terms; mkcmds mmmmmmmmmm . 'set -o | grep pipefail'
+run; chk "pipefail is on in the session" '.demos[0].stdout|test("pipefail\\s+on")'
+# determinism: two runs give the same hashes although the harness timing changes every run (the stub prints a random one)
+terms; mkcmds nnnnnnnnnn . 'cargo test --locked --offline --test p1' 'echo done'
+run; a=$(jq -r '.demos[0].stdout_sha256' "$T/out.json"); run; b=$(jq -r '.demos[0].stdout_sha256' "$T/out.json"); [ -n "$a" ] && [ "$a" = "$b" ] && ok "row hash stable across runs" || bad "row hash stable across runs"
+# measured bench timings (`  polars: 7.8 ms`) are pinned, a rerun hashes the same
+terms; mkcmds oooooooooo . 'printf "   polars: %d.%d ms\n btreemap: %d.%d ms\n" $((RANDOM%9+1)) $RANDOM $((RANDOM%9+1)) $RANDOM'
+run; a=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); run; b=$(jq -r ".demos[0].stdout_sha256" "$T/out.json"); [ -n "$a" ] && [ "$a" = "$b" ] && ok "bench timing pinned" || bad "bench timing pinned"
 # a stale OUT from an earlier run must not survive a refused run
-echo stale >"$T/out.json"; PATH="$T/bin:$PATH" ADS_CRATE_DIR="$T/crate" "$EMIT" "$T/out.json" "$T/b3.batch" >/dev/null 2>&1
+terms; echo stale >"$T/out.json"; PATH="$T/bin:$PATH" ADS_ROOT="$T/root" ADS_TERM_DIR="$T/terms" ADS_WARM=true "$EMIT" "$T/out.json" >/dev/null 2>&1
 [ ! -e "$T/out.json" ] && ok "stale output removed" || bad "stale output removed"
 [ "$fail" -eq 0 ] && echo "falsify-emit-demo-json OK" || { echo "falsify-emit-demo-json RED" >&2; exit 1; }

@@ -1,0 +1,2 @@
+bat -r 23:23 -r 44:51 examples/a-m3-p3-tree/main.rs
+cargo run -q --locked --offline --example a-m3-p3-tree

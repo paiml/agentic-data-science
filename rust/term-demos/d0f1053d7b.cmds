@@ -1,0 +1,2 @@
+bat -r 134:147 src/p2.rs
+cargo test -q --locked --offline --test p2

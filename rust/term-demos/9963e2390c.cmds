@@ -1,0 +1,2 @@
+bat -r 23:33 examples/a-m4-p4-bench/main.rs
+cargo run --locked --offline --example a-m4-p4-bench

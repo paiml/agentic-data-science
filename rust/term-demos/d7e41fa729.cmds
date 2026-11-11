@@ -1,0 +1,2 @@
+bat -r 67:85 src/p2.rs
+cargo run -q --locked --offline --example a-m2-p2-cv

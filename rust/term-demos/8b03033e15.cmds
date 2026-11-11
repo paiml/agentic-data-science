@@ -1,0 +1,2 @@
+bat -r 187:198 src/p4.rs
+cargo test --locked --offline --test p4
