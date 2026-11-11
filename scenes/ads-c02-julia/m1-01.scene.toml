@@ -1,0 +1,18 @@
+# m1-01 ticket and oracle. Source: teleprompter beats 2 and 4 (cue = beat number until the srt is locked). Facts: contract = ticket, failing test, implementation, gate; 344 rows, na_policy drops 2, 342 clean.
+scene = { name = "m1-01-the-ticket-and-its-oracle", code_font = "Noto Sans Mono" }
+element = [
+  { id = "t", kind = "chip", x = 120, y = 200, w = 380, label = "ticket: the answer", show = 2, via = "left" },
+  { id = "r", kind = "chip", x = 560, y = 200, w = 380, label = "test fails first", show = 2, via = "left" },
+  { id = "i", kind = "chip", x = 1000, y = 200, w = 380, label = "implementation", show = 2, via = "left" },
+  { id = "g", kind = "chip", x = 1440, y = 200, w = 380, label = "gate proves it", show = 2, via = "left" },
+  { id = "job", kind = "strip", x = 120, y = 380, w = 1200, label = "my job: say what correct means, then check it", tone = "accent", show = 2, via = "below" },
+  { id = "raw", kind = "card", x = 120, y = 600, w = 480, label = "raw file", slots = ["344 rows"], show = 4, via = "left" },
+  { id = "na", kind = "chip", x = 700, y = 660, w = 440, label = "na_policy drops 2", tone = "error", show = 4, via = "scale" },
+  { id = "cl", kind = "card", x = 1240, y = 600, w = 480, label = "clean", slots = ["342 rows"], show = 4, via = "right" },
+  { id = "sum", kind = "strip", x = 120, y = 860, w = 900, label = "344 - 2 = 342", show = 4, via = "below" },
+]
+beat = [
+  { cue = 2, targets = ["t", "r", "i", "g"], action = "highlight", stagger = 0.5 },
+  { cue = 4, target = "na", action = "state", state = "error" },
+  { cue = 4, target = "cl", action = "state", state = "ok" },
+]

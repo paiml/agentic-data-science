@@ -1,0 +1,14 @@
+# m2-09 a sort-based split moves with the locale. Cues are teleprompter beat numbers. Facts only from the teleprompter: order 2 4 6 3 1 5 under C, 2 3 1 4 5 6 under en US; cv rmse 394.31296 under both.
+scene = { name = "m2-09-a-sort-based-split-moves-with-the-locale", code_font = "Noto Sans Mono" }
+element = [
+  { id = "c", kind = "card", x = 120, y = 140, w = 760, label = "locale C, sort order", slots = ["order: 2 4 6 3 1 5"], via = "left", show = 4 },
+  { id = "us", kind = "card", x = 1000, y = 140, w = 760, label = "locale en US, sort order", slots = ["order: 2 3 1 4 5 6"], via = "right", show = 4 },
+  { id = "moves", kind = "strip", x = 120, y = 360, w = 1640, label = "it moves", tone = "error", via = "below", show = 5 },
+  { id = "cvc", kind = "outline", x = 120, y = 540, w = 760, label = "folds by row index, under C", slots = ["cv rmse: 394.31296"], via = "left", show = 6 },
+  { id = "cvus", kind = "card", x = 1000, y = 540, w = 760, label = "folds by row index, under en US", slots = ["cv rmse: 394.31296"], via = "right", show = 6 },
+  { id = "req", kind = "strip", x = 120, y = 780, w = 1640, label = "orders differ, CV values identical: contract line prints", tone = "ok", via = "below", show = 7 },
+]
+beat = [
+  { cue = 5, targets = ["c.order", "us.order"], action = "state", state = "error", stagger = 0.3 },
+  { cue = 6, target = "cvus", action = "fit", to = "cvc" },
+]

@@ -1,0 +1,15 @@
+# m4-03 Split the wine data. Facts: 6,497 rows; every fifth row (counting from one) is test; train 5,198, test 1,299; no shuffle; fit sees train only.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m4-03-split-the-wine-data", code_font = "Noto Sans Mono" }
+element = [
+  { id = "rows", kind = "code", x = 120, y = 120, w = 840, slots = ["row number mod five", "every fifth row is a test row", "no shuffle"], via = "left", show = 1 },
+  { id = "train", kind = "chip", x = 1100, y = 120, label = "train: 5,198", show = 2 },
+  { id = "test", kind = "chip", x = 1100, y = 260, label = "test: 1,299", show = 2 },
+  { id = "gate", kind = "strip", x = 120, y = 520, w = 900, label = "refused: test rows never reach fit", tone = "error", via = "below", show = 2 },
+  { id = "score", kind = "strip", x = 120, y = 700, w = 900, label = "model meets 1,299 unseen rows: honest score", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["rows.1", "rows.2", "rows.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 2, target = "gate", action = "state", state = "error" },
+  { cue = 3, target = "score", action = "state", state = "ok" },
+]

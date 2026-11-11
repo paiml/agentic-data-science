@@ -1,0 +1,15 @@
+# m4-08 dplyr and data.table, answers first, then timings. Cues are teleprompter beat numbers. Facts only from the teleprompter: red 5.64 over 1,599, white 5.88 over 4,898, same answer, timings never tested.
+scene = { name = "m4-08-dplyr-and-data-table-answers-first-then-timings", code_font = "Noto Sans Mono" }
+element = [
+  { id = "dp", kind = "card", x = 120, y = 140, w = 760, label = "dplyr: quality and count per colour", slots = ["red: 5.64, 1,599", "white: 5.88, 4,898"], via = "left", show = 3 },
+  { id = "dt", kind = "outline", x = 1000, y = 140, w = 760, label = "data.table: same summary", slots = ["red: 5.64, 1,599", "white: 5.88, 4,898"], show = 6 },
+  { id = "chk", kind = "strip", x = 120, y = 460, w = 1640, label = "colours match, counts exact, means within one in a trillion", tone = "ok", via = "below", show = 9 },
+  { id = "tim", kind = "card", x = 120, y = 600, w = 760, label = "timings: one sample, this machine", slots = ["dplyr: varies", "data.table: varies"], via = "below", show = 13 },
+  { id = "never", kind = "chip", x = 1000, y = 600, label = "no test depends on timings", tone = "accent", show = 17 },
+  { id = "line", kind = "strip", x = 1000, y = 720, w = 760, label = "contract: same answer, both engines", tone = "ok", via = "below", show = 19 },
+]
+beat = [
+  { cue = 7, target = "dp", action = "fit", to = "dt" },
+  { cue = 9, target = "chk", action = "highlight" },
+  { cue = 16, targets = ["tim.dplyr", "tim.data-table"], action = "state", state = "muted", stagger = 0.3 },
+]

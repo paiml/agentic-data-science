@@ -1,0 +1,19 @@
+# m2-04 OLS by hand. Facts: 342 penguins; slope 49.69; intercept -5780.83; golden datasets/golden/p2.json within 1e-8.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m2-04-ols-by-hand", code_font = "Noto Sans Mono" }
+element = [
+  { id = "dots", kind = "card", x = 120, y = 120, w = 840, label = "342 penguins", slots = ["flipper across", "mass up"], via = "left", show = 1 },
+  { id = "mean", kind = "chip", x = 1100, y = 120, label = "mean point", show = 2 },
+  { id = "sums", kind = "code", x = 1100, y = 300, w = 700, slots = ["sxx: spread of x", "sxy: x and y together"], via = "right", show = 3 },
+  { id = "slope", kind = "strip", x = 120, y = 560, w = 840, label = "slope = sxy / sxx = 49.69", tone = "ok", via = "below", show = 4 },
+  { id = "icpt", kind = "strip", x = 120, y = 700, w = 840, label = "intercept = -5780.83", tone = "ok", via = "below", show = 5 },
+  { id = "gold", kind = "strip", x = 1100, y = 700, w = 700, label = "golden: b0 and b1 match", tone = "ok", via = "below", show = 6 },
+]
+beat = [
+  { cue = 1, target = "dots", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "mean", action = "state", state = "accent" },
+  { cue = 3, targets = ["sums.1", "sums.2"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 4, target = "slope", action = "state", state = "ok" },
+  { cue = 5, target = "icpt", action = "state", state = "ok" },
+  { cue = 6, target = "gold", action = "state", state = "ok" },
+]

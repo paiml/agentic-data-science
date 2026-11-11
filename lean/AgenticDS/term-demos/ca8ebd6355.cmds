@@ -1,0 +1,17 @@
+make lean-scan
+echo "exit=$? #01"
+printf 'theorem planted : 1 = 2 := sorry
+' > lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #02"
+bat -p lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #03"
+(cd lean/AgenticDS && lake env lean AgenticDS/Scratch.lean)
+echo "exit=$? #04"
+clear; echo cleared-""05
+make lean-scan
+echo "exit=$? #05"
+rm -v lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #06"
+clear; echo cleared-""08
+make lean-scan
+echo "exit=$? #07"

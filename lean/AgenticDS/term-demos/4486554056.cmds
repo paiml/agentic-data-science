@@ -1,0 +1,4 @@
+bat -r 20:34 Makefile && (cd lean/AgenticDS && lake build)
+echo "exit=$? #01"
+make gate-lean
+echo "exit=$? #02"

@@ -1,0 +1,17 @@
+# m4-07 Run the pipeline. Facts: six stages read_wine, validate_wine, split_wine, fit, metrics, report_ttl; 6,497 x 13; quality 11 refused; train 5,198 to fit, test 1,299 to metrics; RMSE 0.7603, r2 0.2599; ads:rmse 0.7602516062; same hash twice.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m4-07-run-the-pipeline", code_font = "Noto Sans Mono" }
+element = [
+  { id = "stages", kind = "code", x = 120, y = 120, w = 840, slots = ["read_wine", "validate_wine", "split_wine", "fit", "metrics", "report_ttl"], via = "left", show = 1 },
+  { id = "bad", kind = "strip", x = 1100, y = 120, w = 760, label = "refused: quality outside 0..10", tone = "error", via = "right", show = 1 },
+  { id = "flow", kind = "strip", x = 120, y = 560, w = 900, label = "train 5,198 to fit; test 1,299 to metrics", tone = "accent", via = "below", show = 2 },
+  { id = "res", kind = "strip", x = 1100, y = 420, w = 760, label = "RMSE 0.7603, r2 0.2599", tone = "ok", via = "below", show = 2 },
+  { id = "same", kind = "strip", x = 120, y = 740, w = 900, label = "identical: same inputs, same report", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["stages.1", "stages.2", "stages.3", "stages.4", "stages.5", "stages.6"], action = "state", state = "accent", stagger = 0.3 },
+  { cue = 1, target = "bad", action = "state", state = "error" },
+  { cue = 2, target = "flow", action = "state", state = "accent" },
+  { cue = 2, target = "res", action = "state", state = "ok" },
+  { cue = 3, target = "same", action = "state", state = "ok" },
+]

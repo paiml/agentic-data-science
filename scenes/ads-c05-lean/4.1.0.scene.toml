@@ -1,0 +1,29 @@
+# 4.1.0 Tour: the surface of Pipeline.lean. Facts only from the locked narration (srt): one file, a list of declarations in file order, the structure ValidRow, functions validate/clean/trainRows (split)/fitCoefs (fit) as declared in Pipeline.lean, theorems about them.
+scene = { name = "4.1.0-tour-the-surface-of-pipeline-lean", code_font = "Noto Sans Mono" }
+element = [
+  { id = "file", kind = "card", x = 120, y = 120, w = 760, label = "Pipeline.lean", slots = ["one file", "the new code of module 4"], via = "left", show = 0 },
+  { id = "rows", kind = "chip", x = 120, y = 400, label = "rows", show = 3, hide = 8 },
+  { id = "val", kind = "chip", x = 320, y = 400, label = "validate", show = 3, hide = 8 },
+  { id = "cln", kind = "chip", x = 560, y = 400, label = "clean", show = 3, hide = 8 },
+  { id = "spl", kind = "chip", x = 760, y = 400, label = "split", show = 4, hide = 8 },
+  { id = "fit", kind = "chip", x = 940, y = 400, label = "fit a model", show = 6, hide = 8 },
+  { id = "e1", kind = "edge", from = "rows", to = "val", show = 3, hide = 8 },
+  { id = "e2", kind = "edge", from = "val", to = "cln", show = 3, hide = 8 },
+  { id = "e3", kind = "edge", from = "cln", to = "spl", show = 4, hide = 8 },
+  { id = "e4", kind = "edge", from = "spl", to = "fit", show = 6, hide = 8 },
+  { id = "decl", kind = "code", x = 960, y = 120, w = 840, slots = ["structure ValidRow", "def validate", "def clean", "theorem clean_length_le", "def trainRows", "theorem split_partition", "def fitCoefs"], via = "right", show = 9 },
+  { id = "order", kind = "chip", x = 120, y = 640, label = "every declaration, in file order", tone = "accent", via = "below", show = 8 },
+  { id = "surface", kind = "strip", x = 120, y = 780, w = 1500, label = "the surface of the file: names first, code in the next lessons", tone = "accent", via = "below", show = 9 },
+]
+beat = [
+  { cue = 1, target = "file", action = "highlight", duration = 1.6 },
+  { cue = 3, targets = ["rows", "val", "cln"], action = "state", state = "accent", stagger = 0.3 },
+  { cue = 4, target = "spl", action = "state", state = "accent" },
+  { cue = 6, target = "fit", action = "state", state = "ok" },
+  { cue = 7, target = "file", action = "scale", value = 1.06 },
+  { cue = 7, target = "file", action = "scale", value = 1.0, offset = 0.8 },
+  { cue = 8, target = "order", action = "highlight" },
+  { cue = 10, targets = ["decl.1", "decl.2", "decl.3", "decl.5"], action = "state", state = "accent", stagger = 0.25 },
+  { cue = 11, target = "decl.7", action = "state", state = "ok" },
+  { cue = 12, targets = ["decl.4", "decl.6"], action = "state", state = "ok", stagger = 0.3 },
+]

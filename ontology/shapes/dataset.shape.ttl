@@ -1,0 +1,7 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix sh:  <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ads:DatasetShape a sh:NodeShape ;
+  sh:targetClass ads:Dataset ;
+  sh:property [ sh:path rdfs:label ; sh:minCount 1 ] .

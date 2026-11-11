@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+bat -p AgenticDS/Scenes/M2V04.lean
+echo "exit=$? #01"
+lake env lean AgenticDS/Scenes/M2V04.lean
+echo "exit=$? #02"

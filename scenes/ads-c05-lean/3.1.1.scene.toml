@@ -1,0 +1,36 @@
+# 3.1.1 K-means objective and nearest centroid — scene spec (c05 plate fix). A point travels to its nearest centroid; a tie goes to the lower index.
+scene = { name = "3.1.1-terminal-the-k-means-objective-and-nearest-centroid", code_font = "Noto Sans Mono" }
+element = [
+  { id = "pt", kind = "card", x = 160, y = 560, w = 520, label = "point p", slots = ["nearest centroid?"], show = 1 },
+  { id = "c0", kind = "card", x = 700, y = 160, w = 460, label = "centroid 0", slots = ["lower index"], show = 2 },
+  { id = "c1", kind = "card", x = 1260, y = 160, w = 460, label = "centroid 1", slots = ["later index"], show = 2 },
+  { id = "e0", kind = "edge", from = "pt", to = "c0", show = 4 },
+  { id = "e1", kind = "edge", from = "pt", to = "c1", show = 4 },
+  { id = "obj", kind = "code", x = 160, y = 840, w = 1600, slots = ["objective = sum of squared distance to nearest centroid"], via = "below", show = 3 },
+  { id = "fn", kind = "code", x = 160, y = 380, w = 900, slots = ["nearest uses strict less-than"], via = "left", show = 7 },
+  { id = "tie", kind = "strip", x = 160, y = 960, w = 1600, label = "tie: equally near, lower index wins", tone = "accent", via = "below", show = 14 },
+  { id = "w", kind = "badge", x = 1500, y = 600, label = "w/var", show = 19 },
+]
+beat = [
+  { cue = 3, target = "pt", action = "move", to_xy = [700, 560], duration = 1.5 },
+  { cue = 4, targets = ["e0", "e1"], action = "travel", stagger = 0.5 },
+  { cue = 5, target = "obj", action = "move", to_xy = [160, 780], duration = 1.2 },
+  { cue = 6, target = "pt", action = "move", to_xy = [1260, 560], duration = 1.5 },
+  { cue = 7, target = "fn", action = "highlight" },
+  { cue = 8, target = "c0", action = "move", to_xy = [700, 260], duration = 1.2 },
+  { cue = 9, target = "pt", action = "move", to_xy = [160, 560], duration = 1.5 },
+  { cue = 10, target = "c1", action = "move", to_xy = [1260, 260], duration = 1.2 },
+  { cue = 11, target = "pt", action = "move", to_xy = [700, 560], duration = 1.5 },
+  { cue = 12, target = "obj", action = "move", to_xy = [160, 840], duration = 1.2 },
+  { cue = 13, target = "pt", action = "move", to_xy = [1260, 560], duration = 1.5 },
+  { cue = 14, target = "c0", action = "move", to_xy = [700, 160], duration = 1.2 },
+  { cue = 15, target = "pt", action = "move", to_xy = [980, 560], duration = 1.5 },
+  { cue = 16, target = "c0", action = "state", state = "ok" },
+  { cue = 17, target = "pt", action = "move", to_xy = [160, 560], duration = 1.5 },
+  { cue = 18, target = "c1", action = "move", to_xy = [1260, 160], duration = 1.2 },
+  { cue = 19, target = "c1", action = "state", state = "ok" },
+  { cue = 19, target = "pt", action = "move", to_xy = [1260, 560], duration = 1.5 },
+  { cue = 20, target = "w", action = "highlight" },
+  { cue = 21, target = "pt", action = "move", to_xy = [700, 560], duration = 1.5 },
+  { cue = 21, offset = 1.5, target = "obj", action = "move", to_xy = [160, 780], duration = 1.2 },
+]

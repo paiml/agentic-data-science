@@ -1,0 +1,20 @@
+# m2-06 read_folds. Facts: folds.csv, 342 rows, header skipped, folds 69/69/68/68/68, zero squares differ across machines, cv RMSE 394.31 and 376.64.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m2-06-read-folds", code_font = "Noto Sans Mono" }
+element = [
+  { id = "csv", kind = "code", x = 120, y = 120, w = 700, slots = ["header: skipped", "row,fold pairs", "342 rows"], via = "left", show = 1 },
+  { id = "grid", kind = "card", x = 960, y = 120, w = 840, label = "342-square grid", slots = ["fold digit colours its square"], via = "right", show = 3 },
+  { id = "bars", kind = "code", x = 120, y = 460, w = 700, slots = ["fold 1: 69", "fold 2: 69", "fold 3: 68", "fold 4: 68", "fold 5: 68"], show = 4 },
+  { id = "same", kind = "strip", x = 960, y = 460, w = 840, label = "machine B: 0 squares differ", tone = "ok", via = "below", show = 5 },
+  { id = "rand", kind = "strip", x = 120, y = 740, w = 700, label = "random folds: squares differ", tone = "error", via = "below", show = 6 },
+  { id = "rmse", kind = "strip", x = 960, y = 740, w = 840, label = "cv RMSE 394.31 and 376.64 match", tone = "ok", via = "below", show = 7 },
+]
+beat = [
+  { cue = 1, target = "csv", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "csv.1", action = "state", state = "error" },
+  { cue = 3, target = "grid", action = "highlight", duration = 1.6 },
+  { cue = 4, targets = ["bars.1", "bars.2", "bars.3", "bars.4", "bars.5"], action = "state", state = "accent", stagger = 0.4 },
+  { cue = 5, target = "same", action = "state", state = "ok" },
+  { cue = 6, target = "rand", action = "state", state = "error" },
+  { cue = 7, target = "rmse", action = "state", state = "ok" },
+]

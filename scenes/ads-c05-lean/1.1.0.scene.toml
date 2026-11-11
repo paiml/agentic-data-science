@@ -1,0 +1,32 @@
+# 1.1.0 Tour of the lake package. Facts only from the locked narration (srt): three source files (CSV reads the data file, stats holds the maths, profile joins the two), first example prints mean 5 and variance 4, exact not rounded, written for any field.
+scene = { name = "1.1.0-tour-of-the-lake-package-the-course-builds", code_font = "Noto Sans Mono" }
+element = [
+  { id = "pkg", kind = "card", x = 120, y = 120, w = 760, label = "the lake package", slots = ["one small package", "proves things about statistics code"], via = "left", show = 0 },
+  { id = "csv", kind = "card", x = 120, y = 420, w = 520, label = "CSV", slots = ["reads the data file"], via = "left", show = 5, hide = 13 },
+  { id = "sts", kind = "card", x = 120, y = 660, w = 520, label = "stats", slots = ["holds the maths"], via = "left", show = 9, hide = 13 },
+  { id = "prf", kind = "card", x = 900, y = 540, w = 620, label = "profile", slots = ["joins the two together"], via = "right", show = 10, hide = 13 },
+  { id = "e1", kind = "edge", from = "csv", to = "prf", show = 10, hide = 13 },
+  { id = "e2", kind = "edge", from = "sts", to = "prf", show = 10, hide = 13 },
+  { id = "all", kind = "chip", x = 900, y = 800, label = "all three files are there", tone = "ok", via = "below", show = 11, hide = 13 },
+  { id = "run", kind = "code", x = 960, y = 120, w = 840, slots = ["the package's first example", "mean = 5", "variance = 4"], via = "right", show = 13 },
+  { id = "exact", kind = "chip", x = 960, y = 420, label = "exact numbers, not rounded", tone = "ok", via = "below", show = 17 },
+  { id = "field", kind = "strip", x = 120, y = 640, w = 1500, label = "written for any field", tone = "accent", via = "below", show = 19 },
+  { id = "every", kind = "strip", x = 120, y = 780, w = 1500, label = "so the proofs can talk about every field at once", tone = "accent", via = "below", show = 20 },
+  { id = "next", kind = "chip", x = 120, y = 920, label = "next: why exact rationals matter", via = "below", show = 22 },
+]
+beat = [
+  { cue = 2, target = "pkg", action = "highlight", duration = 1.5, offset = 1.5 },
+  { cue = 2, target = "pkg", action = "highlight", duration = 1.5, offset = 3.5 },
+  { cue = 1, target = "pkg", action = "highlight", duration = 1.5 },
+  { cue = 1, target = "pkg", action = "highlight", duration = 1.5, offset = 2.0 },
+  { cue = 3, target = "pkg", action = "highlight", duration = 1.6 },
+  { cue = 7, target = "csv", action = "state", state = "accent" },
+  { cue = 9, targets = ["sts", "prf"], action = "state", state = "accent", stagger = 0.6 },
+  { cue = 10, targets = ["e1", "e2"], action = "travel", stagger = 0.4 },
+  { cue = 11, target = "all", action = "highlight" },
+  { cue = 14, target = "run.1", action = "state", state = "accent" },
+  { cue = 15, target = "run.2", action = "state", state = "ok" },
+  { cue = 16, target = "run.3", action = "state", state = "ok" },
+  { cue = 18, target = "exact", action = "highlight" },
+  { cue = 21, target = "every", action = "highlight" },
+]

@@ -1,0 +1,25 @@
+# 1.1.2 Lake and the toolchain pin. Facts only from the locked narration (srt): the package pins exactly one Lean release, every machine builds with the same version, the file names Lean 4.35.0, nobody guesses the compiler, Lake the build tool builds the stats file, build completed successfully.
+scene = { name = "1.1.2-lake-and-the-toolchain-pin", code_font = "Noto Sans Mono" }
+element = [
+  { id = "pin", kind = "card", x = 120, y = 120, w = 760, label = "the package", slots = ["pins exactly one Lean release"], via = "left", show = 0 },
+  { id = "m1", kind = "chip", x = 120, y = 400, label = "machine 1", via = "below", show = 4, hide = 7 },
+  { id = "m2", kind = "chip", x = 420, y = 400, label = "machine 2", via = "below", show = 4, hide = 7 },
+  { id = "m3", kind = "chip", x = 720, y = 400, label = "machine 3", via = "below", show = 4, hide = 7 },
+  { id = "v", kind = "chip", x = 420, y = 540, label = "the same version", tone = "ok", via = "below", show = 5, hide = 7 },
+  { id = "file", kind = "code", x = 960, y = 120, w = 840, slots = ["the file names one release", "lean version 4.35.0"], via = "right", show = 6 },
+  { id = "guess", kind = "strip", x = 960, y = 400, w = 840, label = "nobody has to guess which compiler to install", tone = "ok", via = "below", show = 7 },
+  { id = "lake", kind = "card", x = 120, y = 660, w = 760, label = "Lake, the build tool", slots = ["builds the stats file"], via = "left", show = 11 },
+  { id = "ok", kind = "chip", x = 960, y = 700, label = "Build completed successfully", tone = "ok", via = "below", show = 14 },
+]
+beat = [
+  { cue = 3, target = "pin", action = "scale", value = 1.05, duration = 1.2 },
+  { cue = 3, target = "pin", action = "scale", value = 1.0, duration = 1.2, offset = 1.2 },
+  { cue = 2, target = "pin", action = "highlight", duration = 1.5, offset = 0.2 },
+  { cue = 1, target = "pin", action = "highlight", duration = 1.5 },
+  { cue = 1, target = "pin", action = "highlight", duration = 1.5, offset = 2.0 },
+  { cue = 2, target = "pin", action = "highlight", duration = 1.6 },
+  { cue = 4, targets = ["m1", "m2", "m3"], action = "state", state = "accent", stagger = 0.4 },
+  { cue = 6, target = "file.2", action = "state", state = "accent" },
+  { cue = 12, target = "lake", action = "highlight" },
+  { cue = 14, target = "ok", action = "highlight" },
+]

@@ -1,0 +1,35 @@
+# 3.1.0 Tour of the k-means, confusion and tree files — scene spec (c05 plate fix). Three one-job files, wc counts them. Cards and wc stay put; only free-band elements move, so nothing overlaps.
+scene = { name = "3.1.0-terminal-tour-of-the-kmeans-confusion-and-tree-files", code_font = "Noto Sans Mono" }
+element = [
+  { id = "hdr", kind = "strip", x = 120, y = 40, w = 1680, label = "Module 3: three small files, one job each", tone = "accent", via = "below", show = 1 },
+  { id = "k", kind = "card", x = 120, y = 220, w = 520, label = "Kmeans.lean", slots = ["groups points"], show = "K means" },
+  { id = "c", kind = "card", x = 700, y = 220, w = 520, label = "Confusion.lean", slots = ["counts right and wrong"], show = "Confusion counts" },
+  { id = "t", kind = "card", x = 1280, y = 220, w = 520, label = "Tree.lean", slots = ["grows a decision tree"], show = "Tree grows" },
+  { id = "wc", kind = "code", x = 120, y = 560, w = 1100, slots = ["$ wc -l Kmeans.lean Confusion.lean Tree.lean"], via = "below", show = "lines with WC" },
+  { id = "ek", kind = "edge", from = "wc", to = "k", show = "terminal prints" },
+  { id = "ec", kind = "edge", from = "wc", to = "c", show = "terminal prints" },
+  { id = "et", kind = "edge", from = "wc", to = "t", show = "terminal prints" },
+  { id = "tot", kind = "badge", x = 1400, y = 560, label = "total", show = "the total of them" },
+  { id = "small", kind = "chip", x = 720, y = 760, label = "small files", tone = "accent", show = "to see how small" },
+  { id = "job", kind = "strip", x = 120, y = 900, w = 1680, label = "one job each: easier to read, easier to prove things about", via = "below", show = "Short files with one job" },
+]
+beat = [
+  { at = "K means", target = "k", action = "highlight" },
+  { at = "Confusion counts", target = "c", action = "highlight" },
+  { at = "Tree grows", target = "t", action = "highlight" },
+  { at = "lines with WC", target = "wc", action = "state", state = "accent" },
+  { at = "to see how small", target = "small", action = "highlight" },
+  { at = "terminal prints", targets = ["ek", "ec", "et"], action = "travel", stagger = 0.4 },
+  { at = "for each file in", target = "hdr", action = "move", to_xy = [120, 100], duration = 1.2 },
+  { at = "the total of them", target = "tot", action = "highlight" },
+  { at = "the total of them", offset = 0.8, target = "tot", action = "move", to_xy = [1400, 700], duration = 1.2 },
+  { at = "not just one thing", target = "small", action = "move", to_xy = [1000, 760], duration = 1.2 },
+  { at = "do on the job", target = "hdr", action = "move", to_xy = [120, 40], duration = 1.2 },
+  { at = "do on the job", offset = 1.5, target = "tot", action = "move", to_xy = [1400, 560], duration = 1.2 },
+  { at = "Short files with one job", offset = 0.5, target = "small", action = "move", to_xy = [720, 760], duration = 1.2 },
+  { at = "easier to read", target = "job", action = "move", to_xy = [120, 960], duration = 1.2 },
+  { at = "easier to read", offset = 1.2, targets = ["k", "c", "t"], action = "state", state = "ok", stagger = 0.3 },
+  { at = "to prove things about", target = "job", action = "move", to_xy = [120, 900], duration = 1.2 },
+  { at = "to prove things about", offset = 1.5, target = "hdr", action = "move", to_xy = [120, 100], duration = 1.2 },
+  { at = "to prove things about", offset = 1.6, target = "small", action = "move", to_xy = [1000, 760], duration = 1.2 },
+]

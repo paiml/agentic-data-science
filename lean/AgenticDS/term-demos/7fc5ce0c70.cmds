@@ -1,0 +1,7 @@
+cd lean/AgenticDS
+bat -p AgenticDSTest/PlantedWrongSlope.lean.planted
+echo "exit=$? #01"
+lake env lean AgenticDSTest/PlantedWrongSlope.lean.planted
+echo "exit=$? #02"
+lake env lean AgenticDS/Scenes/M2V09.lean
+echo "exit=$? #03"

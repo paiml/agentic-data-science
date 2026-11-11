@@ -1,0 +1,44 @@
+# ads-julia-p2-v1: Course B (Julia), Module 2, Problem P2 (ordinary least squares and cross-validation on Palmer Penguins)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The BM2 functions fit the closed-form OLS of body mass on flipper length, the species model and the fixed-fold cross-validated RMSE, and reproduce datasets/golden/p2.json: 342 rows, intercept -5780.83, slope 49.69, cv_rmse 394.313 (flipper only) and 376.638 (with species)."
+  references:
+    - "datasets/golden/p2.json"
+    - "datasets/fixtures/folds.csv"
+    - "julia/BM2/src/helpers.jl"
+    - "julia/BM2/test/runtests.jl"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_fit_matches_golden:
+    formula: |
+      rows(load())                      = 342        (drop_na on the four numeric columns)
+      intercept                         = -5780.83135807716   printed to 3 decimals
+      slope                             = 49.6855664061006    within 1e-8
+      cv_rmse(ols), cv_rmse(species)    = 394.312960342554, 376.638259793938   within 1e-6
+    domain: "data/penguins.csv, a verbatim copy of datasets/penguins/penguins.csv, and the fold ids of datasets/fixtures/folds.csv"
+    codomain: "coefficients, out-of-fold RMSE and the printed contract line"
+    postconditions:
+      - "DROP_NA_MODEL_COLUMNS: rows are dropped when a numeric column (bill length, bill depth, flipper length or body mass) is NA, so 342 rows remain"
+      - "FIXED_FOLDS: fold ids are read from folds.csv, never drawn from a random number generator"
+      - "SPECIES_BEATS_FLIPPER: the out-of-fold RMSE with species is below the flipper-only RMSE"
+      - "CAN_FAIL: a leaking fold or a model without an intercept moves a golden RMSE"
+
+proof_obligations:
+  - type: invariant
+    property: "Fitted coefficients and cross-validated RMSE equal the P2 golden"
+    formal: "|slope - golden.ols.slope| <= 1e-8, the intercept equals the golden to the 3 printed decimals, and |cv_rmse - golden.cv_rmse| <= 1e-6"
+    applies_to: p2_fit_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-JULIA-P2-001
+    rule: "Coefficients and cross-validated RMSE match the golden"
+    prediction: "Pkg.test passes with 342 rows and the golden values"
+    test: "julia --project=julia/BM2 -e 'using Pkg; Pkg.test()'"
+    mutation: "Fit on the training rows of each fold plus the held-out rows (a leak): the cv_rmse check fails"
+    discriminates: "A leaking cross-validation cannot reproduce the golden RMSE"
+    if_fails: "A reported RMSE would not be an out-of-fold figure"

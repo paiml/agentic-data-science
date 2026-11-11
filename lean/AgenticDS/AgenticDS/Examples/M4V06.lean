@@ -1,0 +1,34 @@
+import AgenticDS.Examples.Run
+import AgenticDS.Pipeline
+import AgenticDS.Plot
+import AgenticDS.Examples.Scat
+/-! The leak: train on every row, test rows included. -/
+open AgenticDS
+def m4v06_leak (l : List ℕ) : List ℕ :=
+  l.zipIdx.map (·.1)
+-- split_partition's statement is false for the leak.
+theorem m4v06_fails : ¬ ∀ l : List ℕ,
+    (m4v06_leak l).length + (testRows l).length
+      = l.length := by
+  intro h
+  have := h (List.range 5)
+  revert this
+  simp [m4v06_leak, testRows, isTest, List.range_succ,
+    List.zipIdx]
+def m4v06 : IO Unit := do
+  let l := List.range 5
+  IO.println s!"rows {l.length}"
+  IO.println s!"leaky train {(m4v06_leak l).length}"
+  IO.println s!"test {(testRows l).length}"
+  let rows := [("rows       ", l.length),
+    ("leaky train", (m4v06_leak l).length),
+    ("test       ", (testRows l).length)]
+  plot 20 rows
+  writeSvg "plot-m4v06.svg" "The leak" 20 rows
+  wineDemo "plot-m4v06b.svg" "Red wine: density and quality"
+    "density" 7 8
+  contract "ads-lean-m4v06-v1"
+    (decide ((trainRows l).length <
+      (m4v06_leak l).length) &&
+      (← plotOk "plot-m4v06.svg") &&
+      (← plotOk "plot-m4v06b.svg"))

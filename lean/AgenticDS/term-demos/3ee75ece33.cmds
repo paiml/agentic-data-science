@@ -1,0 +1,10 @@
+cp -v datasets/golden/p3.json /tmp/p3-mutant.json
+echo "exit=$? #01"
+sed -i 's/\[37, 0, 0\]/[36, 1, 0]/' /tmp/p3-mutant.json
+echo "exit=$? #02"
+diff --color=always datasets/golden/p3.json /tmp/p3-mutant.json
+echo "exit=$? #03"
+(cd lean/AgenticDS && lake exe scene-m3 v09)
+echo "exit=$? #04"
+rm -v /tmp/p3-mutant.json
+echo "exit=$? #05"

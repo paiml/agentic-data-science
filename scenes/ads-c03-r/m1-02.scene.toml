@@ -1,0 +1,21 @@
+# m1-02 Typed ingest and the NA policy. Cues are teleprompter beat numbers (the line that becomes the srt row when Noah records). Facts only from the teleprompter: column types, NA counts per column, rows 344 to 342, sex NA kept.
+scene = { name = "m1-02-typed-ingest-and-the-na-policy", code_font = "Noto Sans Mono" }
+element = [
+  { id = "raw", kind = "outline", x = 120, y = 140, w = 760, label = "columns the reader produced", slots = ["species: character", "island: character", "sex: character", "bill length: numeric", "bill depth: numeric", "flipper length: numeric", "body mass: numeric", "year: integer"], show = 2 },
+  { id = "bad", kind = "strip", x = 120, y = 830, w = 760, label = "numbers read as text lie", tone = "error", via = "below", show = 7, hide = 8 },
+  { id = "na", kind = "card", x = 1000, y = 140, w = 760, label = "missing values in the raw file", slots = ["bill length: 2", "bill depth: 2", "flipper length: 2", "body mass: 2", "sex: 11", "species: 0", "island: 0", "year: 0"], via = "right", show = 8, hide = 19 },
+  { id = "same", kind = "chip", x = 1000, y = 830, label = "the same two rows, nothing measured", tone = "error", show = 15, hide = 19 },
+  { id = "rows", kind = "card", x = 1000, y = 140, w = 760, label = "the policy at work", slots = ["rows before: 344", "rows after: 342", "sex still missing: 9"], via = "below", show = 19 },
+  { id = "keep", kind = "chip", x = 120, y = 830, label = "no sex, still a bill and a mass: row stays", tone = "ok", show = 24 },
+  { id = "contract", kind = "strip", x = 1000, y = 520, w = 760, label = "contract: typed ingest, sex NA kept", tone = "ok", via = "below", show = 25 },
+]
+beat = [
+  { cue = 3, targets = ["raw.species", "raw.island", "raw.sex"], action = "state", state = "accent", stagger = 0.2 },
+  { cue = 4, targets = ["raw.bill-length", "raw.bill-depth", "raw.flipper-length", "raw.body-mass"], action = "state", state = "ok", stagger = 0.2 },
+  { cue = 5, target = "raw.year", action = "state", state = "muted" },
+  { cue = 9, targets = ["na.bill-length", "na.bill-depth", "na.flipper-length", "na.body-mass"], action = "state", state = "error", stagger = 1.0 },
+  { cue = 13, target = "na.sex", action = "state", state = "accent" },
+  { cue = 14, targets = ["na.species", "na.island", "na.year"], action = "state", state = "ok", stagger = 0.2 },
+  { cue = 20, target = "rows.rows-after", action = "highlight" },
+  { cue = 22, target = "rows.sex-still-missing", action = "highlight" },
+]

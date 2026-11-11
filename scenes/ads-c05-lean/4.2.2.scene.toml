@@ -1,0 +1,21 @@
+# 4.2.2 A leakage mutant makes the proof fail. Facts only from the locked narration (srt): leaky train trains on every row, test rows included; the partition theorem cannot be proved; the file holds a theorem saying so.
+scene = { name = "4.2.2-a-leakage-mutant-makes-the-proof-fail", code_font = "Noto Sans Mono" }
+element = [
+  { id = "all", kind = "card", x = 120, y = 120, w = 700, label = "rows", slots = ["train rows", "test rows"], via = "left", show = 0 },
+  { id = "leak", kind = "code", x = 960, y = 120, w = 840, slots = ["leaky train function:", "trains on every row,", "test rows included"], via = "right", show = 5 },
+  { id = "part", kind = "outline", x = 120, y = 400, w = 700, label = "partition theorem", slots = ["train + test = total"], show = 8 },
+  { id = "imp", kind = "strip", x = 120, y = 600, w = 700, label = "cannot be proved for the leak", tone = "error", via = "below", show = 9 },
+  { id = "says", kind = "chip", x = 120, y = 740, label = "the file holds a theorem saying so", show = 10 },
+  { id = "out", kind = "code", x = 960, y = 400, w = 840, slots = ["row count", "leaky train count", "test count"], via = "right", show = 13 },
+  { id = "keep", kind = "chip", x = 960, y = 640, label = "leaky set keeps every row", show = 16 },
+  { id = "bad", kind = "strip", x = 960, y = 760, w = 840, label = "the two parts no longer add up", tone = "error", via = "below", show = 19 },
+]
+beat = [
+  { cue = 1, target = "all", action = "highlight", duration = 1.6 },
+  { cue = 6, target = "leak", action = "state", state = "error" },
+  { cue = 8, target = "part", action = "highlight" },
+  { cue = 12, target = "imp", action = "highlight", duration = 1.6 },
+  { cue = 14, targets = ["out.1", "out.2", "out.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 17, target = "keep", action = "state", state = "error" },
+  { cue = 19, target = "bad", action = "highlight", duration = 1.6 },
+]

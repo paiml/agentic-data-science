@@ -1,0 +1,29 @@
+import AgenticDS.Examples.Run
+import AgenticDS.Pipeline
+import AgenticDS.Plot
+import AgenticDS.Examples.Scat
+/-! validate refuses a bad row; clean keeps the somes. -/
+open AgenticDS
+def m4v03_f : List (Option ℚ) := List.replicate 11 (some 1)
+-- Quality eleven is refused, never clamped.
+theorem m4v03_q11 :
+    validate ⟨m4v03_f, some 11, "red"⟩ = none := by
+  norm_num [validate, m4v03_f]
+def m4v03 : IO Unit := do
+  let rs : List WineRaw := [
+    ⟨m4v03_f, some 6, "red"⟩,
+    ⟨m4v03_f, some 11, "red"⟩,
+    ⟨m4v03_f.tail, some 6, "red"⟩,
+    ⟨none :: m4v03_f.tail, some 6, "white"⟩,
+    ⟨m4v03_f, some 6, "rose"⟩]
+  for r in rs do IO.println s!"{(validate r).isSome}"
+  IO.println s!"kept {(clean rs).length} of {rs.length}"
+  let rows := [("kept   ", (clean rs).length),
+    ("refused", rs.length - (clean rs).length)]
+  plot 20 rows
+  writeSvg "plot-m4v03.svg" "Rows kept and refused" 20 rows
+  wineDemo "plot-m4v03b.svg" "Red wine: sulphates and quality"
+    "sulphates" 9 8
+  contract "ads-lean-m4v03-v1"
+    ((clean rs).length == 1 && (← plotOk "plot-m4v03.svg") &&
+      (← plotOk "plot-m4v03b.svg"))

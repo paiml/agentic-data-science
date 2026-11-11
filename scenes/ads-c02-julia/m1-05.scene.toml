@@ -1,0 +1,12 @@
+# m1-05 Aqua and JET. Source: teleprompter beats 4 and 5 (cue = beat number). Facts: Aqua 11 of 11 checks the package as a package; JET 1 of 1 static analysis finds likely errors without a test.
+scene = { name = "m1-05-the-test-suite-aqua-and-jet", code_font = "Noto Sans Mono" }
+element = [
+  { id = "aq", kind = "card", x = 120, y = 160, w = 760, label = "Aqua", slots = ["11 passed of 11", "checks the package as a package"], show = 4, via = "left" },
+  { id = "hy", kind = "chip", x = 120, y = 480, w = 560, label = "hygiene for the whole package", show = 4, via = "below" },
+  { id = "jt", kind = "card", x = 1000, y = 160, w = 760, label = "JET", slots = ["1 passed of 1", "static analysis, no test needed"], show = 5, via = "right" },
+  { id = "ey", kind = "chip", x = 1000, y = 480, w = 560, label = "a second pair of eyes", show = 5, via = "below" },
+]
+beat = [
+  { cue = 4, target = "aq", action = "state", state = "ok" },
+  { cue = 5, target = "jt", action = "state", state = "ok" },
+]

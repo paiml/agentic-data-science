@@ -1,0 +1,15 @@
+{
+  "name": "paiml/ads-lean-vscode-v1",
+  "httpPort": 8080,
+  "mounts": [
+    {
+      "path": "/home/coder/project"
+    },
+    {
+      "path": "/home/coder/coursera"
+    },
+    {
+      "path": "/home/nginx"
+    }
+  ]
+}

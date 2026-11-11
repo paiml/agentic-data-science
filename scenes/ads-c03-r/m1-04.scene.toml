@@ -1,0 +1,19 @@
+# m1-04 Per-species profile and the n-1 standard deviation. Cues are teleprompter beat numbers. Facts only from the teleprompter: counts, means and sds per species; the Gentoo sd three ways.
+scene = { name = "m1-04-per-species-profile-and-the-n-1-standard-deviation", code_font = "Noto Sans Mono" }
+element = [
+  { id = "tab", kind = "card", x = 120, y = 140, w = 1000, label = "one row per species: count, mean g, sd", slots = ["Adelie: 151, 3700.662, 458.5661", "Chinstrap: 68, 3733.088, 384.3351", "Gentoo: 123, 5076.016, 504.1162"], via = "left", show = 2 },
+  { id = "close", kind = "chip", x = 1240, y = 160, label = "Adelie and Chinstrap close", tone = "accent", show = 7 },
+  { id = "heavy", kind = "chip", x = 1240, y = 260, label = "Gentoo much heavier", tone = "error", show = 8 },
+  { id = "sd", kind = "card", x = 120, y = 520, w = 1000, label = "Gentoo standard deviation, three ways", slots = ["summary function: 504.116237", "by hand, n minus 1: 504.116237", "divide by n: 502.062801"], via = "below", show = 10 },
+  { id = "gap", kind = "strip", x = 120, y = 860, w = 1000, label = "about two grams apart: not a rounding error", tone = "accent", via = "below", show = 15 },
+  { id = "why", kind = "chip", x = 120, y = 980, label = "n minus 1: mean estimated from same data", tone = "ok", show = 17 },
+]
+beat = [
+  { cue = 3, target = "tab.adelie", action = "highlight" },
+  { cue = 4, target = "tab.chinstrap", action = "highlight" },
+  { cue = 5, target = "tab.gentoo", action = "highlight" },
+  { cue = 11, target = "sd.summary-function", action = "state", state = "ok" },
+  { cue = 12, target = "sd.by-hand--n-minus-1", action = "state", state = "ok" },
+  { cue = 14, target = "sd.divide-by-n", action = "state", state = "error" },
+  { cue = 18, target = "why", action = "highlight" },
+]

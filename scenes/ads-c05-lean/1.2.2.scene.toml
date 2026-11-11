@@ -1,0 +1,25 @@
+# 1.2.2 Golden parity against the R reference. Facts only from the locked narration (srt): golden number = mean Adelie penguin body mass computed by R, stored in the repository, read back as an exact rational and compared with our own mean; contract ADS-Lean-P1-V1; ok prints only when the two differ by less than 1 billionth.
+scene = { name = "1.2.2-golden-parity-against-the-r-reference", code_font = "Noto Sans Mono" }
+element = [
+  { id = "proof", kind = "card", x = 120, y = 120, w = 620, label = "Lean proofs", slots = ["the code is correct in general"], via = "left", show = 1 },
+  { id = "r", kind = "card", x = 900, y = 120, w = 860, label = "R", slots = ["the reference most statisticians trust"], via = "right", show = 3, hide = 8 },
+  { id = "gp", kind = "chip", x = 120, y = 420, label = "golden parity", tone = "accent", via = "below", show = 7, hide = 8 },
+  { id = "gold", kind = "card", x = 120, y = 520, w = 800, label = "the golden number", slots = ["mean Adelie penguin body mass", "computed by R, stored in our repository"], via = "left", show = 8 },
+  { id = "ours", kind = "card", x = 1100, y = 520, w = 620, label = "our own mean", slots = ["computed in Lean"], via = "right", show = 11 },
+  { id = "cmp", kind = "edge", from = "gold", to = "ours", show = 11 },
+  { id = "out", kind = "code", x = 120, y = 800, w = 1400, slots = ["mean ours  gold golden", "contract: ads-lean-p1-v1 OK"], via = "below", show = 13 },
+  { id = "ctr", kind = "chip", x = 1100, y = 960, label = "ads-lean-p1-v1", tone = "accent", via = "below", show = 15 },
+  { id = "tol", kind = "strip", x = 120, y = 960, w = 900, label = "ok prints only if the gap < 1 billionth", tone = "ok", via = "below", show = 18 },
+  { id = "no", kind = "strip", x = 960, y = 120, w = 900, label = "a gap of 1 billionth or more: no ok", tone = "error", via = "below", show = 20 },
+]
+beat = [
+  { cue = 1, target = "proof", action = "highlight" },
+  { cue = 4, target = "r", action = "state", state = "accent" },
+  { cue = 8, target = "gold", action = "highlight" },
+  { cue = 11, target = "cmp", action = "travel" },
+  { cue = 12, target = "ours", action = "highlight" },
+  { cue = 14, target = "out.2", action = "state", state = "ok" },
+  { cue = 15, target = "ctr", action = "highlight" },
+  { cue = 18, target = "tol", action = "highlight" },
+  { cue = 20, target = "no", action = "highlight", duration = 1.6 },
+]

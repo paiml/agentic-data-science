@@ -1,0 +1,273 @@
+name: ci
+on: { pull_request: {}, merge_group: {}, push: { branches: [main] } }
+concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  datasets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make gate-datasets
+  shacl:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "25" }
+      - name: Install Apache Jena (pinned, sha512-verified)
+        run: |
+          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
+          curl -fsSL -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
+          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
+          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+      - run: make gate-shacl
+  julia:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Julia 1.13.3 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: |
+          h=5c61cb4b40332cb5a3504e7779e2f5dac093caa4a1116ded19f01413f85c63e4
+          curl -fsSL -o "$RUNNER_TEMP/julia.tgz" "https://julialang-s3.julialang.org/bin/linux/x64/1.13/julia-1.13.3-linux-x86_64.tar.gz"
+          echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/julia-1.13.3/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.julia
+          key: julia-${{ runner.os }}-1.13.3-${{ hashFiles('julia/**/Manifest.toml') }}
+      - name: Install the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.instantiate()"
+      - name: Test the package
+        run: julia --project=julia/AgenticDS.jl -e "using Pkg; Pkg.test()"
+      - name: Run the examples
+        run: for e in julia/AgenticDS.jl/examples/*/run.jl; do julia --project=julia/AgenticDS.jl "$e" > /dev/null; done
+  julia-quality:
+    name: julia-quality (${{ matrix.part }})
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [AgenticDS, Anscombe, BM1, BM2, BM3, BM4, PenguinsOLS]
+    env:
+      ADS_JULIA_PARTS: AgenticDS Anscombe BM1 BM2 BM3 BM4 PenguinsOLS
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Julia 1.13.3 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: |
+          h=5c61cb4b40332cb5a3504e7779e2f5dac093caa4a1116ded19f01413f85c63e4
+          curl -fsSL -o "$RUNNER_TEMP/julia.tgz" "https://julialang-s3.julialang.org/bin/linux/x64/1.13/julia-1.13.3-linux-x86_64.tar.gz"
+          echo "$h  $RUNNER_TEMP/julia.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/julia.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/julia-1.13.3/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ~/.julia
+          key: julia-quality-${{ matrix.part }}-${{ runner.os }}-1.13.3-${{ hashFiles('julia/**/Manifest.toml') }}
+      - run: scripts/gate-julia.sh ${{ matrix.part }}
+  anscombe-julia:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the lesson twice in the digest-pinned container; the two manifests must be identical
+        run: |
+          scripts/anscombe-julia.sh "$RUNNER_TEMP/a" > /dev/null
+          scripts/anscombe-julia.sh "$RUNNER_TEMP/b" > /dev/null
+          diff "$RUNNER_TEMP/a/manifest.sha256" "$RUNNER_TEMP/b/manifest.sha256"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-julia, path: "${{ runner.temp }}/a" }
+  r:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries for the R build (Posit ubuntu-2404 tarball)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 libdeflate0 libgomp1 zlib1g
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.6.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.6.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/rlib
+          key: rlib-test-${{ runner.os }}-4.6.1-${{ hashFiles('scripts/r-pins.txt', 'scripts/r-deps.sh') }}
+      - name: Install pinned R dependencies (CRAN snapshot 2026-10-20, versions checked)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "R_LIBS=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
+      - name: Install the package
+        run: R CMD INSTALL --library="$RUNNER_TEMP/rlib" r/agenticds
+      - name: Test the package
+        run: Rscript -e 'testthat::test_dir("r/agenticds/tests/testthat", package = "agenticds", load_package = "installed")'
+        env: { ADS_ROOT: "${{ github.workspace }}" }
+      - name: Run the examples
+        run: for e in r/agenticds/inst/examples/*/run.R; do Rscript "$e" > /dev/null; done
+  r-quality:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries for the R build (Posit ubuntu-2404 tarball)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 libdeflate0 libgomp1 zlib1g
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.6.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.6.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/rlib
+          key: rlib-${{ runner.os }}-4.6.1-${{ hashFiles('scripts/r-pins.txt', 'scripts/r-deps.sh') }}
+      - name: Install pinned R tools (styler, lintr, covr; CRAN snapshot 2026-10-20)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "ADS_RLIB=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
+      - run: make gate-r
+  lean:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      ADS_DL_CACHE: ${{ github.workspace }}/.dl-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.dl-cache
+          key: dl-elan-${{ hashFiles('scripts/install-elan.sh', 'scripts/dl-cached.sh') }}
+      - name: Install elan (pinned, sha256-verified)
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan/toolchains
+            ~/.cache/mathlib
+          key: lean-${{ runner.os }}-${{ hashFiles('lean/AgenticDS/lean-toolchain', 'lean/AgenticDS/lake-manifest.json') }}
+      - name: Mathlib oleans (download into the workspace)
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - run: make gate-lean
+  rust:
+    timeout-minutes: 45
+    runs-on: ubuntu-24.04
+    container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools inside the pinned image
+        run: |
+          apt-get update -q && apt-get install -y -q --no-install-recommends jq
+          rustup component add llvm-tools-preview rustfmt clippy
+          cargo install --locked --version 0.8.5 cargo-llvm-cov
+      - run: make gate-rust
+  anscombe-lean:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    env:
+      ADS_DL_CACHE: ${{ github.workspace }}/.dl-cache
+    container: debian@sha256:7ff6ba31527b9e336162fa061746c366c4b2032f4d2cff2078bea43f78efe3f8
+    steps:
+      - name: Tools inside the pinned image
+        run: apt-get update -q && apt-get install -y -q --no-install-recommends ca-certificates curl git zstd
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.dl-cache
+          key: dl-elan-${{ hashFiles('scripts/install-elan.sh', 'scripts/dl-cached.sh') }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/.elan/toolchains
+          key: lean-tc-anscombe-${{ hashFiles('lean/anscombe/lean-toolchain') }}
+      - name: Install elan (pinned, sha256-verified); lake takes the toolchain from lean-toolchain
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - run: scripts/gate-lean-anscombe.sh
+      - name: Lesson artifacts (stdout.txt, plot.svg, manifest.sha256)
+        run: scripts/lesson-artifacts.sh anscombe lean "$RUNNER_TEMP/anscombe/lean"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-lean, path: "${{ runner.temp }}/anscombe/lean" }
+  r-lesson:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lesson artifacts in the digest-pinned R image
+        run: scripts/lesson-artifacts.sh anscombe r "$RUNNER_TEMP/anscombe/r"
+      - name: Determinism (two runs, same hashes)
+        run: lessons/anscombe/r/determinism.sh
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-r, path: "${{ runner.temp }}/anscombe/r" }
+  kotlin-anscombe:
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    container: eclipse-temurin:25-jdk-noble@sha256:95e350ad1eb738f943e141640f7e3d797e483359a3b33c3864255bfd1ad71f8a
+    env:
+      ADS_DL_CACHE: ${{ github.workspace }}/.dl-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.dl-cache
+          key: dl-gradle-${{ hashFiles('kotlin/gradle/wrapper/gradle-wrapper.properties', 'scripts/dl-cached.sh', 'scripts/fetch-gradle.sh') }}
+      - run: scripts/anscombe-artifacts.sh "$RUNNER_TEMP/anscombe/kotlin"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-kotlin, path: "${{ runner.temp }}/anscombe/kotlin" }
+  parity:
+    needs: [r-lesson, anscombe-lean, kotlin-anscombe, anscombe-julia]
+    timeout-minutes: 30
+    runs-on: ubuntu-24.04
+    permissions: { contents: read, id-token: write }
+    container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tools the poisoned-cache falsifier needs (zip, unzip)
+        run: apt-get update -q && apt-get install -y -q --no-install-recommends zip unzip
+      - run: make gate-parity
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-r, path: "${{ runner.temp }}/anscombe/r" }
+      - name: Lesson artifacts (stdout.txt, plot.svg, manifest.sha256)
+        run: scripts/lesson-artifacts.sh anscombe rust "$RUNNER_TEMP/anscombe/rust"
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-lean, path: "${{ runner.temp }}/anscombe/lean" }
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-kotlin, path: "${{ runner.temp }}/anscombe/kotlin" }
+      - uses: actions/download-artifact@v4
+        with: { name: anscombe-julia, path: "${{ runner.temp }}/anscombe/julia" }
+      - name: Parity over every landed language (missing = RED)
+        run: scripts/parity.sh "$RUNNER_TEMP/anscombe" parity/anscombe.landed
+      - name: Determinism (two runs, same hashes)
+        run: scripts/determinism.sh scripts/lesson-artifacts.sh anscombe rust
+      - name: Install cosign v3.1.4 (pinned, sha256-verified)
+        run: |
+          curl -fsSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+          echo "424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa  /usr/local/bin/cosign" | sha256sum -c -
+          chmod +x /usr/local/bin/cosign
+      - name: Sign (keyless sigstore) and verify
+        run: |
+          d="$RUNNER_TEMP/anscombe/rust"
+          for f in stdout.txt plot.svg manifest.sha256; do cosign sign-blob --yes --bundle "$d/$f.sigstore.json" "$d/$f" >/dev/null; done
+          scripts/verify-signed.sh "$d" "${{ github.repository }}"
+      - name: Hero F5 falsifier (stages every landed language's plot; clean GREEN, missing/stale/unreferenced RED)
+        run: scripts/falsify-hero.sh "$RUNNER_TEMP/anscombe"
+      - name: Hero image (generated from the landed plots; missing or stale = RED)
+        run: scripts/hero.sh check "$RUNNER_TEMP/anscombe"
+      - run: scripts/hero.sh build "$RUNNER_TEMP/anscombe" "$RUNNER_TEMP/hero"
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-hero, path: "${{ runner.temp }}/hero" }
+      - uses: actions/upload-artifact@v4
+        with: { name: anscombe-rust, path: "${{ runner.temp }}/anscombe/rust" }
+  gate:
+    name: gate
+    if: always()
+    needs: [datasets, shacl, r, r-quality, julia, julia-quality, rust, lean, r-lesson, anscombe-lean, kotlin-anscombe, parity]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}; then exit 1; fi

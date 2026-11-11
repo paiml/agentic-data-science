@@ -1,0 +1,15 @@
+# m3-04 Gini impurity. Facts: gini = 1 - sum of squared class shares; 12 dots in a node; a pure node has impurity 0 and growth stops (risk == 0: leaf).
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m3-04-gini-impurity", code_font = "Noto Sans Mono" }
+element = [
+  { id = "node", kind = "code", x = 120, y = 120, w = 840, slots = ["12 dots in a node", "share bar per class", "gini = 1 - sum of squared shares"], via = "left", show = 1 },
+  { id = "split", kind = "code", x = 1100, y = 120, w = 700, slots = ["mixed node: tall bar", "Gentoo node: bar drops"], via = "right", show = 2 },
+  { id = "pure", kind = "strip", x = 120, y = 560, w = 840, label = "pure node: impurity 0", tone = "ok", via = "below", show = 3 },
+  { id = "leaf", kind = "chip", x = 1100, y = 600, label = "risk == 0: leaf", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["node.1", "node.2", "node.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 2, targets = ["split.1", "split.2"], action = "state", state = "accent", stagger = 0.6 },
+  { cue = 3, target = "pure", action = "state", state = "ok" },
+  { cue = 3, target = "leaf", action = "state", state = "ok" },
+]

@@ -1,0 +1,23 @@
+# m1-10 Wrap-up, what the contracts proved. Cues are teleprompter beat numbers. Facts only from the teleprompter: three contract lines; proved vs not proved.
+scene = { name = "m1-10-wrap-up-what-the-contracts-proved", code_font = "Noto Sans Mono" }
+element = [
+  { id = "c1", kind = "strip", x = 120, y = 140, w = 760, label = "contract: ingest, 344 to 342", tone = "neutral", via = "left", show = 3 },
+  { id = "c2", kind = "strip", x = 120, y = 240, w = 760, label = "contract: profile matches golden p1.json", tone = "neutral", via = "left", show = 5 },
+  { id = "c3", kind = "strip", x = 120, y = 340, w = 760, label = "contract: wrap-up, if both pass", tone = "neutral", via = "left", show = 7 },
+  { id = "proved", kind = "outline", x = 1000, y = 140, w = 760, label = "what the gate proved", slots = ["code reproduces golden numbers: yes", "tests red on broken NA policy: seen", "tests red on wrong sd: seen", "coverage, lint, format: clean"], show = 8 },
+  { id = "not", kind = "card", x = 1000, y = 560, w = 760, label = "what it did not prove", slots = ["golden numbers answer the right question", "342 birds represent penguins everywhere", "dropping rows is right for other data"], via = "below", show = 12 },
+  { id = "you", kind = "chip", x = 120, y = 640, label = "those are your decisions", tone = "accent", show = 16 },
+  { id = "report", kind = "strip", x = 120, y = 760, w = 760, label = "Gate Report: proved, and not", tone = "ok", via = "below", show = 17 },
+  { id = "next", kind = "chip", x = 120, y = 880, label = "next: regression and leakage", tone = "muted", show = 18 },
+]
+beat = [
+  { cue = 3, target = "c1", action = "state", state = "ok" },
+  { cue = 5, target = "c2", action = "state", state = "ok" },
+  { cue = 7, target = "c3", action = "state", state = "ok" },
+  { cue = 9, target = "proved.code-reproduces-golden-numbers", action = "state", state = "ok" },
+  { cue = 10, targets = ["proved.tests-red-on-broken-na-policy", "proved.tests-red-on-wrong-sd"], action = "state", state = "ok", stagger = 0.3 },
+  { cue = 11, target = "proved.coverage--lint--format", action = "state", state = "ok" },
+  { cue = 13, target = "not.golden-numbers-answer-the-right-question", action = "state", state = "error" },
+  { cue = 14, target = "not.342-birds-represent-penguins-everywhere", action = "state", state = "error" },
+  { cue = 15, target = "not.dropping-rows-is-right-for-other-data", action = "state", state = "error" },
+]

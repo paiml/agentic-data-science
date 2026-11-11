@@ -1,0 +1,58 @@
+# The Kotlin course's own demo workflow: runs every lesson demo in kotlin/scripts/demos.tsv (40 rows) from kotlin/,
+# refuses a non-zero exit or a missing ready line, emits demo.json and attests it on main.
+name: kotlin-demo
+on:
+  push:
+    branches: [main]
+    paths: ['kotlin/**', 'datasets/**', 'ontology/shapes/**', 'scripts/fetch-gradle.sh', 'scripts/dl-cached.sh', '.github/workflows/kotlin-demo.yml']
+  pull_request:
+    paths: ['kotlin/**', 'datasets/**', 'ontology/shapes/**', 'scripts/fetch-gradle.sh', 'scripts/dl-cached.sh', '.github/workflows/kotlin-demo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: kotlin-demo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  kotlin-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    env:
+      ADS_DL_CACHE: ${{ github.workspace }}/.dl-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "25" }
+      - uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.dl-cache
+          key: dl-kotlin-demo-${{ hashFiles('kotlin/gradle/wrapper/gradle-wrapper.properties', 'scripts/dl-cached.sh', 'scripts/fetch-gradle.sh', '.github/workflows/kotlin-demo.yml') }}
+      - name: Install Apache Jena (pinned, sha512-verified)
+        run: |
+          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
+          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
+          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
+      - name: Install pmat v3.42.0 (pinned, sha256-verified)
+        run: |
+          v=3.42.0; a=pmat-v$v-x86_64-unknown-linux-musl
+          scripts/dl-cached.sh "https://github.com/paiml/paiml-mcp-agent-toolkit/releases/download/v$v/$a.tar.gz" \
+            c4b9f5e0f180940dac27e971b8bb27768edddd8ab2495e1f15153d75a3d79033 "$RUNNER_TEMP/pmat.tgz"
+          tar -xzf "$RUNNER_TEMP/pmat.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/$a" >> "$GITHUB_PATH"
+      - name: Run the 40 lesson demos and emit demo.json
+        run: kotlin/scripts/emit-demo-json.sh "$RUNNER_TEMP/demo.json"
+      - name: Attest demo.json (build provenance)
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/demo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-json-${{ github.sha }}
+          path: ${{ runner.temp }}/demo.json

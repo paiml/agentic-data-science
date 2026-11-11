@@ -1,0 +1,42 @@
+# ads-lean-p4-v1: Course E (Lean 4), Module 4, Problem P4 (exact wine pipeline vs the golden file)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Validate, clean, split (every fifth row is test), fit by exact Gauss-Jordan on the training rows and score on the test rows, reproducing datasets/golden/p4.json: 6497 rows, 5198 train, 1299 test, rmse about 0.76, r2 about 0.26, mean quality red about 5.64 and white about 5.88."
+  references:
+    - "lean/AgenticDS/AgenticDS/Pipeline.lean"
+    - "lean/AgenticDS/AgenticDS/P4.lean"
+    - "lean/AgenticDS/AgenticDSTest/P4.lean"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern): numeric parity against a golden file, tolerances 1e-6 (rmse, r2) and 1e-9 (colour means)"
+
+equations:
+  p4_lean_pipeline_matches_golden:
+    formula: |
+      n_rows = 6497, n_test = 1299, n_train = 5198
+      |sqrt(mse) - rmse| <= 1e-6,  |r2 - golden| <= 1e-6
+      |mean_quality(colour) - golden| <= 1e-9
+    domain: "winequality-red.csv and winequality-white.csv with SHA256SUMS verified"
+    codomain: "row counts, held-out rmse and r2, mean quality per colour"
+    postconditions:
+      - "VALIDATE_FIRST: only rows that validate reach the split"
+      - "NO_TEST_LEAKAGE: the model is fitted on training rows only"
+      - "CAN_FAIL: fitting on all rows moves rmse and r2 and fails the test"
+
+proof_obligations:
+  - type: invariant
+    property: "Held-out rmse and r2 equal the golden file within 1e-6"
+    formal: "|sqrt(mse) - rmse| <= 1e-6 and |r2 - golden| <= 1e-6"
+    applies_to: p4_lean_pipeline_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-P4-001
+    rule: "The model never sees test rows"
+    prediction: "lake env lean --run AgenticDSTest/P4.lean prints contract: ads-lean-p4-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/P4.lean"
+    mutation: "Fit on all rows: FAIL rmse and FAIL r2 (measured 2026-10-26)"
+    discriminates: "A leaking pipeline cannot match the held-out oracle"
+    if_fails: "Learners report an optimistic wine-quality error"

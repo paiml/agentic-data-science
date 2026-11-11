@@ -1,0 +1,19 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#d-m1-p1-profile> a ads:Example ;
+  ads:language "kotlin" ;
+  ads:course "D" ;
+  ads:module "1"^^xsd:integer ;
+  ads:problem "P1" ;
+  ads:dataset ads:penguins ;
+  ads:readme
+  "kotlin/ads-kotlin/examples/d-m1-p1-profile/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#19" ;
+  ads:contract "contracts/ads-kotlin-p1-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p1.json" ;
+  ads:branchCasesEnumerated true .
+
+ads:penguins a ads:Dataset .

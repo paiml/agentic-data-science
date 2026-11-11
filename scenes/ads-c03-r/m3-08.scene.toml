@@ -1,0 +1,12 @@
+# m3-08 k-means from fixed centroids, against the golden result. Cues are teleprompter beat numbers. Facts only from the teleprompter: sizes 133, 123 and 86; objective 378.29.
+scene = { name = "m3-08-k-means-from-fixed-centroids-against-the-golden-result", code_font = "Noto Sans Mono" }
+element = [
+  { id = "cen", kind = "chip", x = 120, y = 140, label = "cen: the fixed starting centroids", tone = "accent", show = 2 },
+  { id = "km", kind = "card", x = 120, y = 260, w = 760, label = "kmeans fixed clusters the penguins", slots = ["cluster 1 size: 133", "cluster 2 size: 123", "cluster 3 size: 86", "objective: 378.29"], via = "left", show = 2 },
+  { id = "gold", kind = "outline", x = 1000, y = 260, w = 760, label = "golden file, tolerance 1e-9", slots = ["cluster 1 size: 133", "cluster 2 size: 123", "cluster 3 size: 86", "objective: 378.29"], show = 4 },
+  { id = "ok", kind = "strip", x = 120, y = 700, w = 760, label = "same sizes and objective: OK", tone = "ok", via = "below", show = 5 },
+]
+beat = [
+  { cue = 3, targets = ["km.cluster-1-size", "km.cluster-2-size", "km.cluster-3-size"], action = "highlight", stagger = 0.4 },
+  { cue = 4, target = "km", action = "fit", to = "gold" },
+]

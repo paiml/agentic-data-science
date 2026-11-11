@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#a-m1-p1> a ads:Example ;
+  ads:language "rust" ;
+  ads:course "A" ;
+  ads:module "1"^^xsd:integer ;
+  ads:problem "P1" ;
+  ads:dataset ads:penguins ;
+  ads:readme "rust/ads-rust/examples/a-m1-p1/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#10" ;
+  ads:contract "contracts/ads-rust-p1-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p1.json" ;
+  ads:branchCasesEnumerated true .

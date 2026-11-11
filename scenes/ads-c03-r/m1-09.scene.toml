@@ -1,0 +1,21 @@
+# m1-09 A malformed number is reported, not silently kept. Cues are teleprompter beat numbers. Facts only from the teleprompter: two penguins, heavy in body mass, the problem report at row 2 column 6.
+scene = { name = "m1-09-a-malformed-number-is-reported-not-silently-kept", code_font = "Noto Sans Mono" }
+element = [
+  { id = "file", kind = "code", x = 120, y = 140, w = 760, label = "the small file, two penguins", slots = ["Adelie, body mass: heavy", "Adelie, body mass: 3800"], show = 2 },
+  { id = "warn", kind = "strip", x = 120, y = 400, w = 760, label = "warning: one or more parsing issues", tone = "accent", via = "below", show = 5 },
+  { id = "tbl", kind = "card", x = 1000, y = 140, w = 760, label = "the two rows read back", slots = ["row 1 body mass: NA", "row 2 body mass: 3800", "column type: double"], via = "right", show = 8 },
+  { id = "rep", kind = "card", x = 1000, y = 520, w = 760, label = "the problem report", slots = ["row: 2", "column: 6", "expected: a double", "actual: heavy"], via = "below", show = 14 },
+  { id = "drop", kind = "chip", x = 120, y = 560, label = "NA policy drops row 1; one row remains", tone = "ok", show = 24 },
+  { id = "visible", kind = "strip", x = 120, y = 700, w = 760, label = "a bad value made visible and countable", tone = "ok", via = "below", show = 26 },
+]
+beat = [
+  { cue = 3, target = "file.1", action = "state", state = "error" },
+  { cue = 4, target = "file.2", action = "state", state = "ok" },
+  { cue = 10, target = "tbl.row-1-body-mass", action = "state", state = "error" },
+  { cue = 11, target = "tbl.column-type", action = "state", state = "ok" },
+  { cue = 15, target = "rep.row", action = "highlight" },
+  { cue = 16, target = "rep.expected", action = "highlight" },
+  { cue = 17, target = "rep.actual", action = "state", state = "error" },
+  { cue = 23, target = "rep.column", action = "highlight" },
+  { cue = 24, target = "file", action = "fade", value = 0.3 },
+]

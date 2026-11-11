@@ -1,0 +1,14 @@
+# m3-09 the sort order moves with the locale; the accuracy does not. Cues are teleprompter beat numbers. Facts only from the teleprompter: A B a b under C, a A b B under en US, accuracy 0.97647 under both.
+scene = { name = "m3-09-the-sort-order-moves-with-the-locale-the-accuracy-does-not", code_font = "Noto Sans Mono" }
+element = [
+  { id = "c", kind = "card", x = 120, y = 140, w = 760, label = "locale C, sorting a, B, b, A", slots = ["order: A B a b"], via = "left", show = 3 },
+  { id = "us", kind = "card", x = 1000, y = 140, w = 760, label = "locale en US, same four", slots = ["order: a A b B"], via = "right", show = 3 },
+  { id = "diff", kind = "chip", x = 120, y = 360, label = "a different order in each", tone = "error", show = 3 },
+  { id = "accc", kind = "outline", x = 120, y = 520, w = 760, label = "classifier under C", slots = ["accuracy: 0.97647"], via = "left", show = 4 },
+  { id = "accus", kind = "card", x = 1000, y = 520, w = 760, label = "classifier under en US", slots = ["accuracy: 0.97647"], via = "right", show = 4 },
+  { id = "ok", kind = "strip", x = 120, y = 760, w = 1640, label = "different sort, same accuracy: contract line prints OK", tone = "ok", via = "below", show = 5 },
+]
+beat = [
+  { cue = 3, targets = ["c.order", "us.order"], action = "state", state = "error", stagger = 0.3 },
+  { cue = 4, target = "accus", action = "fit", to = "accc" },
+]

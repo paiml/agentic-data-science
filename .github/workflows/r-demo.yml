@@ -1,0 +1,48 @@
+# W for ads-c03-r: the course's OWN demo workflow, R twin of lean-demo.yml.
+# Installs pinned R and the package, runs all 40 lesson demos, emits demo.json (attestation: follow-up once the job-level id-token permission starts jobs here).
+# demo.json comes only from this workflow's run at the exact commit (artifact demo-json-r-<sha>).
+name: r-demo
+on:
+  push:
+    branches: [main]
+    paths: ['r/agenticds/**', 'datasets/**', 'scripts/install-r.sh', 'scripts/r-deps.sh', 'scripts/r-pins.txt', 'scripts/emit-demo-json-r.sh', '.github/workflows/r-demo.yml']
+  pull_request:
+    paths: ['r/agenticds/**', 'datasets/**', 'scripts/install-r.sh', 'scripts/r-deps.sh', 'scripts/r-pins.txt', 'scripts/emit-demo-json-r.sh', '.github/workflows/r-demo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: r-demo-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  r-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: System libraries for the R build (Posit ubuntu-2404 tarball)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends libblas3 liblapack3 libgfortran5 libicu-dev libcurl4-openssl-dev libssl-dev libxml2-dev libpcre2-8-0 libbz2-1.0 liblzma5 libreadline8 libtirpc3 libdeflate0 libgomp1 zlib1g
+      - name: Isolate R from runner user state (empty HOME, no user library, no profiles)
+        run: |
+          h="$RUNNER_TEMP/rhome"; mkdir -p "$h"
+          { echo "HOME=$h"; echo "XDG_CONFIG_HOME=$h/.config"; echo "XDG_CACHE_HOME=$h/.cache"
+            echo "R_USER_CACHE_DIR=$h/.cache/R"; echo "R_LIBS_USER=$RUNNER_TEMP/rnolib"; echo "R_LIBS_SITE=$RUNNER_TEMP/rnolib"
+            echo "R_ENVIRON_USER=/dev/null"; echo "R_PROFILE_USER=/dev/null"; } >> "$GITHUB_ENV"
+      - name: Install R 4.6.1 (pinned, sha256-verified, into RUNNER_TEMP)
+        run: scripts/install-r.sh "$RUNNER_TEMP/r" && echo "$RUNNER_TEMP/r/4.6.1/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/rlib
+          key: rlib-test-${{ runner.os }}-4.6.1-${{ hashFiles('scripts/r-pins.txt', 'scripts/r-deps.sh') }}
+      - name: Install pinned R dependencies (CRAN snapshot 2026-10-20, versions checked)
+        run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "R_LIBS=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
+      - name: Install the package
+        run: R CMD INSTALL --library="$RUNNER_TEMP/rlib" r/agenticds
+      - name: Run the 40 lesson demos and emit demo.json
+        run: scripts/emit-demo-json-r.sh "$RUNNER_TEMP/demo.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-json-r-${{ github.sha }}
+          path: ${{ runner.temp }}/demo.json

@@ -1,0 +1,13 @@
+# m4-06 Aggregate with a map. Facts: BTreeMap, or_insert((0, 0)); illustration means 5.25 and 6.0; all 6,497 rows: red 5.636, white 5.878.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m4-06-aggregate-with-a-map", code_font = "Noto Sans Mono" }
+element = [
+  { id = "map", kind = "code", x = 120, y = 120, w = 840, slots = ["or_insert((0, 0))", "red: (sum, count)", "white: (sum, count)"], via = "left", show = 1 },
+  { id = "mean", kind = "strip", x = 120, y = 520, w = 840, label = "sum / count: 5.25 and 6.0", tone = "accent", via = "below", show = 2 },
+  { id = "all", kind = "strip", x = 120, y = 680, w = 900, label = "6,497 rows: red 5.636, white 5.878", tone = "ok", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, targets = ["map.1", "map.2", "map.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 2, target = "mean", action = "state", state = "accent" },
+  { cue = 2, target = "all", action = "state", state = "ok" },
+]

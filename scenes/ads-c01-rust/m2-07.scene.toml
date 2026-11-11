@@ -1,0 +1,19 @@
+# m2-07 cv_rmse. Facts: five committed folds, hold one out, 342 held-out gaps, pooled RMSE 394.31, with species 376.64, both match golden.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m2-07-cv-rmse", code_font = "Noto Sans Mono" }
+element = [
+  { id = "folds", kind = "code", x = 120, y = 120, w = 840, slots = ["fold 1", "fold 2", "fold 3", "fold 4", "fold 5"], via = "left", show = 1 },
+  { id = "round", kind = "card", x = 1100, y = 120, w = 700, label = "hold one out", slots = ["fit on the other four", "gap for each held-out row"], via = "right", show = 2 },
+  { id = "gaps", kind = "chip", x = 120, y = 460, label = "342 honest gaps", show = 3 },
+  { id = "pool", kind = "strip", x = 1100, y = 460, w = 700, label = "pooled RMSE 394.31", tone = "accent", via = "below", show = 4 },
+  { id = "sp", kind = "strip", x = 120, y = 640, w = 840, label = "with species: 376.64", tone = "ok", via = "below", show = 5 },
+  { id = "gold", kind = "strip", x = 1100, y = 700, w = 700, label = "both match the golden file", tone = "ok", via = "below", show = 6 },
+]
+beat = [
+  { cue = 1, targets = ["folds.1", "folds.2", "folds.3", "folds.4", "folds.5"], action = "state", state = "accent", stagger = 0.4 },
+  { cue = 2, target = "round", action = "highlight", duration = 1.6 },
+  { cue = 3, target = "gaps", action = "state", state = "accent" },
+  { cue = 4, target = "pool", action = "state", state = "accent" },
+  { cue = 5, target = "sp", action = "state", state = "ok" },
+  { cue = 6, target = "gold", action = "state", state = "ok" },
+]

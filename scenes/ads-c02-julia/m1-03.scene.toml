@@ -1,0 +1,13 @@
+# m1-03 red first. Source: teleprompter beats 5 and 8 (cue = beat number). Facts: testset greet with one test, Scratch.greet equals "Hello, Julia"; a test that never failed never proved it can fail; red run fails for the reason the ticket describes.
+scene = { name = "m1-03-red-first-then-green", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ts", kind = "code", x = 120, y = 140, w = 1000, label = "the test, written before the function", slots = ["@testset \"greet\" begin", "  @test Scratch.greet() == \"Hello, Julia\"", "end"], show = 5, via = "left" },
+  { id = "tk", kind = "chip", x = 1200, y = 200, w = 560, label = "ticket as code", show = 5, via = "right" },
+  { id = "red", kind = "chip", x = 120, y = 560, w = 460, label = "red: it fails", tone = "error", show = 8, via = "scale" },
+  { id = "why", kind = "strip", x = 120, y = 700, w = 1500, label = "never failed = never proved it can fail", show = 8, via = "below" },
+  { id = "rs", kind = "strip", x = 120, y = 820, w = 1500, label = "it fails for the ticket's reason, not a typo", tone = "accent", show = 8, via = "below" },
+]
+beat = [
+  { cue = 5, target = "ts.2", action = "highlight" },
+  { cue = 8, target = "red", action = "state", state = "error" },
+]

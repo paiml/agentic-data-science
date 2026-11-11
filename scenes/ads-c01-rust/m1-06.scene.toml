@@ -1,0 +1,16 @@
+# m1-06 The fixture. Facts: datasets/penguins/penguins.csv, 344 rows, 8 columns; SHA-256 in SHA256SUMS (f204db2c...); one changed value (3750 to 3751) fails the gate; the Adelie mean is 38.79 on every machine.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m1-06-the-fixture", code_font = "Noto Sans Mono" }
+element = [
+  { id = "csv", kind = "code", x = 120, y = 120, w = 840, slots = ["species,island,bill_length_mm,...", "Adelie,Torgersen,39.1,18.7,181,3750", "344 rows, 8 columns"], via = "left", show = 1 },
+  { id = "hash", kind = "card", x = 120, y = 440, w = 840, label = "SHA-256", slots = ["file digest f204db2c...", "SHA256SUMS digest f204db2c..."], via = "below", show = 2 },
+  { id = "okc", kind = "chip", x = 1100, y = 460, label = "datasets OK", show = 2 },
+  { id = "flip", kind = "strip", x = 120, y = 760, w = 900, label = "3750 becomes 3751: digest differs, gate refuses", tone = "error", via = "below", show = 3 },
+  { id = "mean", kind = "outline", x = 1100, y = 140, w = 700, label = "three machines", slots = ["laptop 1: Adelie mean 38.79", "laptop 2: Adelie mean 38.79", "laptop 3: Adelie mean 38.79"], show = 4 },
+]
+beat = [
+  { cue = 1, target = "csv", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "okc", action = "state", state = "ok" },
+  { cue = 3, target = "flip", action = "state", state = "error" },
+  { cue = 4, target = "mean", action = "state", state = "ok" },
+]

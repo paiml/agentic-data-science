@@ -1,0 +1,13 @@
+# m2-06 ktlint — scene spec. cue = teleprompter beat index (becomes the srt row when Noah records).
+scene = { name = "m2-06-ktlint", code_font = "Noto Sans Mono" }
+element = [
+  { id = "src", kind = "code", x = 120, y = 160, w = 900, slots = ["P1.kt lines 62-67", "col 68 ruler"], show = 1 },
+  { id = "lint", kind = "card", x = 1200, y = 160, w = 560, label = "ktlint", slots = ["formatting", "imports", "naming"], show = 1 },
+  { id = "e1", kind = "edge", from = "src", to = "lint", show = 1 },
+  { id = "out", kind = "strip", x = 120, y = 600, w = 1640, label = "stdout empty, exit 0: the build continues", tone = "ok", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, target = "lint", action = "highlight" },
+  { cue = 2, target = "lint", action = "state", state = "ok" },
+  { cue = 2, offset = 0.6, target = "out", action = "state", state = "ok" },
+]

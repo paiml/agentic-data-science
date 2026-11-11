@@ -1,0 +1,15 @@
+# m4-04 Design the matrix. Facts: 13 columns per wine row; 11 measurements are features; quality is y; color becomes a dummy (white 1, red 0); 11 + 1 = 12 columns; X keeps 5,198 rows.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m4-04-design-the-matrix", code_font = "Noto Sans Mono" }
+element = [
+  { id = "cols", kind = "code", x = 120, y = 120, w = 840, slots = ["13 columns per wine row", "11 measurements drop into X", "X is 5198 x j"], via = "left", show = 1 },
+  { id = "y", kind = "chip", x = 1100, y = 120, label = "quality leaves X: becomes y", show = 2 },
+  { id = "dummy", kind = "card", x = 1100, y = 300, w = 700, label = "color: white = 1, red = 0", via = "right", show = 2 },
+  { id = "tally", kind = "strip", x = 120, y = 560, w = 840, label = "11 features + 1 dummy = 12 columns", tone = "ok", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, targets = ["cols.1", "cols.2", "cols.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 2, target = "y", action = "state", state = "accent" },
+  { cue = 2, target = "dummy", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "tally", action = "state", state = "ok" },
+]

@@ -1,0 +1,17 @@
+# m1-05 The contract. Facts: contracts/ads-rust-p1-v1.yaml; assert_eq!((raw.height(), kept.height()), (344, 342)); then "contract: ads-rust-p1-v1 rows 344 -> 342 OK"; a kept count of 344 makes the assert panic.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m1-05-the-contract", code_font = "Noto Sans Mono" }
+element = [
+  { id = "yaml", kind = "code", x = 120, y = 120, w = 700, slots = ["equations", "proof_obligations", "falsification_tests"], via = "left", show = 1 },
+  { id = "prog", kind = "card", x = 960, y = 120, w = 840, label = "ads-rust-p1-v1", slots = ["rows loaded: 344", "rows kept: 342"], via = "right", show = 1 },
+  { id = "gate", kind = "outline", x = 960, y = 440, w = 840, label = "assert_eq! (344, 342)", slots = ["344 matches", "342 matches"], show = 2 },
+  { id = "ok", kind = "strip", x = 960, y = 700, w = 840, label = "contract: ads-rust-p1-v1 rows 344 -> 342 OK", tone = "ok", via = "below", show = 2 },
+  { id = "bad", kind = "strip", x = 120, y = 440, w = 760, label = "kept 344 against 342: panic, no OK line", tone = "error", via = "below", show = 3 },
+  { id = "dial", kind = "chip", x = 120, y = 700, label = "mutation dial: red every time", show = 4 },
+]
+beat = [
+  { cue = 1, target = "yaml", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "gate", action = "state", state = "ok" },
+  { cue = 3, target = "bad", action = "state", state = "error" },
+  { cue = 4, target = "dial", action = "highlight", duration = 1.6 },
+]

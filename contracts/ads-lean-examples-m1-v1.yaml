@@ -1,0 +1,40 @@
+# ads-lean-examples-m1-v1: Course E (Lean 4), Module 1 examples (v01..v10)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Ten examples for Course E module 1: mean and variance over a field, exact rationals against Float, the toolchain pin, the unfinished-proof scan, the three theorem statements, golden parity against R, the axiom report, the contract and its falsifier, the four gate checks and the recap."
+  references:
+    - "lean/AgenticDS/AgenticDS/Examples/M1.lean"
+    - "lean/AgenticDS/AgenticDSTest/ExamplesM1.lean"
+    - "CLASSIFICATION (kind: pattern): example values asserted by the test, theorems kernel-checked"
+
+equations:
+  m1_example_facts:
+    formula: |
+      mean [2,4,4,4,5,5,7,9] = 5,  variance = 4
+      1/3 + 1/3 + 1/3 = 1 in Q,  (0.1 + 0.2 == 0.3) = false in Float
+      axioms(variance_shift) subset {propext, Classical.choice, Quot.sound}
+    domain: "the Lean sources under lean/AgenticDS and datasets/golden/p1.json"
+    codomain: "ten registered examples that run and print their stated values"
+    postconditions:
+      - "REGISTRY: the number of example files equals the number of registered examples"
+      - "GOLDEN: the Adelie body mass mean agrees with p1.json within 1e-9"
+      - "CAN_FAIL: an example that breaks a stated value fails the test"
+
+proof_obligations:
+  - type: invariant
+    property: "The example test reports contract: ads-lean-examples-m1-v1 OK only when every check passes"
+    formal: "ExamplesM1.main returns 0 iff registry, values, axioms and every example run succeed"
+    applies_to: m1_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-LEAN-EXAMPLES-M1-001
+    rule: "Example values match the stated ones"
+    prediction: "lake env lean --run AgenticDSTest/ExamplesM1.lean prints contract: ads-lean-examples-m1-v1 OK"
+    test: "lean/AgenticDS/AgenticDSTest/ExamplesM1.lean"
+    mutation: "Change m1v01_xs to [2, 4, 4, 4, 5, 5, 7, 10]: the mean and variance checks fail"
+    discriminates: "An example with a wrong number cannot pass the checks"
+    if_fails: "An example prints a value the course text does not state"

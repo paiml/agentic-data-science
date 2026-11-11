@@ -1,0 +1,42 @@
+# ads-kotlin-p4-v1: Course D (Kotlin), Module 4, Problem P4 (wine pipeline and engine comparison)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-28"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "The P4 functions (readWine, validate, splitWine, scoreWine, aggregateFrame, aggregatePlain) reproduce datasets/golden/p4.json within 1e-6, and the two aggregation engines agree before anything is timed. P4Test ends on a contract line that counts the tests that ran."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4Bench.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/P4Golden.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/P4Test.kt"
+    - "datasets/golden/p4.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p4_matches_golden:
+    formula: |
+      |rmse - golden.rmse| <= 1e-6,  |r2 - golden.r2| <= 1e-6
+      aggregateFrame(wine) = aggregatePlain(wine)
+    domain: "datasets/wine/*.csv with SHA256SUMS verified"
+    codomain: "held-out RMSE and R2, per-colour mean quality and row count"
+    postconditions:
+      - "GOLDEN: the held-out RMSE and R2 equal the R oracle within 1e-6"
+      - "AGREE: both aggregation engines return the same table"
+      - "CAN_FAIL: a shifted prediction or a changed row makes the golden or agreement test fail"
+
+proof_obligations:
+  - type: invariant
+    property: "P4Test prints contract: ads-kotlin-p4-v1 tests <n> OK only when every test passed"
+    formal: "tests > 0 and failed = 0"
+    applies_to: p4_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-P4-001
+    rule: "Golden parity and engine agreement hold"
+    prediction: "make gate-kotlin passes with Kover LINE = 100 and BRANCH >= 95"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Add 1.0 to every prediction: RMSE leaves the 1e-6 band and the golden test fails"
+    discriminates: "A model that drifts from the R oracle cannot print OK"
+    if_fails: "Learners compare their own language against a wrong reference"

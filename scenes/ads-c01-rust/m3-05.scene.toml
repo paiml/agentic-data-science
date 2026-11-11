@@ -1,0 +1,17 @@
+# m3-05 Best split. Facts: sort on one measurement, try every cut; MINBUCKET 7 refuses a side under 7 rows; threshold is the midpoint (a + b) / 2; best gain over all four features.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m3-05-best-split", code_font = "Noto Sans Mono" }
+element = [
+  { id = "axis", kind = "code", x = 120, y = 120, w = 840, slots = ["dots sorted by bill length", "cut line in the first gap"], via = "left", show = 1 },
+  { id = "curve", kind = "card", x = 1100, y = 120, w = 700, label = "weighted gini per cut", slots = ["left and right weighed by size"], via = "right", show = 2 },
+  { id = "skip", kind = "strip", x = 120, y = 480, w = 840, label = "side under 7 rows: skipped (MINBUCKET)", tone = "error", via = "below", show = 2 },
+  { id = "best", kind = "strip", x = 120, y = 640, w = 840, label = "lowest dip wins: threshold (a + b) / 2", tone = "ok", via = "below", show = 3 },
+  { id = "feat", kind = "chip", x = 1100, y = 640, label = "best gain over all four features", show = 3 },
+]
+beat = [
+  { cue = 1, target = "axis", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "curve", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "skip", action = "state", state = "error" },
+  { cue = 3, target = "best", action = "state", state = "ok" },
+  { cue = 3, target = "feat", action = "state", state = "ok" },
+]

@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+ls AgenticDS/Csv.lean AgenticDS/Profile.lean AgenticDS/Stats.lean && bat -r 1:12 AgenticDS/Stats.lean
+echo "exit=$? #01"
+lake exe scene-m1 v01
+echo "exit=$? #02"

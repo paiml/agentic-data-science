@@ -1,0 +1,19 @@
+bat -p lean/AgenticDS/AgenticDS/Scenes/M3V05.lean
+echo "exit=$? #01"
+(cd lean/AgenticDS && lake env lean AgenticDS/Scenes/M3V05.lean)
+echo "exit=$? #02"
+make lean-scan
+echo "exit=$? #03"
+printf 'theorem planted : 2 + 2 = 4 := by native_decide
+' > lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #04"
+cat lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #05"
+clear; echo cleared-""06
+make lean-scan
+echo "exit=$? #06"
+rm -v lean/AgenticDS/AgenticDS/Scratch.lean
+echo "exit=$? #07"
+clear; echo cleared-""09
+make lean-scan
+echo "exit=$? #08"

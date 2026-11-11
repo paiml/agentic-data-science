@@ -1,0 +1,23 @@
+target/
+.lake/
+*.log
+kotlin/.gradle/
+kotlin/build/
+kotlin/ads-kotlin/build/
+.kotlin/
+/plot.png
+
+# pv lint caches
+lean/AgenticDS/plot.*
+.pv/
+contracts/.pv/
+target-lab/
+*.profraw
+
+# pmat writes this. The T12p measurer (lean-coverage-report.sh) runs on a fresh `git clone --shared` and refuses ANY .pmat-metrics copy it finds, tracked or not; ignoring keeps it out of git, never run T12p on a working tree.
+.pmat-metrics/
+
+# copied in by scripts/gate-lean.sh from PlantedWrongSlope.lean.planted, removed after
+lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean
+out/lab-preview/
+.dl-cache/

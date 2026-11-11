@@ -1,0 +1,13 @@
+# m1-09 malformed number. Source: teleprompter beats 2 and 3 (cue = beat number). Facts: tiny CSV, row 1 body mass "heavy", row 2 body mass 3800 (both Adelie, Torgersen); outcomes: crash, zero, stays a string, becomes missing.
+scene = { name = "m1-09-a-malformed-number-is-never-a-silent-string", code_font = "Noto Sans Mono" }
+element = [
+  { id = "csv", kind = "code", x = 120, y = 140, w = 1100, label = "tiny CSV made on the fly", slots = ["header from the real penguin file", "Adelie, Torgersen, ... body mass: heavy", "Adelie, Torgersen, ... body mass: 3800"], show = 2, via = "left" },
+  { id = "o1", kind = "chip", x = 120, y = 560, w = 400, label = "the run crashes", tone = "error", show = 3, via = "below" },
+  { id = "o2", kind = "chip", x = 560, y = 560, w = 400, label = "cell becomes 0", tone = "error", show = 3, via = "below" },
+  { id = "o3", kind = "chip", x = 1000, y = 560, w = 400, label = "cell stays a string", tone = "error", show = 3, via = "below" },
+  { id = "o4", kind = "chip", x = 1440, y = 560, w = 400, label = "cell becomes missing", show = 3, via = "below" },
+]
+beat = [
+  { cue = 2, target = "csv.2", action = "highlight" },
+  { cue = 3, target = "o4", action = "state", state = "ok" },
+]

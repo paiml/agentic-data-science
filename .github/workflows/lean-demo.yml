@@ -1,0 +1,63 @@
+# W for ads-c05-lean (RMV-001 §16 A-2/A-3): the course's OWN demo workflow.
+# Builds the Lean package, runs the Lean gate, runs every declared contract demo, emits demo.json and attests it.
+# The recorder takes demo.json only from this workflow's run at the exact commit, and runs `gh attestation verify` on it.
+name: lean-demo
+on:
+  push:
+    branches: [main]
+    paths: ['lean/AgenticDS/**', 'scripts/gate-lean.sh', 'scripts/install-elan.sh', '.github/workflows/lean-demo.yml']
+  pull_request:
+    paths: ['lean/AgenticDS/**', 'scripts/gate-lean.sh', 'scripts/install-elan.sh', '.github/workflows/lean-demo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lean-demo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lean-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (pinned, sha256-verified)
+        run: scripts/install-elan.sh && echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.elan/toolchains
+            ~/.cache/mathlib
+          key: lean-${{ runner.os }}-${{ hashFiles('lean/AgenticDS/lean-toolchain', 'lean/AgenticDS/lake-manifest.json') }}
+      - name: Mathlib oleans (download into the workspace)
+        working-directory: lean/AgenticDS
+        run: ~/.elan/bin/lake exe cache get
+      - name: Lean gate (build, axioms, tests, planted faults, demo reruns)
+        run: make gate-lean
+      - name: Run the declared demos and emit demo.json
+        working-directory: lean/AgenticDS
+        run: scripts/emit-demo-json.sh .lake/build/bin "$RUNNER_TEMP/demo.json" $(cat scripts/contract-demos.txt)
+      - name: Tool layout for the term demos (/opt/elan, /opt/tools/bin/bat 0.24.0 pinned)
+        run: |
+          sudo ln -sfn "$HOME/.elan" /opt/elan
+          curl -fsSL -o "$RUNNER_TEMP/bat.tgz" https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-v0.24.0-x86_64-unknown-linux-musl.tar.gz
+          echo "d39a21e3da57fe6a3e07184b3c1dc245f8dba379af569d3668b6dcdfe75e3052  $RUNNER_TEMP/bat.tgz" | sha256sum -c -
+          sudo mkdir -p /opt/tools/bin && sudo tar -xzf "$RUNNER_TEMP/bat.tgz" -C /opt/tools/bin --strip-components=1 bat-v0.24.0-x86_64-unknown-linux-musl/bat
+          sudo ln -sfn /usr/bin/make /opt/tools/bin/gmake
+      - name: Run term-demos/*.cmds as term-<id> demos
+        working-directory: lean/AgenticDS
+        run: |
+          scripts/emit-term-demos.sh "$RUNNER_TEMP/demo.json" "$RUNNER_TEMP/demo-all.json"
+          mv "$RUNNER_TEMP/demo-all.json" "$RUNNER_TEMP/demo.json"
+      - name: Attest demo.json (build provenance, D9)
+        if: github.event_name != 'pull_request'
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ runner.temp }}/demo.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: demo-json-${{ github.sha }}
+          path: ${{ runner.temp }}/demo.json

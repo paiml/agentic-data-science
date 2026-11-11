@@ -1,0 +1,40 @@
+# ads-kotlin-plot-v1: Course D (Kotlin) demo plots, the structural check of a plot SVG (ADS-DEMO-001, mirrors ads-lean-plot-v1)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-11-03"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "PlotCheck.kt measures a plot SVG (points = circles, axis and grid strokes = lines and paths, tick labels = texts) and refuses one that draws fewer than 2 points, 4 axis or grid strokes or 8 tick labels, or that is empty. PlotCheckTest applies it to the Anscombe plot.svg and to the penguin OLS fit exported as SVG, and deletes each part to show the check goes red."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/PlotCheck.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/PlotCheckTest.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Example.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/anscombe/Anscombe.kt"
+    - "contracts/ads-lean-plot-v1.yaml"
+    - "CLASSIFICATION (kind: pattern): structural check of an SVG, tolerances none"
+
+equations:
+  plot_is_real:
+    formula: |
+      refusals(svg) = [] iff not blank(svg) and count('<circle') >= 2 and count('<line') + count('<path') >= 4 and count('<text') >= 8
+    domain: "any SVG text"
+    codomain: "an empty list, or one line per missing part"
+    postconditions:
+      - "REAL: Anscombe plot.svg holds 44 points (4 sets of 11); the penguin fit holds exactly 342 data points (the 3 legend keys at cx=cy=10.5 are not counted)"
+      - "REFUSE: an empty file, or an SVG with no points, no axis or grid strokes, or no tick labels, is refused"
+
+proof_obligations:
+  - type: invariant
+    property: "Each of the three parts, deleted alone from a real plot, makes the check refuse; the untouched plots pass"
+    formal: "forall svg in {anscombe, fit}: refusals(svg) = [] and refusals(delete(svg, circle)) has one line naming points"
+    applies_to: plot_is_real
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-PLOT-001
+    rule: "The check refuses a plot with the points deleted"
+    prediction: "PlotCheckTest passes inside scripts/gate-kotlin.sh"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Delete every <circle> from the Anscombe and the fit SVG: plotRefusals returns exactly one line naming points (deletingThePointsGoesRed); delete the lines and paths, or the texts: the axis and tick refusals appear (deletingTheAxesOrTheTicksGoesRed); keep the legend keys but delete the data circles: the points refusal still appears (keepingTheLegendButDeletingTheDataGoesRed)"
+    discriminates: "A blank or text-only picture cannot reach a course video"
+    if_fails: "A learner sees a plot with nothing plotted"

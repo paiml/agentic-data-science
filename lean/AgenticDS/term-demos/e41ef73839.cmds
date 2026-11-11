@@ -1,0 +1,9 @@
+cd lean/AgenticDS
+bat -r 1:12 AgenticDSTest/OlsTest.lean && lake exe scene-m2 v06
+echo "exit=$? #01"
+grep -n "\"intercept\"" ../../datasets/golden/p2.json
+echo "exit=$? #02"
+grep -n "\"slope\"" ../../datasets/golden/p2.json
+echo "exit=$? #03"
+lake env lean --run AgenticDSTest/OlsTest.lean ../..
+echo "exit=$? #04"

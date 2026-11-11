@@ -1,0 +1,41 @@
+# id	ready (substring the run must print)	command (run from kotlin/, as recorded)
+m1v01	VERDICT: ingest 344 -> 342 PASS	gradle --no-daemon --offline :ads-kotlin:m1v01
+m1v02	VERDICT: profile matches R golden PASS	gradle --no-daemon --offline :ads-kotlin:m1v02
+m1v03	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.P1Test
+m1v04	BUILD SUCCESSFUL	./gradlew --console=plain ktlintCheck
+m1v05	BUILD SUCCESSFUL	./gradlew --console=plain detekt
+m1v06	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.ToolsCanFailTest.sha256sumFailsOnAChangedByte
+m1v07	BUILD SUCCESSFUL	./gradlew --console=plain verifyShaclP1
+m1v08	BUILD SUCCESSFUL	./gradlew --console=plain koverLog koverLogBranch koverVerify
+m1v09	Quality gate PASSED	pmat quality-gate --checks complexity,satd,duplicates
+m1v10	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:check
+m2v01	Golden P2 PASS	gradle --no-daemon --offline :ads-kotlin:m2v01
+m2v02	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test
+m2v03	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.OlsTest
+m2v04	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.ToolsCanFailTest.sha256sumFailsOnAChangedByte
+m2v05	BUILD SUCCESSFUL	./gradlew --console=plain koverLog koverLogBranch koverVerify
+m2v06	BUILD SUCCESSFUL	./gradlew --console=plain ktlintCheck
+m2v07	BUILD SUCCESSFUL	./gradlew --console=plain detekt
+m2v08	BUILD SUCCESSFUL	./gradlew --console=plain test koverVerify ktlintCheck detekt
+m2v09	BUILD SUCCESSFUL	./gradlew --console=plain verifyShaclP1Profile
+m2v10	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:check
+m3v01	P3 matches golden PASS	gradle --no-daemon --offline :ads-kotlin:m3v01
+m3v02	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test
+m3v03	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.M3ExamplesTest
+m3v04	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.ToolsCanFailTest.sha256sumFailsOnAChangedByte
+m3v05	BUILD SUCCESSFUL	./gradlew --console=plain koverLog koverLogBranch koverVerify
+m3v06	BUILD SUCCESSFUL	./gradlew --console=plain ktlintCheck
+m3v07	BUILD SUCCESSFUL	./gradlew --console=plain detekt
+m3v08	BUILD SUCCESSFUL	./gradlew --console=plain test koverVerify ktlintCheck detekt
+m3v09	BUILD SUCCESSFUL	./gradlew --console=plain verifyShaclP3
+m3v10	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:check
+m4v01	P4 vs golden PASS	gradle --no-daemon --offline :ads-kotlin:m4v01
+m4v02	P4 bench PASS	gradle --no-daemon --offline :ads-kotlin:m4v02
+m4v03	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test
+m4v04	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:test --tests com.paiml.ads.P4Test
+m4v05	BUILD SUCCESSFUL	./gradlew --console=plain koverLog koverLogBranch koverVerify
+m4v06	BUILD SUCCESSFUL	./gradlew --console=plain ktlintCheck
+m4v07	BUILD SUCCESSFUL	./gradlew --console=plain detekt
+m4v08	BUILD SUCCESSFUL	./gradlew --console=plain test koverVerify ktlintCheck detekt
+m4v09	BUILD SUCCESSFUL	./gradlew --console=plain verifyShaclP4
+m4v10	BUILD SUCCESSFUL	gradle --no-daemon --offline :ads-kotlin:check

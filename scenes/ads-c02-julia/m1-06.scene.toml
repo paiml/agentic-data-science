@@ -1,0 +1,13 @@
+# m1-06 full profile vs golden. Source: teleprompter beats 6 and 8 (cue = beat number). Facts: Gentoo flipper mean 217.187, body mass 5076.02, smallest bill depth 14.9821; Chinstrap longest bill 48.8338 vs Gentoo 47.5049 vs Adelie 38.7914; one OK line replaces eyeballing thirty numbers.
+scene = { name = "m1-06-the-full-profile-against-the-golden-file", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ge", kind = "card", x = 120, y = 140, w = 640, label = "Gentoo", slots = ["flipper mean 217.187", "body mass 5076.02", "bill depth 14.9821 (smallest)"], show = 6, via = "left" },
+  { id = "bl", kind = "code", x = 900, y = 140, w = 760, label = "mean bill length", slots = ["Chinstrap 48.8338", "Gentoo 47.5049", "Adelie 38.7914"], show = 6, via = "right" },
+  { id = "no", kind = "chip", x = 120, y = 640, w = 720, label = "not 30 numbers by eye", tone = "error", show = 8, via = "left" },
+  { id = "ok", kind = "strip", x = 120, y = 780, w = 1200, label = "one line: OK = every value matched", tone = "accent", show = 8, via = "below" },
+]
+beat = [
+  { cue = 6, target = "bl.1", action = "highlight" },
+  { cue = 8, target = "no", action = "state", state = "error" },
+  { cue = 8, target = "ok", action = "state", state = "ok" },
+]

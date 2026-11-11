@@ -1,0 +1,14 @@
+# m1-07 gates. Source: teleprompter beats 7 and 11 (cue = beat number). Facts: coverage says tests visited the code; golden file and mutants say tests would complain; ask for the gate not a promise; "gate-julia OK" comes from a tool that can fail.
+scene = { name = "m1-07-the-gates-shacl-coverage-and-format", code_font = "Noto Sans Mono" }
+element = [
+  { id = "cov", kind = "chip", x = 120, y = 200, w = 700, label = "coverage: tests visited the code", show = 7, via = "left" },
+  { id = "gold", kind = "chip", x = 120, y = 320, w = 700, label = "golden file: values match", show = 7, via = "left" },
+  { id = "mut", kind = "chip", x = 120, y = 440, w = 700, label = "mutants: tests would complain", show = 7, via = "left" },
+  { id = "say", kind = "chip", x = 1000, y = 200, w = 700, label = "\"it works\" is a sentence", tone = "error", show = 11, via = "right" },
+  { id = "res", kind = "chip", x = 1000, y = 320, w = 700, label = "gate-julia OK: a result", show = 11, via = "right" },
+  { id = "tog", kind = "strip", x = 120, y = 760, w = 1500, label = "together they give a result you can lean on", tone = "accent", show = 11, via = "below" },
+]
+beat = [
+  { cue = 7, targets = ["cov", "gold", "mut"], action = "highlight", stagger = 0.5 },
+  { cue = 11, target = "res", action = "state", state = "ok" },
+]

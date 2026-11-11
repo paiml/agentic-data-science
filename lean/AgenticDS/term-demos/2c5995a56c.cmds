@@ -1,0 +1,3 @@
+cd lean/AgenticDS
+bat -r 1:19 AgenticDS/Scenes/M4V06.lean
+lake exe scene-m4 v06

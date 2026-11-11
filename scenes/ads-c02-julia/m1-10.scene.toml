@@ -1,0 +1,13 @@
+# m1-10 wrap-up. Source: teleprompter beat 5 (cue = beat number). Facts: state correct in a ticket; test fails first; Claude writes the code; check with a tool that can fail against a number not from the code; my job is first and last.
+scene = { name = "m1-10-wrap-up-both-p1-contracts", code_font = "Noto Sans Mono" }
+element = [
+  { id = "s1", kind = "chip", x = 120, y = 300, w = 400, label = "1 ticket: what correct means", show = 5, via = "left" },
+  { id = "s2", kind = "chip", x = 560, y = 300, w = 400, label = "2 test fails first", show = 5, via = "left" },
+  { id = "s3", kind = "chip", x = 1000, y = 300, w = 400, label = "3 Claude writes code", show = 5, via = "left" },
+  { id = "s4", kind = "chip", x = 1440, y = 300, w = 400, label = "4 check vs outside number", show = 5, via = "left" },
+  { id = "me", kind = "strip", x = 120, y = 560, w = 1200, label = "your job: the first and the last", tone = "accent", show = 5, via = "below" },
+]
+beat = [
+  { cue = 5, targets = ["s1", "s2", "s3", "s4"], action = "highlight", stagger = 0.6 },
+  { cue = 5, targets = ["s1", "s4"], action = "state", state = "ok" },
+]

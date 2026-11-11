@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#c-m4-p4-pipeline> a ads:Example ;
+  ads:language "r" ;
+  ads:course "C" ;
+  ads:module "4"^^xsd:integer ;
+  ads:problem "P4" ;
+  ads:dataset ads:wine-quality ;
+  ads:readme "r/agenticds/inst/examples/c-m4-p4-pipeline/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#7" ;
+  ads:contract "contracts/ads-r-p4-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p4.json" ;
+  ads:branchCasesEnumerated true .
