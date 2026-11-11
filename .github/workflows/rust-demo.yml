@@ -1,5 +1,5 @@
 # The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds as one terminal session (the same row shape as the
-# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero exit, a failed or ignored test, passed == 0, a duplicate id, an empty command file; emits demo.json and attests it on main.
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on main.
 name: rust-demo
 on:
   push:

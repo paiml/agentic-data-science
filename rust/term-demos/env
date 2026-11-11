@@ -1,5 +1,3 @@
-LC_ALL=C.UTF-8
-TZ=UTC
 TERM=xterm-256color
 PS1=$ 
 INPUTRC=/dev/null
