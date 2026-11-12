@@ -2,7 +2,7 @@
 name = "demo-emit"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.87"
+rust-version = "1.88"
 publish = false
 description = "Attested demo.json emitter for the Rust course: runs each rust/term-demos/<id>.cmds line as an argv, with no shell"
 

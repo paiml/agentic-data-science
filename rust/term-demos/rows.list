@@ -1,4 +1,4 @@
-# pinned rows of demo.json: <id> <sha256 of <id>.cmds> <sha256 of <id>.cwd>; emit-demo-json.sh refuses an unlisted row file, a missing listed file and a file whose sha256 differs
+# pinned rows of demo.json: <id> <sha256 of <id>.cmds> <sha256 of <id>.cwd>; demo-emit refuses an unlisted row file, a missing listed file and a file whose sha256 differs
 45af114317 59579ecec9d5186464ff440c23cd6598e8476ca94b74a7fe4ceddf5c2c15648a e1b419bcf32c9b1ca79faa8a708881753adca5a4b55b0f2fbdea77236ea1509f
 476ac04b89 44741141db08ea7ecffe4b566b530791a06f59677d856346c1bc8efb1fbbb93c e1b419bcf32c9b1ca79faa8a708881753adca5a4b55b0f2fbdea77236ea1509f
 4c7254d89f 4579adbcd946469ff3ced2f63d48e2f1787363986dc49db7eb87a3940bcf1766 e1b419bcf32c9b1ca79faa8a708881753adca5a4b55b0f2fbdea77236ea1509f
