@@ -44,7 +44,7 @@ fn cfg() -> Config {
 #[test]
 fn every_committed_row_passes_the_validation_phase() {
     let plan = validate(&cfg()).unwrap_or_else(|e| panic!("{e:?}"));
-    assert_eq!(plan.len(), 18);
+    assert_eq!(plan.len(), 20);
     for r in &plan {
         assert!(
             r.id.bytes()
@@ -446,4 +446,25 @@ fn run_forms_are_the_documented_ones() {
         r#"cd "${ADS_ROOT:?}" && make gate-rust && ls"#
     ));
     assert!(!is_gate_run(r#"cd "${ADS_ROOT:?}" && make "#));
+}
+
+#[test]
+fn the_two_gate_rows_are_committed_with_their_course_ids_and_the_root_cwd()
+ {
+    let plan = validate(&cfg()).unwrap();
+    for (id, target) in
+        [("c67ac635c3", "gate-shacl"), ("3efee9bb69", "gate-rust")]
+    {
+        let r = plan.iter().find(|r| r.id == id).expect(id);
+        assert_eq!(r.cwd, root(), "{id} runs at the checkout root");
+        let last = r.lines.last().unwrap();
+        assert_eq!(last.program, "make");
+        assert_eq!(last.args, [target]);
+    }
+    let makes = plan
+        .iter()
+        .flat_map(|r| r.lines.iter())
+        .filter(|l| l.program == "make")
+        .count();
+    assert_eq!(makes, 2, "no other row runs make");
 }

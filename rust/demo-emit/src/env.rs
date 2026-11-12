@@ -192,7 +192,8 @@ fn canon(p: &Path, what: &str) -> Result<PathBuf, EnvError> {
 }
 
 /// `text` is the content of `<id>.cwd`; the result is the absolute,
-/// canonical directory, which must stay inside `root`.
+/// canonical directory, which must stay inside `root`. A lone `.`
+/// names the checkout root itself (the repo-level targets need it).
 pub fn check_cwd(
     root: &Path,
     text: &str,
@@ -201,7 +202,9 @@ pub fn check_cwd(
     if rel.is_empty() {
         return err("cwd is empty");
     }
-    rel.split('/').try_for_each(|c| component_ok(rel, c))?;
+    if rel != "." {
+        rel.split('/').try_for_each(|c| component_ok(rel, c))?;
+    }
     let canon_root =
         canon(root, &format!("root {}", root.display()))?;
     let dir = canon(&root.join(rel), &format!("cwd {rel:?}"))?;

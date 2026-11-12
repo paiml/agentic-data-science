@@ -15,7 +15,7 @@ fn cfg(p: &Planted) -> Config {
         term_dir: p.term.clone(),
         out: p.out.clone(),
         target_dir: p.scratch.path().join("target"),
-        allow: vec!["bat".into(), "cargo".into()],
+        allow: vec!["bat".into(), "cargo".into(), "make".into()],
         warm: vec![],
         warm_cwd: "rust/ads-rust".into(),
         timeout: Duration::from_secs(20),
@@ -543,4 +543,89 @@ fn validate_runs_nothing_and_returns_the_plan() {
     assert_eq!(plan[0].lines.len(), 1);
     assert!(!p.root.join("rust/ads-rust/ran-marker").exists());
     assert!(!p.out.exists());
+}
+
+/// A row whose only gate line is `make <target>` at the checkout root.
+fn gate_row(target: &str, out: &str) -> Planted {
+    let mut p = Planted::new("make");
+    p.row_in(
+        "gg1",
+        &format!("bat -r 1:2 src/x.rs\nmake {target}\n"),
+        ".\n",
+    );
+    fs::write(p.root.join("make-out"), out).unwrap();
+    p
+}
+
+#[test]
+fn a_make_gate_row_runs_at_the_checkout_root_with_the_root_normalised()
+ {
+    for t in ["gate-shacl", "gate-rust"] {
+        let p = gate_row(t, "shacl OK\n");
+        let r = emit(&cfg(&p)).unwrap();
+        assert_eq!(
+            r.rows[0].commands,
+            ["bat -r 1:2 src/x.rs", format!("make {t}").as_str()]
+        );
+        assert!(
+            r.rows[0].stdout.contains(&format!(
+                "$ make {t}\nran {t} in .\nshacl OK\n"
+            )),
+            "{}",
+            r.rows[0].stdout
+        );
+    }
+}
+
+#[test]
+fn a_changed_gate_output_line_changes_the_row_digest() {
+    let a = emit(&cfg(&gate_row("gate-rust", "rust gate OK\n")))
+        .unwrap();
+    let b = emit(&cfg(&gate_row("gate-rust", "rust gate OK\n")))
+        .unwrap();
+    let c =
+        emit(&cfg(&gate_row("gate-rust", "rust gate FAIL-ish\n")))
+            .unwrap();
+    assert_eq!(a.rows[0].stdout_sha256, b.rows[0].stdout_sha256);
+    assert_ne!(a.rows[0].stdout_sha256, c.rows[0].stdout_sha256);
+}
+
+#[test]
+fn a_gate_run_that_prints_a_host_path_or_hex_run_is_refused() {
+    let p = gate_row("gate-shacl", "/home/someone/x.ttl\n");
+    refused(&p, "E-LEAK");
+    let p = gate_row("gate-rust", "id 0123456789abcdef0123\n");
+    refused(&p, "E-LEAK");
+}
+
+#[test]
+fn a_make_row_with_any_other_target_is_refused_before_anything_runs()
+ {
+    for bad in ["gate-pmat", "-C rust gate-rust", ""] {
+        let mut p = Planted::new("makebad");
+        p.row_in("gg2", &format!("make {bad}\n"), ".\n");
+        refused(&p, "E-FORM");
+    }
+}
+
+#[test]
+fn make_is_refused_when_the_configured_allow_list_lacks_it() {
+    let p = gate_row("gate-rust", "");
+    let mut c = cfg(&p);
+    c.allow = vec!["bat".into(), "cargo".into()];
+    let e = validate(&c).expect_err("make accepted without allow");
+    assert!(codes(&e).contains(&"E-FORM"), "{e:?}");
+}
+
+#[test]
+fn a_failing_make_gate_is_a_status_refusal_naming_the_line() {
+    let mut p = Planted::new("makefail");
+    p.row_in("gg3", "make gate-rust\n", ".\n");
+    script_fail(&p);
+    let e = refused(&p, "E-STATUS");
+    assert!(e[0].msg.contains("line 1 `make gate-rust`"), "{e:?}");
+}
+
+fn script_fail(p: &Planted) {
+    common::script(&p.bin, "make", "echo boom 1>&2; exit 2");
 }

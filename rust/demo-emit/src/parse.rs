@@ -6,7 +6,13 @@
 //! the whole file. The program word must also be on a short allow-list.
 
 /// The programs a row may run: the first words of the committed rows.
-pub const ALLOWED_PROGRAMS: &[&str] = &["bat", "cargo"];
+pub const ALLOWED_PROGRAMS: &[&str] = &["bat", "cargo", "make"];
+
+/// The only `make` invocations a row may type: `make <target>` with
+/// exactly one argument from this list. `make` starts the recipe's
+/// shell, so this is the one place a shell runs; it is bounded to the
+/// repo-owned targets named here and to nothing a row can add.
+pub const MAKE_TARGETS: &[&str] = &["gate-shacl", "gate-rust"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FormKind {
@@ -16,6 +22,7 @@ pub enum FormKind {
     Assignment(String),
     BadProgramWord(String),
     ProgramNotAllowed(String),
+    MakeNotAllowed(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,11 +90,17 @@ fn parse_line(
     if !allow.contains(&program.as_str()) {
         return Err(err(FormKind::ProgramNotAllowed(program)));
     }
+    let args: Vec<String> = words.collect();
+    if program == "make"
+        && !matches!(args.as_slice(), [t] if MAKE_TARGETS.contains(&t.as_str()))
+    {
+        return Err(err(FormKind::MakeNotAllowed(args.join(" "))));
+    }
     Ok(Line {
         number,
         raw: text.to_string(),
         program,
-        args: words.collect(),
+        args,
     })
 }
 

@@ -1,0 +1,2 @@
+bat -r 1:23 ontology/shapes/example.shape.ttl
+make gate-shacl
