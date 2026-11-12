@@ -1,0 +1,2 @@
+bat -r 12:13 -r 35:43 examples/a-m4-p4-pipeline/main.rs
+cargo run --locked --offline --example a-m4-p4-pipeline

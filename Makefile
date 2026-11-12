@@ -1,7 +1,7 @@
 SHELL := bash
 .SUFFIXES:
 .DELETE_ON_ERROR:
-.PHONY: gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
+.PHONY: rust-demo-test rust-demo gate gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
 gate: gate-parity gate-datasets gate-shacl gate-r gate-julia gate-rust gate-kotlin gate-lean gate-pmat
 
@@ -60,3 +60,10 @@ falsify-lab-preview:
 	@bash labs/e-final/tests/falsify-image-digest.sh
 	@bash labs/e-final/tests/falsify-lab-preview.sh
 	@bash labs/e-final/tests/falsify-exit-codes.sh
+
+# The Rust demo emitter (rust/demo-emit): not part of `make gate`; CI runs it in .github/workflows/rust-demo.yml.
+rust-demo-test:
+	cargo test --locked --offline --manifest-path rust/demo-emit/Cargo.toml
+
+rust-demo:
+	cargo run --release --locked --offline --manifest-path rust/demo-emit/Cargo.toml -- demo.json

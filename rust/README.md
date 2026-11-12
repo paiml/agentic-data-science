@@ -15,7 +15,7 @@ cargo clippy -- -D warnings    # lint, zero warnings
 
 ## What lives here
 
-Today, only `rustfmt.toml`, which sets the line width to 68 for the format check. When the examples land: a Cargo project built on polars and aprender, with its tests and its gate.
+`rustfmt.toml` sets the line width to 68 for the format check. `demo-emit/` is the demo emitter (see its README): it runs the terminal rows in `term-demos/` and writes `demo.json`. When the examples land: a Cargo project built on polars and aprender, with its tests and its gate.
 
 ## Back to the project
 

@@ -1,0 +1,2 @@
+bat -r 48:64 examples/a-m2-p2-cv/main.rs
+cargo run --locked --offline --example a-m2-p2-cv

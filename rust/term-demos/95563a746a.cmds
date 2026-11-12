@@ -1,0 +1,3 @@
+bat -r 31:46 tests/p1.rs
+cargo test --locked --offline --test p1
+cargo run -q --locked --offline --example a-m1-p1

@@ -1,0 +1,2 @@
+bat -r 23:23 -r 53:61 examples/a-m3-p3-kmeans/main.rs
+cargo run -q --locked --offline --example a-m3-p3-kmeans

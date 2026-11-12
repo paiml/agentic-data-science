@@ -1,0 +1,58 @@
+# The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds line as an argv (rust/demo-emit, a std-only Rust program; no shell reads a line, a line is never eval'd) (the same row shape as the
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status, a signal or a timeout on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list, which pins the sha256 of each row file, and every typed line must be in the closed command form (allow-listed alphabet and first word); the repository gate and the SHACL check are not rows.
+name: rust-demo
+on:
+  push:
+    branches: [main]
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', '**/example.ttl', '**/*artifact.ttl', '.github/workflows/rust-demo.yml']
+  pull_request:
+    paths: ['rust/**', 'demos/rust-native/**', 'Makefile', 'data/anscombe/**', 'datasets/**', '**/example.ttl', '**/*artifact.ttl', '.github/workflows/rust-demo.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: rust-demo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  rust-demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Mark the workspace safe for git in this job (the container user differs from the checkout owner; the demo sessions get the same trust from the emitter itself)
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: Install bat 0.24.0 (pinned, sha256-verified) for the terminal sessions
+        run: |
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/bat.tgz" https://github.com/sharkdp/bat/releases/download/v0.24.0/bat-v0.24.0-x86_64-unknown-linux-musl.tar.gz
+          echo "d39a21e3da57fe6a3e07184b3c1dc245f8dba379af569d3668b6dcdfe75e3052  $RUNNER_TEMP/bat.tgz" | sha256sum -c -
+          mkdir -p /opt/tools/bin && tar -xzf "$RUNNER_TEMP/bat.tgz" -C /opt/tools/bin --strip-components=1 bat-v0.24.0-x86_64-unknown-linux-musl/bat
+          echo /opt/tools/bin >> "$GITHUB_PATH"
+      - name: Fetch dependencies (the demos run with --offline)
+        working-directory: rust/ads-rust
+        run: cargo fetch --locked
+      - name: Emitter tests (every evasion and every error code is a named test; planted faults are refused)
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/emit-target
+        run: cargo test --locked --offline --manifest-path rust/demo-emit/Cargo.toml
+      - name: Build the emitter (std only, no dependencies)
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/emit-target
+        run: cargo build --release --locked --offline --manifest-path rust/demo-emit/Cargo.toml
+      - name: Run rust/term-demos/*.cmds as term-<id> demos and emit demo.json
+        env:
+          CARGO_TARGET_DIR: ${{ runner.temp }}/target
+        run: $RUNNER_TEMP/emit-target/release/demo-emit "$RUNNER_TEMP/demo.json"
+      - name: Attest demo.json (build provenance)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: ${{ runner.temp }}/demo.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: demo-json-${{ github.sha }}
+          path: ${{ runner.temp }}/demo.json
