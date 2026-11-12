@@ -231,7 +231,12 @@ fn leak_allows_a_whole_decimal_literal() {
 fn r3_leak_does_not_exempt_a_hex_token_after_digit_dot() {
     for t in [
         "echo p1.0123456789abcdef",
-        concat!("v1.", "0123456789abcdef", "0123456789abcdef", "01234567"),
+        concat!(
+            "v1.",
+            "0123456789abcdef",
+            "0123456789abcdef",
+            "01234567"
+        ),
         "0.deadbeefcafebabe",
         "0.0123456789abcdef",
     ] {
