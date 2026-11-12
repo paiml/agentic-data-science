@@ -56,6 +56,7 @@ printf 'print(1)\n%s\n' "$src" >"$d1/term.cmds"; redrow "a command that prints b
 printf '%s\n%s\n' "$src" "$src" >"$d1/term.cmds"; redrow "two source() lines for one run"
 printf '%s\nlibrary(agenticds)\n' "$src" >"$d1/term.cmds"; redrow "a source() that is not last"
 printf 'library(nopkg)\n%s\n' "$src" >"$d1/term.cmds"; redrow "a typed library() that fails to load"
+{ echo "system(1)"; yes "library(x)" | head -n 70000; printf '%s\n' "$src"; } >"$d1/term.cmds"; redrow "a non-library line ahead of more than a pipe buffer of library() lines"
 printf 'library(stats)\n%s\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
 [ "$(jq -r '.demos[]|select(.id=="term-0123456789")|.stdout' "$t/out.json")" = "$(printf 'hello c-m1-v01-x\nmasked: stub\ncontract: stub OK\n')" ] && [ "$(jq -r '.demos[]|select(.id=="m1v01")|.stdout' "$t/out.json")" = "$(printf 'hello c-m1-v01-x\ncontract: stub OK\n')" ] || { echo "FAIL: the term row stdout is not from running its typed commands"; exit 1; }
 printf '%s\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1

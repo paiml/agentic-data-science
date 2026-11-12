@@ -20,7 +20,7 @@ nt=0
 # run_one TAG SCRIPT: runs `Rscript SCRIPT` with ADS_OUT=$T/plots; fails closed; leaves stdout in $T/out and the plot hashes (json) in $plots
 run_one() {
   rm -rf "${T:?}/plots"; mkdir -p "$T/plots"
-  ADS_OUT="$T/plots" Rscript "$2" >"$T/out" 2>"$T/err"; rc=$?
+  ADS_OUT="$T/plots" Rscript "$2" >"$T/out" 2>"$T/err" </dev/null; rc=$?
   [ "$rc" -eq 0 ] || { echo "FAIL $1 exit $rc" >&2; tail -n 20 "$T/err" >&2; exit 1; }
   [ -s "$T/out" ] || { echo "FAIL $1 empty stdout" >&2; exit 1; }
   tail -n 1 "$T/out" | grep -Eq '^contract: .* OK$' || { echo "FAIL $1 no contract line" >&2; exit 1; }
@@ -44,13 +44,13 @@ for dir in "$EX"/c-m[1-4]-v[0-9][0-9]-*/; do
     grep '[^[:space:]]' "$T/cmds" >"$T/cmds2" && mv "$T/cmds2" "$T/cmds" || { echo "FAIL $tid no typed command for $name" >&2; exit 1; }
     # exactly one source() of this example, last, after only library(<pkg>) lines
     [ "$(grep -cxF "source(\"$dir/run.R\")" "$T/cmds")" -eq 1 ] && [ "$(tail -n 1 "$T/cmds")" = "source(\"$dir/run.R\")" ] || { echo "FAIL $tid term.cmds of $name must end in exactly one source(\"$dir/run.R\")" >&2; exit 1; }
-    head -n -1 "$T/cmds" | grep -Evq '^library\([A-Za-z][A-Za-z0-9.]*\)$' && { echo "FAIL $tid term.cmds of $name: only library(<pkg>) lines may precede the source()" >&2; exit 1; }
+    sed '$d' "$T/cmds" >"$T/pre" && grep -Evq '^library\([A-Za-z][A-Za-z0-9.]*\)$' "$T/pre" && { echo "FAIL $tid term.cmds of $name: only library(<pkg>) lines may precede the source()" >&2; exit 1; }
     # the row's stdout and plots come from running those typed commands themselves, in one R session
     cp "$T/cmds" "$T/term.R" || { echo "FAIL $tid copy term.R" >&2; exit 1; }
     run_one "$tid ($name typed commands)" "$T/term.R"
-    cmds=$(jq -R . "$T/cmds" | jq -s .) || { echo "FAIL $tid commands jq" >&2; exit 1; }
-    jq -cn --arg id "$tid" --argjson cmds "$cmds" --rawfile out "$T/out" --arg sha "$(sha256sum <"$T/out" | cut -d' ' -f1)" --argjson plots "$plots" \
-      '{id:$id,command:(($cmds|join("\n"))+"\n"),commands:$cmds,exit:0,stdout:$out,stdout_sha256:$sha,plots:$plots}' >>"$T/rows" || { echo "FAIL $tid term row jq" >&2; exit 1; }
+    jq -R . "$T/cmds" | jq -s . >"$T/cmds.json" || { echo "FAIL $tid commands jq" >&2; exit 1; }
+    jq -cn --arg id "$tid" --slurpfile cmdsf "$T/cmds.json" --rawfile out "$T/out" --arg sha "$(sha256sum <"$T/out" | cut -d' ' -f1)" --argjson plots "$plots" \
+      '{id:$id,command:(($cmdsf[0]|join("\n"))+"\n"),commands:$cmdsf[0],exit:0,stdout:$out,stdout_sha256:$sha,plots:$plots}' >>"$T/rows" || { echo "FAIL $tid term row jq" >&2; exit 1; }
     nt=$((nt + 1))
   done <"$MAP"
   n=$((n + 1))
