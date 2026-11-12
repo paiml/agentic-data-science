@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Falsifier for scripts/emit-demo-json-r.sh term rows: with a stub Rscript and 40 stub example dirs, the emitter must write
 # one term-<hash> row per line of the term map (same stdout and plots as the example it names) and must fail closed on a
-# map line naming a missing example, a malformed id, a duplicate id, and an empty map. Term rows also carry `commands` (the typed console commands) and `command` (those joined): an extra command must change the row, a changed or missing sourcing command and an empty, non-file or non-sourcing term.cmds must fail closed, CRLF is stripped, and one example's term.cmds never leaks into another row.
+# map line naming a missing example, a malformed id, a duplicate id, and an empty map. Term rows also carry `commands` (the typed console commands) and `command` (those joined): an extra command must change the row, a changed or missing sourcing command and an empty, non-file or non-sourcing term.cmds must fail closed, a command that prints or a repeated or non-last source() fails closed, CRLF is stripped, and one example's term.cmds never leaks into another row.
 set -uo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"; t="$(mktemp -d)"; trap 'rm -rf "${t:?}"' EXIT
 mkdir -p "$t/bin" "$t/ex"
@@ -36,9 +36,18 @@ two=$(trow "$t/out.json" term-0123456789); [ -n "$two" ] || { echo "FAIL: no ter
 printf 'library(agenticds)\nsource("y/run.R")\n' >"$d1/term.cmds"; rm -f "${t:?}/out.json"
 if run "$t/ok.tsv"; then echo "FAIL: a changed command (source of another file) stayed green"; exit 1; fi
 [ ! -e "$t/out.json" ] || { echo "FAIL: a changed command left a file"; exit 1; }
-printf 'library(agenticds)\n%s\nprint(1)\r\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
+printf 'library(agenticds)\r\nlibrary(stats)\r\n%s\r\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
 three=$(trow "$t/out.json" term-0123456789); [ -n "$three" ] && [ "$three" != "$two" ] || { echo "FAIL: another extra command did not change the row"; exit 1; }
-[ "$(jq -c '.[1]|length' <<<"$three")" = 3 ] && [ "$(jq -r '.[1][2]' <<<"$three")" = 'print(1)' ] || { echo "FAIL: CRLF kept or command lost"; exit 1; }
+[ "$(jq -c '.[1]|length' <<<"$three")" = 3 ] && [ "$(jq -r '.[1][1]' <<<"$three")" = 'library(stats)' ] || { echo "FAIL: CRLF kept or command lost"; exit 1; }
+jq -e --arg s "library(agenticds)
+library(stats)
+$src
+" '.demos[]|select(.id=="term-0123456789")|.command==$s' "$t/out.json" >/dev/null || { echo "FAIL: command is not the commands joined plus a final newline"; exit 1; }
+redrow() { rm -f "${t:?}/out.json"; if run "$t/ok.tsv"; then echo "FAIL: $1 stayed green"; exit 1; fi; [ ! -e "$t/out.json" ] || { echo "FAIL: $1 left a file"; exit 1; }; }
+printf 'library(agenticds)\n%s\nprint(1)\n' "$src" >"$d1/term.cmds"; redrow "a command that prints after the source()"
+printf 'print(1)\n%s\n' "$src" >"$d1/term.cmds"; redrow "a command that prints before the source()"
+printf '%s\n%s\n' "$src" "$src" >"$d1/term.cmds"; redrow "two source() lines for one run"
+printf '%s\nlibrary(agenticds)\n' "$src" >"$d1/term.cmds"; redrow "a source() that is not last"
 printf '%s\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
 [ "$(trow "$t/out.json" term-0123456789)" = "$base" ] || { echo "FAIL: the single-command term.cmds differs from the default row"; exit 1; }
 printf 'library(agenticds)\n' >"$d1/term.cmds"; rm -f "${t:?}/out.json"
