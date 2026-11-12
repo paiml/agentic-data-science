@@ -7,7 +7,14 @@ root="$(cd "$(dirname "$0")/.." && pwd)"; t="$(mktemp -d)"; trap 'rm -rf "${t:?}
 mkdir -p "$t/bin" "$t/ex"
 cat >"$t/bin/Rscript" <<'S'
 #!/usr/bin/env bash
-printf 'hello %s\ncontract: stub OK\n' "$(basename "$(dirname "$1")")"
+# a typed-commands script (term.R) runs its last source() line; library(stats) adds a line of output, library(nopkg) fails like a missing package
+f=$1; extra=
+if [ "${f##*/}" = term.R ]; then
+  grep -q 'library(nopkg)' "$f" && { echo "there is no package called nopkg" >&2; exit 1; }
+  grep -q 'library(stats)' "$f" && extra='masked: stub\n'
+  f=$(tail -n 1 "$f" | sed 's/^source("\(.*\)")$/\1/')
+fi
+printf "hello %s\n${extra}contract: stub OK\n" "$(basename "$(dirname "$f")")"
 printf '<svg/>' >"$ADS_OUT/plot.svg"
 S
 chmod +x "$t/bin/Rscript"
@@ -48,6 +55,9 @@ printf 'library(agenticds)\n%s\nprint(1)\n' "$src" >"$d1/term.cmds"; redrow "a c
 printf 'print(1)\n%s\n' "$src" >"$d1/term.cmds"; redrow "a command that prints before the source()"
 printf '%s\n%s\n' "$src" "$src" >"$d1/term.cmds"; redrow "two source() lines for one run"
 printf '%s\nlibrary(agenticds)\n' "$src" >"$d1/term.cmds"; redrow "a source() that is not last"
+printf 'library(nopkg)\n%s\n' "$src" >"$d1/term.cmds"; redrow "a typed library() that fails to load"
+printf 'library(stats)\n%s\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
+[ "$(jq -r '.demos[]|select(.id=="term-0123456789")|.stdout' "$t/out.json")" = "$(printf 'hello c-m1-v01-x\nmasked: stub\ncontract: stub OK\n')" ] && [ "$(jq -r '.demos[]|select(.id=="m1v01")|.stdout' "$t/out.json")" = "$(printf 'hello c-m1-v01-x\ncontract: stub OK\n')" ] || { echo "FAIL: the term row stdout is not from running its typed commands"; exit 1; }
 printf '%s\n' "$src" >"$d1/term.cmds"; run "$t/ok.tsv" || exit 1
 [ "$(trow "$t/out.json" term-0123456789)" = "$base" ] || { echo "FAIL: the single-command term.cmds differs from the default row"; exit 1; }
 printf 'library(agenticds)\n' >"$d1/term.cmds"; rm -f "${t:?}/out.json"
