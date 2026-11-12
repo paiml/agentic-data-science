@@ -1,5 +1,5 @@
 //! The session environment and the cwd rule.
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 
 /// The only keys `term-demos/env` may set.
 pub const ENV_FILE_KEYS: &[&str] = &[

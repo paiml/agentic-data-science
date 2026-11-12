@@ -122,6 +122,29 @@ fn exit_of(s: std::process::ExitStatus) -> Exit {
     }
 }
 
+/// `ETXTBSY`: a sibling thread forked while this program's file was
+/// still open for writing. The window closes in microseconds, so a
+/// short bounded retry is the whole remedy.
+const TEXT_FILE_BUSY: i32 = 26;
+
+fn spawn_retry(
+    cmd: &mut Command,
+) -> std::io::Result<std::process::Child> {
+    let mut tries = 0;
+    loop {
+        match cmd.spawn() {
+            Err(e)
+                if e.raw_os_error() == Some(TEXT_FILE_BUSY)
+                    && tries < 20 =>
+            {
+                tries += 1;
+                thread::sleep(Duration::from_millis(25));
+            }
+            other => return other,
+        }
+    }
+}
+
 /// Run `program` with `args` in `cwd` with exactly `env`. Stdout and
 /// stderr share one pipe, so their order is the order they were written.
 pub fn run(
@@ -145,7 +168,7 @@ pub fn run(
         .stdout(writer)
         .stderr(writer2)
         .process_group(0);
-    let mut child = cmd.spawn().map_err(|e| {
+    let mut child = spawn_retry(&mut cmd).map_err(|e| {
         ExecError::Spawn(format!("{}: {e}", program.display()))
     })?;
     // The Command still holds the parent's copies of the write end.

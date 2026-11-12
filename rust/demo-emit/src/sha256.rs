@@ -23,8 +23,8 @@ const H0: [u32; 8] = [
 
 fn compress(h: &mut [u32; 8], block: &[u8]) {
     let mut w = [0u32; 64];
-    for (i, c) in block.chunks_exact(4).enumerate() {
-        w[i] = u32::from_be_bytes([c[0], c[1], c[2], c[3]]);
+    for (i, c) in block.as_chunks::<4>().0.iter().enumerate() {
+        w[i] = u32::from_be_bytes(*c);
     }
     for i in 16..64 {
         let s0 = w[i - 15].rotate_right(7)
@@ -72,11 +72,10 @@ fn compress(h: &mut [u32; 8], block: &[u8]) {
 /// Lower-case hex digest of `data`.
 pub fn sha256_hex(data: &[u8]) -> String {
     let mut h = H0;
-    let mut blocks = data.chunks_exact(64);
-    for b in &mut blocks {
+    let (blocks, rest) = data.as_chunks::<64>();
+    for b in blocks {
         compress(&mut h, b);
     }
-    let rest = blocks.remainder();
     let mut tail = rest.to_vec();
     tail.push(0x80);
     while tail.len() % 64 != 56 {
@@ -85,7 +84,7 @@ pub fn sha256_hex(data: &[u8]) -> String {
     tail.extend_from_slice(
         &((data.len() as u64) * 8).to_be_bytes(),
     );
-    for b in tail.chunks_exact(64) {
+    for b in tail.as_chunks::<64>().0 {
         compress(&mut h, b);
     }
     h.iter().map(|x| format!("{x:08x}")).collect()
