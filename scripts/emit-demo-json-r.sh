@@ -4,7 +4,7 @@
 # runs every lesson demo r/agenticds/inst/examples/c-m<M>-v<NN>-*/run.R once and records what the terminal
 # would show: the command, its exit code, its raw stdout, the stdout sha256 and the sha256 of every plot it
 # wrote (ADS_OUT). Fails closed: a non-zero exit, an empty stdout, a last line that is not `contract: ... OK`, no plot.svg,
-# or a lesson count other than 40 stops the run and no file is written. Also writes one row per line of r/term-demos.tsv (term-<id> TAB example dir) under that term id, a copy of the named example row. CI uploads and attests the file.
+# or a lesson count other than 40 stops the run and no file is written. Also writes one row per line of r/term-demos.tsv (term-<id> TAB example dir) under that term id: a copy of the named example row plus `commands`, the typed console commands, one string per command (the example's term.cmds, else its source() line), and `command` as those lines joined. CI uploads and attests the file.
 set -uo pipefail  # no -e: every step below is checked explicitly
 OUT=${1:?OUT.json}
 EX=${EXAMPLES_DIR:-r/agenticds/inst/examples}
@@ -33,7 +33,11 @@ for dir in "$EX"/c-m[1-4]-v[0-9][0-9]-*/; do
     '{id:$id,command:$cmd,exit:0,stdout:$out,stdout_sha256:$sha,plots:$plots}' >>"$T/rows" || { echo "FAIL $id row jq" >&2; exit 1; }
   while IFS=$'\t' read -r tid tex; do
     [ "$tex" = "$name" ] || continue
-    tail -n 1 "$T/rows" | jq -c --arg id "$tid" '.id=$id' >>"$T/rows" || { echo "FAIL $tid term row jq" >&2; exit 1; }
+    # typed commands of the console session: the example's own term.cmds (one command per line) when it has one, else the single source() line
+    if [ -e "$dir/term.cmds" ]; then cp "$dir/term.cmds" "$T/cmds"; else printf 'source("%s/run.R")\n' "$dir" >"$T/cmds"; fi
+    grep -q '[^[:space:]]' "$T/cmds" || { echo "FAIL $tid no typed command for $name" >&2; exit 1; }
+    cmds=$(jq -R . "$T/cmds" | jq -s 'map(select(test("[^ \t]")))') || { echo "FAIL $tid commands jq" >&2; exit 1; }
+    tail -n 1 "$T/rows" | jq -c --arg id "$tid" --argjson cmds "$cmds" '.id=$id | .commands=$cmds | .command=(($cmds|join("\n"))+"\n")' >>"$T/rows" || { echo "FAIL $tid term row jq" >&2; exit 1; }
     nt=$((nt + 1))
   done <"$MAP"
   n=$((n + 1))
