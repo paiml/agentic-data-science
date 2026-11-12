@@ -1,5 +1,5 @@
 # The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds line as an argv (rust/demo-emit, a std-only Rust program; no shell reads a line, a line is never eval'd) (the same row shape as the
-# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status, a signal or a timeout on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list, which pins the sha256 of each row file, and every typed line must be in the closed command form (allow-listed alphabet and first word); the repository gate and the SHACL check are not rows.
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status, a signal or a timeout on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list, which pins the sha256 of each row file, and every typed line must be in the closed command form (allow-listed alphabet and first word); two rows run `make gate-shacl` and `make gate-rust` (the one place a shell runs: the closed form allows `make` for exactly those two targets, and make starts their recipes).
 name: rust-demo
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
 jobs:
   rust-demo:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 75
     container: rust:1.99.1-bookworm@sha256:9181b56c2a21ab1d5e73cffe04fc762426d30aa7fac3c91141dd033f49a7fc8b
     permissions:
       contents: read
@@ -32,6 +32,16 @@ jobs:
           echo "d39a21e3da57fe6a3e07184b3c1dc245f8dba379af569d3668b6dcdfe75e3052  $RUNNER_TEMP/bat.tgz" | sha256sum -c -
           mkdir -p /opt/tools/bin && tar -xzf "$RUNNER_TEMP/bat.tgz" -C /opt/tools/bin --strip-components=1 bat-v0.24.0-x86_64-unknown-linux-musl/bat
           echo /opt/tools/bin >> "$GITHUB_PATH"
+      - name: Install the tools the two gate rows need (JDK 17 and jq from the pinned image's apt, cargo-llvm-cov 0.8.5 as in the ci workflow; Apache Jena 5.2.0 sha512-verified)
+        run: |
+          apt-get update -q && apt-get install -y -q --no-install-recommends jq openjdk-17-jre-headless
+          rustup component add llvm-tools-preview rustfmt clippy
+          cargo install --locked --version 0.8.5 cargo-llvm-cov
+          v=5.2.0; h=9a66044573ca269c0a9a1191fe7a8e1925f2d77e2e0bdadddd68616a1bafed1d9819c0b2988dd03614ec778a3882ccb091d825976fc0837406916f9f001b701c
+          curl -fsSL --retry 5 --retry-all-errors -o "$RUNNER_TEMP/jena.tgz" "https://archive.apache.org/dist/jena/binaries/apache-jena-$v.tar.gz"
+          echo "$h  $RUNNER_TEMP/jena.tgz" | sha512sum -c -
+          tar -xzf "$RUNNER_TEMP/jena.tgz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/apache-jena-$v/bin" >> "$GITHUB_PATH"
       - name: Fetch dependencies (the demos run with --offline)
         working-directory: rust/ads-rust
         run: cargo fetch --locked

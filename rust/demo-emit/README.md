@@ -10,7 +10,7 @@ Exit 0: `OUT.json` written. Exit 1: a refusal (`FAIL <code> <message>` on stderr
 
 ## The closed form of a line
 
-A byte outside `[A-Za-z0-9_./:=,+@-]`, space and tab refuses the whole file (E-FORM, named `<id>.cmds:<line>`). The first word must be `[A-Za-z0-9_-]+`, not contain `=`, and be in `ALLOWED_PROGRAMS` (`bat`, `cargo`; `rust/demo-emit/tests/committed.rs` keeps this equal to the first words of the committed rows). It is resolved in the absolute entries of `PATH` only, never the working directory.
+A byte outside `[A-Za-z0-9_./:=,+@-]`, space and tab refuses the whole file (E-FORM, named `<id>.cmds:<line>`). The first word must be `[A-Za-z0-9_-]+`, not contain `=`, and be in `ALLOWED_PROGRAMS` (`bat`, `cargo`, `make`; `rust/demo-emit/tests/committed.rs` keeps this equal to the first words of the committed rows). `make` is accepted only as `make gate-shacl` or `make gate-rust` (`MAKE_TARGETS`): any other target, flag, variable or second argument refuses the file (E-FORM). `make` starts those two recipes in a shell, so this is the one place a shell runs; it is bounded to the two repo-owned targets. A `.cwd` of a lone `.` is the checkout root. It is resolved in the absolute entries of `PATH` only, never the working directory.
 
 ## What the emitter checks
 
@@ -39,4 +39,4 @@ Checkout and target spellings (logical and physical) become `.` and `target`; ca
 
 ## Tests
 
-`cargo test --locked --offline --manifest-path rust/demo-emit/Cargo.toml` (or `make rust-demo-test`). Every evasion named in the review verdicts and every error code is a named test; the binary is driven end to end with fake `bat` and `cargo`; `tests/committed.rs` validates the 18 committed rows.
+`cargo test --locked --offline --manifest-path rust/demo-emit/Cargo.toml` (or `make rust-demo-test`). Every evasion named in the review verdicts and every error code is a named test; the binary is driven end to end with fake `bat` and `cargo`; `tests/committed.rs` validates the 20 committed rows.

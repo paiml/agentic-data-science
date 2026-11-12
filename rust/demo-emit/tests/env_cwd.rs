@@ -287,3 +287,15 @@ fn cwd_refuses_a_symlink_that_leaves_the_repo() {
     .unwrap();
     assert!(check_cwd(s.path(), "a/escape").is_err());
 }
+
+#[test]
+fn cwd_dot_alone_is_the_checkout_root() {
+    let s = root_with(&["a"]);
+    for ok in [".", ".\n"] {
+        let p = check_cwd(s.path(), ok).unwrap();
+        assert_eq!(p, s.path());
+    }
+    for bad in ["./", "./.", ".\n\n", " .", "..", ".//", "./a"] {
+        assert!(check_cwd(s.path(), bad).is_err(), "{bad:?}");
+    }
+}

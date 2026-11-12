@@ -70,6 +70,19 @@ esac"#,
     );
 }
 
+/// A fake `make` that accepts only the two gate targets and prints the
+/// contents of `make-out` (when present in the working directory).
+pub fn fake_make(dir: &Path) {
+    script(
+        dir,
+        "make",
+        r#"case "$1" in
+  gate-shacl|gate-rust) echo "ran $1 in $PWD"; cat make-out 2>/dev/null; true;;
+  *) echo "unexpected target $*" 1>&2; exit 2;;
+esac"#,
+    );
+}
+
 /// A planted repository: `<root>/rust/term-demos/` with row files, `<root>/rust/ads-rust/` as the cwd.
 pub struct Planted {
     pub scratch: Scratch,
@@ -91,6 +104,7 @@ impl Planted {
         fs::create_dir_all(&term).unwrap();
         fs::create_dir_all(root.join("rust/ads-rust")).unwrap();
         fake_bin(&bin);
+        fake_make(&bin);
         fs::write(term.join("env"), ENV_FILE).unwrap();
         let out = scratch.path().join("out/demo.json");
         fs::create_dir_all(out.parent().unwrap()).unwrap();
@@ -106,13 +120,20 @@ impl Planted {
 
     /// Plant a row and pin it.
     pub fn row(&mut self, id: &str, cmds: &str) -> &mut Planted {
+        self.row_in(id, cmds, "rust/ads-rust\n")
+    }
+
+    /// Plant a row with its own `.cwd` content and pin it.
+    pub fn row_in(
+        &mut self,
+        id: &str,
+        cmds: &str,
+        cwd: &str,
+    ) -> &mut Planted {
         fs::write(self.term.join(format!("{id}.cmds")), cmds)
             .unwrap();
-        fs::write(
-            self.term.join(format!("{id}.cwd")),
-            "rust/ads-rust\n",
-        )
-        .unwrap();
+        fs::write(self.term.join(format!("{id}.cwd")), cwd)
+            .unwrap();
         self.rows.push(id.to_string());
         self.write_rows_list();
         self

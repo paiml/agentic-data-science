@@ -133,7 +133,7 @@ fn refuses_a_name_value_first_token() {
 #[test]
 fn refuses_a_program_outside_the_allow_list() {
     for w in [
-        "sh", "bash", "env", "eval", "echo", "false", "make", "rm",
+        "sh", "bash", "env", "eval", "echo", "false", "gmake", "rm",
         "curl", "set", "exit",
     ] {
         assert!(
@@ -170,7 +170,7 @@ fn refuses_a_program_word_that_is_a_path_or_has_dots() {
 
 #[test]
 fn the_allow_list_is_what_the_committed_rows_use() {
-    assert_eq!(ALLOWED_PROGRAMS, ["bat", "cargo"]);
+    assert_eq!(ALLOWED_PROGRAMS, ["bat", "cargo", "make"]);
 }
 
 // ---- r2 verdict ----
@@ -299,4 +299,48 @@ fn one_bad_line_refuses_the_whole_file() {
         kind("cargo test\ncargo run\nbat x; y\n", ALLOWED_PROGRAMS)
             .is_some()
     );
+}
+
+#[test]
+fn make_is_accepted_for_exactly_the_two_repo_targets() {
+    for t in ["gate-shacl", "gate-rust"] {
+        let l = parse_cmds(
+            format!("make {t}\n").as_bytes(),
+            ALLOWED_PROGRAMS,
+        )
+        .unwrap();
+        assert_eq!(l[0].program, "make");
+        assert_eq!(l[0].args, [t]);
+    }
+}
+
+#[test]
+fn make_refuses_every_other_target_flag_and_shape() {
+    for bad in [
+        "make",
+        "make gate",
+        "make gate-pmat",
+        "make gate-r",
+        "make gate-shacl-x",
+        "make gate-rust gate-shacl",
+        "make gate-rust gate-rust",
+        "make -C .. gate-rust",
+        "make -f x gate-rust",
+        "make -n gate-rust",
+        "make gate-rust -j4",
+        "make gate-rust FOO=1",
+        "make FOO=1 gate-rust",
+        "make --eval=x gate-rust",
+        "make gate-rust\nmake gate-pmat",
+    ] {
+        assert!(
+            matches!(
+                kind(bad, ALLOWED_PROGRAMS),
+                Some(FormKind::MakeNotAllowed(_))
+            ),
+            "accepted or wrong refusal: {bad:?}"
+        );
+        // The permissive word list does not widen the make rule.
+        assert!(kind(bad, PERMISSIVE).is_some(), "{bad:?}");
+    }
 }
