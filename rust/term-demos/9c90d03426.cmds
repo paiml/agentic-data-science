@@ -1,2 +1,2 @@
-bat -r 21:36 tests/p3.rs
+bat -r 32:58 tests/p3.rs
 cargo test -q --locked --offline --test p3
