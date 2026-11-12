@@ -1,5 +1,5 @@
 # The Rust course's own demo workflow: runs every rust/term-demos/<id>.cmds as one terminal session (the same row shape as the
-# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list; the repository gate and the SHACL check are not rows.
+# Lean workflow: id, command, commands[], exit, stdout, stdout_sha256, plots), refuses a non-zero status on any typed line (named by line), a failed or ignored test, passed == 0, an id that is not [a-z0-9]+, an empty command file, and any absolute host path or volatile hash left after normalisation; emits demo.json and attests it on a push to main (never on a pull request or a dispatch from another branch). Rows are the ids in rust/term-demos/rows.list, which pins the sha256 of each row file, and every typed line must be in the closed command form (allow-listed alphabet and first word); the repository gate and the SHACL check are not rows.
 name: rust-demo
 on:
   push:

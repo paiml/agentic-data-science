@@ -2,28 +2,30 @@
 # emit-demo-json.sh OUT.json: one demo row per rust/term-demos/<id>.cmds, in the same row shape as the Lean emitter
 # (lean/AgenticDS/scripts/emit-term-demos.sh): {id:"term-<file stem>", command, commands[], exit, stdout, stdout_sha256, plots:[]}.
 #
-# INPUT: <id>.cmds holds the lines a terminal session types, one per Enter, and nothing else. The id is the opaque file
-# stem, [a-z0-9]+. <id>.cwd (one line, relative to the repository root, default ".") is where the session starts;
-# term-demos/env holds the fixed session environment (KEY=VALUE lines). A typed line is run as typed: nothing is added to it.
-# term-demos/rows.list declares the ids of the rows, one per line (# comments allowed): the .cmds files and the list must agree.
+# INPUT: a row is two files. <id>.cmds holds the lines a terminal session types, one per Enter, and nothing else; <id>.cwd
+# (one line, relative to the repository root) is where the session starts. The id is the opaque file stem, [a-z0-9]+.
+# term-demos/env holds the fixed session environment (KEY=VALUE lines).
+# term-demos/rows.list pins the rows, one line each: "<id> <sha256 of <id>.cmds> <sha256 of <id>.cwd>" (# comments allowed).
+# A row file that is not listed, a listed file that is missing, and a file whose sha256 differs from its pin are refused.
 #
-# CLOSED COMMAND FORM: every line of every .cmds is checked before anything runs, and must be one simple command: words,
-# quotes, options, plain $NAME expansions. Refused (E-FORM <file>:<line>): command substitution and arithmetic expansion
-# ("$(", backtick), a list, a job or a pipe (; & | && ||), a subshell or a brace group (parens, braces), a here-document, a
-# redirection of fd 2, a trailing backslash, and a first word that is set, exec, eval, trap, exit, builtin, command, source,
-# "." or a compound-command word (if, for, while, case, ...). With those out, the status of a line is the status of one
-# command, and no line can end the session, switch errexit off, or hide a failure behind a later command.
+# CLOSED COMMAND FORM (an allow-list; every line of every .cmds is checked before anything runs): a line is words joined
+# by single spaces, with no leading or trailing space; it is not empty; every byte is in the alphabet
+#   A-Z a-z 0-9 _ . / : = , + -
+# (spelled out in ALPHABET below, so no range and no collation); the first word holds no "=" and is one of FIRST_WORDS.
+# Anything else is refused (E-FORM <file>:<line> <reason>). So a line holds no quote, expansion, escape, operator,
+# redirection, glob, comment, tab or newline: the shell has nothing to interpret, and the words are the argv.
 #
-# EXECUTION (the unit is one typed line): every file runs in ONE bash under a 93x25 pty (util-linux `script`), so `cd` and
-# exports carry from line to line as in a learner's terminal. Lines are joined only until `bash -n` parses them (a quoted
-# string or a block that spans lines is one command), shown as an interactive shell shows it ("$ " first, "> " after).
-# The session runs with `set -e -o pipefail`, and the status of each eval is checked as well: a line whose status is
-# non-zero ends the session at that line. An EXIT trap writes "<line> <status>" (or "end 0") to a status file outside the
-# pty; that record, not the transcript, gives the row's `exit` and the line that failed. No row may expect a non-zero status.
+# EXECUTION (the unit is one typed line): every file runs in ONE bash under a 93x25 pty (util-linux `script`). Each line is
+# shown as an interactive shell shows it ("$ " first), split on its single spaces and run as that argv: no eval, no join.
+# A line whose status is non-zero ends the session at that line. An EXIT trap writes "<line> <status>" (or "end 0") to a
+# status file outside the pty; that record, not the transcript, gives the row's `exit` and the line that failed. No row
+# may expect a non-zero status.
 #
 # LOCALE: LC_ALL=C and TZ=UTC are set at the top of this script (file order), the id check spells its set out (no
 # range, so no collation), and LC_ALL=C, TZ=UTC are forced into every row's
 # environment; term-demos/env may not set them (nor any other key the emitter owns).
+# GIT: every git this script runs, and every git a row runs, reads no system and no global config file
+# (GIT_CONFIG_NOSYSTEM=1, GIT_CONFIG_GLOBAL=/dev/null); a row's git trusts the repository root by command-line config only.
 #
 # NORMALISATION (stdout is the pty transcript; ANSI and CR are stripped first), in this order:
 #   N1 the two known absolute roots are replaced everywhere, longest first, in logical and physical spelling:
@@ -40,18 +42,20 @@
 #      /root/, /Users/, /runner/, /github/, /__w/, /var/folders/, /private/ and the mount root), the caller's HOME, CARGO_HOME,
 #      RUSTUP_HOME, TMPDIR or the emitter's work dir, or any run of 16 or more hex digits other than exactly 16 zeros or
 #      exactly 40 zeros (the tokenised values), is refused, naming the row and the transcript line. The one exemption is a
-#      WHOLE decimal literal ([+-]digits.digits[e|E[+-]digits]) whose neighbours are line edge or not [A-Za-z0-9_.]. A trailing slash on CARGO_TARGET_DIR is dropped
+#      WHOLE decimal literal: [+-]D.digits[e|E[+-]E], D at most 15 digits, E at most 3, whose neighbours are line edge or
+#      not [A-Za-z0-9_.+-]. So no 16-digit run hides in its integer part or its exponent, and a literal glued into a longer
+#      token (pkg-1.0123456789012345-rc1) stays scanned. A trailing slash on CARGO_TARGET_DIR is dropped
 #      before N1. A case N1..N3 misses is a red, never a silent leak.
 #
 # GUARDS (fail closed: no OUT is written, a stale OUT is removed first). Each refusal names its error id:
-#   E-TOOL a tool is missing; E-INPUT no .cmds files; E-ID an id that is not [a-z0-9]+; E-EMPTY a .cmds with no command
-#   line; E-FORM a line outside the closed command form (file:line); E-ROWS the .cmds files and term-demos/rows.list
-#   disagree, or the emitted count differs from the declared one; E-CWD a .cwd that is not a directory under the root;
-#   E-ENV term-demos/env sets an emitter-owned key; E-WARM the warm-up build failed; E-STATUS a line exited non-zero (row,
-#   line, status; 126/127 = not runnable); E-TIMEOUT the session ran past TERM_DEMO_TIMEOUT_S; E-NOSTATUS no end record
-#   (the session was killed, or ended before its last line); E-TRANSCRIPT the transcript does not show every command;
-#   E-TESTS a session that runs `cargo test` shows no `test result:` line, a failed or ignored test, or passed == 0;
-#   E-LEAK the refusal scan (N4). The falsifier has one passing refusal arm for every id in this file.
+#   E-TOOL a tool is missing; E-INPUT no .cmds files; E-ID an id that is not [a-z0-9]+; E-ROWS the row files and the pins
+#   in term-demos/rows.list disagree, or the emitted count differs from the declared one; E-EMPTY a .cmds with no command
+#   line; E-FORM a line outside the closed command form (file:line reason); E-CWD a .cwd that is not a directory under the
+#   root; E-ENV term-demos/env sets an emitter-owned key; E-WARM the warm-up build failed; E-STATUS a line exited non-zero
+#   (row, line, status; 126/127 = not runnable); E-TIMEOUT the session ran past TERM_DEMO_TIMEOUT_S; E-NOSTATUS no end
+#   record (the session was killed, or ended before its last line); E-TRANSCRIPT the transcript does not show every
+#   command; E-TESTS a session that runs `cargo test` shows no `test result:` line, a failed or ignored test, or
+#   passed == 0; E-LEAK the refusal scan (N4). The falsifier has one passing refusal arm for every id in this file.
 # A refused row prints the last 20 normalised transcript lines to stderr.
 # The file carries the commit; CI attests it with actions/attest-build-provenance.
 # ENV: ADS_ROOT (repo root), ADS_TERM_DIR (default rust/term-demos), ADS_WARM (command run first, in the crate dir, its
@@ -60,6 +64,10 @@
 set -uo pipefail
 export LC_ALL=C TZ=UTC
 unset LANG LANGUAGE
+# The closed first-word list: the one place it is held. The falsifier proves it equals the first words of the committed rows.
+FIRST_WORDS='bat cargo'
+ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./:=,+-'
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
 OUT=${1:?usage: emit-demo-json.sh OUT.json}
 rm -f "${OUT:?}" "${OUT:?}.tmp"
 die() { echo "FAIL $*" >&2; exit 1; }
@@ -74,57 +82,73 @@ mkdir -p "$TGT" && TGT_P=$(cd "$TGT" && pwd -P) || die "E-INPUT target dir $TGT 
 export ADS_ROOT=$ROOT
 shopt -s nullglob
 cmds=("$DIR"/*.cmds)   # byte order: LC_ALL=C above
+cwds=("$DIR"/*.cwd)
 [ ${#cmds[@]} -gt 0 ] || die "E-INPUT no $DIR/*.cmds (a row comes from a typed-lines file)"
 badid=()
-for c in "${cmds[@]}"; do
-  id=$(basename "$c" .cmds)
-  [[ "$id" =~ ^[abcdefghijklmnopqrstuvwxyz0123456789]+$ ]] || { badid+=("'$id'"); continue; }
-  grep -qE '[^[:space:]]' "$c" || die "E-EMPTY term-$id: .cmds has no command line"
+for f in "${cmds[@]}" "${cwds[@]}"; do
+  id=$(basename "$f"); id=${id%.*}
+  [[ "$id" =~ ^[abcdefghijklmnopqrstuvwxyz0123456789]+$ ]] || badid+=("'$id'")
 done
-[ ${#badid[@]} -eq 0 ] || die "E-ID id not [a-z0-9]+: ${badid[*]}"
-# the closed command form: every line of every file, before anything runs
-formbad=0
-for c in "${cmds[@]}"; do
-  ln=0
-  while IFS= read -r l || [ -n "$l" ]; do
-    ln=$((ln + 1)); r=
-    first=${l#"${l%%[![:space:]]*}"}; first=${first%%[[:space:]]*}
-    if [[ "$l" == *'$('* || "$l" == *'`'* ]]; then r="command substitution"
-    elif [[ "$l" == *';'* || "$l" == *'&'* || "$l" == *'|'* ]]; then r="list, job or pipe"
-    elif [[ "$l" == *'('* || "$l" == *')'* || "$l" == *'{'* || "$l" == *'}'* ]]; then r="subshell or brace group"
-    elif [[ "$l" == *'<<'* ]]; then r="here-document"
-    elif [[ "$l" =~ (^|[^0-9])2[[:space:]]*\> ]]; then r="redirection of fd 2"
-    elif [[ "$l" == *'\' ]]; then r="trailing backslash"
-    else
-      if [[ " set exec eval trap exit builtin command source . " == *" $first "* ]]; then r="leading '$first'"
-      elif [[ " if then else elif fi for while until do done case esac select function time ! [[ coproc " == *" $first "* ]]; then r="compound-command word '$first'"; fi
-    fi
-    [ -z "$r" ] || { echo "FAIL E-FORM $(basename "$c"):$ln $r: ${l:0:80}" >&2; formbad=$((formbad + 1)); }
-  done < "$c"
-done
-[ "$formbad" -eq 0 ] || die "E-FORM $formbad line(s) outside the closed command form"
-# the declared rows
+[ ${#badid[@]} -eq 0 ] || die "E-ID id not [a-z0-9]+: $(printf '%s\n' "${badid[@]}" | sort -u | tr '\n' ' ')"
+# the pinned rows: every row file is listed with its sha256, and every listed file is present with that sha256
 rl="$DIR/rows.list"
 [ -f "$rl" ] || die "E-ROWS no row list $rl"
-mapfile -t declared < <(sed -E 's/#.*//; s/^[[:space:]]+//; s/[[:space:]]+$//; /^$/d' "$rl")
-have=(); for c in "${cmds[@]}"; do have+=("$(basename "$c" .cmds)"); done
-rowsbad=()
-while IFS= read -r d; do [ -n "$d" ] && rowsbad+=("declared twice: $d"); done < <(printf '%s\n' "${declared[@]}" | LC_ALL=C sort | uniq -d)
-for d in "${declared[@]}"; do [[ " ${have[*]} " == *" $d "* ]] || rowsbad+=("declared but has no .cmds: $d"); done
-for h in "${have[@]}"; do [[ " ${declared[*]} " == *" $h "* ]] || rowsbad+=("not declared: $h"); done
+declared=(); rowsbad=(); ln=0
+while IFS= read -r l || [ -n "$l" ]; do
+  ln=$((ln + 1)); l=${l%%#*}; [[ "$l" =~ [^[:space:]] ]] || continue
+  if [[ "$l" =~ ^([abcdefghijklmnopqrstuvwxyz0123456789]+)\ ([0123456789abcdef]{64})\ ([0123456789abcdef]{64})$ ]]; then
+    d=${BASH_REMATCH[1]}
+    [[ " ${declared[*]} " == *" $d "* ]] && { rowsbad+=("declared twice: $d"); continue; }
+    declared+=("$d")
+    for x in "cmds ${BASH_REMATCH[2]}" "cwd ${BASH_REMATCH[3]}"; do
+      ext=${x%% *}; pin=${x#* }
+      if [ ! -f "$DIR/$d.$ext" ]; then rowsbad+=("declared but has no .$ext: $d")
+      elif [ "$(sha256sum < "$DIR/$d.$ext" | cut -d' ' -f1)" != "$pin" ]; then rowsbad+=("pin mismatch: $d.$ext"); fi
+    done
+  else rowsbad+=("malformed line $ln (want '<id> <sha256 .cmds> <sha256 .cwd>')"); fi
+done < "$rl"
+for f in "${cmds[@]}" "${cwds[@]}"; do
+  b=$(basename "$f"); [[ " ${declared[*]} " == *" ${b%.*} "* ]] || rowsbad+=("not declared: $b")
+done
 [ ${#rowsbad[@]} -eq 0 ] || die "E-ROWS $(IFS=';'; echo "${rowsbad[*]}")"
+for c in "${cmds[@]}"; do
+  grep -qE '[^[:space:]]' "$c" || die "E-EMPTY term-$(basename "$c" .cmds): .cmds has no command line"
+done
+# the closed command form: every line of every file, before anything runs
+export F_WORDS=$FIRST_WORDS F_ALPHA=$ALPHABET
+formbad=0
+for c in "${cmds[@]}"; do
+  perl -e '
+    my ($file, $name) = @ARGV; my %first = map { $_ => 1 } split / /, $ENV{F_WORDS};
+    my %ok = map { $_ => 1 } split //, $ENV{F_ALPHA}; $ok{" "} = 1;
+    open my $F, "<:raw", $file or die "$file: $!"; local $/ = "\n"; my ($n, $bad) = (0, 0);
+    while (my $l = <$F>) {
+      $n++; $l =~ s/\n\z//; my $r;
+      if ($l eq "") { $r = "empty line" }
+      elsif (my ($b) = grep { !$ok{$_} } split //, $l) { $r = sprintf "byte 0x%02x is outside the alphabet", ord $b }
+      elsif ($l !~ /\A[^ ]+(?: [^ ]+)*\z/) { $r = "not words joined by single spaces" }
+      else { my ($w) = split / /, $l;
+             if ($w =~ /=/) { $r = "first word \x27$w\x27 is an assignment" }
+             elsif (!$first{$w}) { $r = "first word \x27$w\x27 is not in the closed list ($ENV{F_WORDS})" } }
+      next unless defined $r;
+      (my $show = substr($l, 0, 80)) =~ s/([^\x20-\x7e])/sprintf "\\x%02x", ord $1/ge;
+      print STDERR "FAIL E-FORM $name:$n $r: $show\n"; $bad++;
+    }
+    exit($bad ? 1 : 0)' "$c" "$(basename "$c")" || formbad=$((formbad + 1))
+done
+[ "$formbad" -eq 0 ] || die "E-FORM $formbad file(s) with a line outside the closed command form"
 work=$(mktemp -d "${RUNNER_TEMP:-${TMPDIR:-/tmp}}/term-demos.XXXXXX") || die "E-INPUT no work dir"
 work=$(cd "$work" && pwd -P)
 [ -n "${TERM_DEMO_KEEP:-}" ] || trap 'rm -rf "${work:?}"' EXIT
 mkdir -p "$work/home"
-owned='HOME|PATH|CARGO_HOME|RUSTUP_HOME|CARGO_TARGET_DIR|LC_ALL|LANG|LANGUAGE|TZ|GIT_CONFIG_[A-Z0-9_]+'
+owned='HOME|PATH|CARGO_HOME|RUSTUP_HOME|CARGO_TARGET_DIR|LC_ALL|LANG|LANGUAGE|TZ|GIT_CONFIG_[A-Z0-9_]+|GIT_CONFIG'
 envv=()
 if [ -f "$DIR/env" ]; then mapfile -t envv < <(grep -vE '^\s*(#|$)' "$DIR/env"); fi
 for kv in "${envv[@]}"; do [[ "$kv" =~ ^($owned|LC_[A-Z]+)= ]] && die "E-ENV term-demos/env sets ${kv%%=*}, which the emitter owns"; done
 CH=${CARGO_HOME:-$HOME/.cargo}; RH=${RUSTUP_HOME:-$HOME/.rustup}
 envv+=("HOME=$work/home" "PATH=$PATH" "CARGO_HOME=$CH" "RUSTUP_HOME=$RH" "CARGO_TARGET_DIR=$TGT" "LC_ALL=C" "TZ=UTC")
-# git in a row trusts the repository root and nothing else: command-line-scope config, so it needs no HOME file and no system file
-envv+=("GIT_CONFIG_COUNT=1" "GIT_CONFIG_KEY_0=safe.directory" "GIT_CONFIG_VALUE_0=$ROOT")
+# git in a row reads no system or global config file and trusts the repository root and nothing else (command-line scope)
+envv+=("GIT_CONFIG_NOSYSTEM=1" "GIT_CONFIG_GLOBAL=/dev/null" "GIT_CONFIG_COUNT=1" "GIT_CONFIG_KEY_0=safe.directory" "GIT_CONFIG_VALUE_0=$ROOT")
 strip() { perl -pe 's/\e\][^\a\e]*(\a|\e\\)//g; s/\e\[[0-?]*[ -\/]*[@-~]//g; s/\e[()][A-Z0-9]//g; s/\e[=>]//g; s/\r//g'; }
 export N_TGT=$TGT N_TGT_P=$TGT_P N_ROOT=$ROOT_L N_ROOT_P=$ROOT
 normalise() { # N1..N3
@@ -146,33 +170,28 @@ leaks() { # N4: FILE -> "line N: reason" for the first survivor; non-zero when o
     chomp; my $why;
     for my $x (@lit) { if (index($_, $x) >= 0) { $why = "host path"; last } }
     $why //= "absolute path" if m{(^|[^A-Za-z0-9_.~-])/(home|tmp|root|Users|runner|github|__w|mnt|var/folders|private)(/|\b)};
-    # Whole decimal literals are not hex runs: blank out [+-]digits.digits[(e|E)[+-]digits] only when the character before it
-    # and the character after it are line edge or not [A-Za-z0-9_.]; anything glued to a letter, digit, "_" or "." stays scanned.
-    (my $t = $_) =~ s/(?<![A-Za-z0-9_.])[+-]?[0-9]+\.[0-9]+(?:[eE][+-]?[0-9]+)?(?![A-Za-z0-9_.])/ /g;
+    # Whole decimal literals are not hex runs: blank out [+-]D.digits[(e|E)[+-]E] (D at most 15 digits, E at most 3) only
+    # when the characters before and after it are line edge or not [A-Za-z0-9_.+-]; anything glued into a longer token stays scanned.
+    (my $t = $_) =~ s/(?<![A-Za-z0-9_.+-])[+-]?[0-9]{1,15}\.[0-9]+(?:[eE][+-]?[0-9]{1,3})?(?![A-Za-z0-9_.+-])/ /g;
     unless ($why) { for my $h ($t =~ /[0-9a-f]{16,}/g) { next if $h eq "0" x 16 || $h eq "0" x 40; $why = "volatile hex run (" . length($h) . " chars)"; last } }
     if ($why) { print "line $.: $why: ", substr($_, 0, 160), "\n"; exit 1 }' "$1"
 }
 cat > "$work/run.sh" <<'RUN'
-# run.sh CMDS STATUS: the session. STATUS gets "<first line of the command> <status>", or "end 0" after the last line.
+# run.sh CMDS STATUS: the session. STATUS gets "<line number> <status>", or "end 0" after the last line.
+# Every line is already in the closed form (single-space-separated words of the alphabet), so its words are its argv.
 stty cols 93 rows 25 2>/dev/null
-PS1='$ '
 __n=0; __st=$2
 trap '__s=$?; printf "%s %s\n" "$__n" "$__s" > "$__st"' EXIT
 set -e -o pipefail
-__b=""; __ln=0; __at=0
+__ln=0
 while IFS= read -r -u 3 __l || [ -n "$__l" ]; do
-  __ln=$((__ln + 1)); [ -n "$__b" ] || __at=$__ln
-  __b=${__b:+$__b$'\n'}$__l
-  bash -n <<<"$__b" 2>/dev/null || continue
-  printf '%s\n' "$__b" | sed '1s/^/$ /; 2,$s/^/> /'
-  if [ -n "${ECHO_ONLY:-}" ]; then printf '\0'; __b=""; continue; fi
-  __n=$__at
-  eval "$__b"      # errexit ends the session at the first failing command inside the line
-  __r=$?           # reached when the line's own status is in an errexit-exempt position
-  [ "$__r" -eq 0 ] || exit "$__r"
-  __b=""
+  __ln=$((__ln + 1))
+  printf '$ %s\n' "$__l"
+  if [ -n "${ECHO_ONLY:-}" ]; then printf '\0'; continue; fi
+  __n=$__ln
+  IFS=' ' read -r -a __w <<<"$__l"
+  "${__w[@]}" || exit $?
 done 3< "$1"
-[ -z "$__b" ] || { printf 'term-demo: unparsed command at end of file:\n%s\n' "$__b" >&2; __n=$__at; exit 2; }
 __n=end; exit 0
 RUN
 crate="$ROOT/rust/ads-rust"
@@ -190,9 +209,9 @@ test_facts() { # FILE -> reason on stdout, non-zero when the transcript's test f
 n=0
 for c in "${cmds[@]}"; do
   id=$(basename "$c" .cmds); why=()
-  cwd=.; [ -f "${c%.cmds}.cwd" ] && cwd=$(head -n 1 "${c%.cmds}.cwd")
+  cwd=$(head -n 1 "$DIR/$id.cwd")
   [[ -n "$cwd" && "$cwd" != /* && "/$cwd/" != */../* && -d "$ROOT/$cwd" ]] || die "E-CWD term-$id: cwd '$cwd' is not a directory under the root"
-  st="$work/$id.status"; rm -f "$st"
+  st="$work/$id.status"; rm -f "${st:?}"
   ( cd "$ROOT/$cwd" && env -i "${envv[@]}" timeout "${TERM_DEMO_TIMEOUT_S:-2400}" \
       script -qefc "bash --norc --noprofile $(printf '%q %q %q' "$work/run.sh" "$c" "$st")" /dev/null ) \
     > "$work/$id.raw" 2>&1 </dev/null && rc=0 || rc=$?
@@ -211,7 +230,7 @@ for c in "${cmds[@]}"; do
   perl -e 'local $/; open my $W, "<", $ARGV[0] or die; my @w = split /\0/, <$W>; open my $T, "<", $ARGV[1] or die; my $t = <$T>;
     my $at = 0; for my $x (@w) { my $i = index($t, $x, $at); if ($i < 0) { print "missing: $x"; exit 1 } $at = $i + length $x } exit(@w ? 0 : 1)' \
     "$work/$id.want" "$work/$id.txt" > "$work/$id.miss" || why+=("E-TRANSCRIPT $(head -c 200 "$work/$id.miss")")
-  if grep -qE '^cargo test( |$)|[;&|]\s*cargo test( |$)' "$c"; then
+  if grep -qE '^cargo test( |$)' "$c"; then
     f=$(test_facts "$work/$id.txt") || why+=("E-TESTS $f")
   fi
   l=$(leaks "$work/$id.txt") || why+=("E-LEAK $l")
@@ -227,7 +246,8 @@ for c in "${cmds[@]}"; do
   n=$((n + 1))
 done
 [ ${#bad[@]} -eq 0 ] || die "${#bad[@]} refusal(s): ${bad[*]}"
-jq -s --arg commit "${GITHUB_SHA:-$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)}" --arg wf "${GITHUB_WORKFLOW:-local}" --arg run "${GITHUB_RUN_ID:-local}" \
+commit=${GITHUB_SHA:-$(git -c safe.directory="$ROOT" -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)}
+jq -s --arg commit "$commit" --arg wf "${GITHUB_WORKFLOW:-local}" --arg run "${GITHUB_RUN_ID:-local}" \
   '{schema:"demo-json/v1",course:"ads-c01-rust",commit:$commit,workflow:$wf,run_id:$run,demos:.}' "$rows" >"$OUT.tmp" || { rm -f "${OUT:?}.tmp"; die "final jq"; }
 [ "$(jq -s 'length' "$rows")" -eq "${#declared[@]}" ] && [ "$n" -eq "${#declared[@]}" ] || { rm -f "${OUT:?}.tmp"; die "E-ROWS emitted $n rows, declared ${#declared[@]}"; }
 mv "$OUT.tmp" "$OUT"
