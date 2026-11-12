@@ -4,7 +4,7 @@
 # runs every lesson demo r/agenticds/inst/examples/c-m<M>-v<NN>-*/run.R once and records what the terminal
 # would show: the command, its exit code, its raw stdout, the stdout sha256 and the sha256 of every plot it
 # wrote (ADS_OUT). Fails closed: a non-zero exit, an empty stdout, a last line that is not `contract: ... OK`, no plot.svg,
-# or a lesson count other than 40 stops the run and no file is written. Also writes one row per line of r/term-demos.tsv (term-<id> TAB example dir) under that term id: a copy of the named example row plus `commands`, the typed console commands, one string per command (the example's term.cmds, else its source() line), and `command` as those lines joined. CI uploads and attests the file.
+# or a lesson count other than 40 stops the run and no file is written. Also writes one row per line of r/term-demos.tsv (term-<id> TAB example dir) under that term id: a copy of the named example row plus `commands`, the typed console commands, one string per command (the example's term.cmds, else its source() line), and `command` as those lines joined with a final newline (the Rust row shape); the typed sequence must source the example the row carries. CI uploads and attests the file.
 set -uo pipefail  # no -e: every step below is checked explicitly
 OUT=${1:?OUT.json}
 EX=${EXAMPLES_DIR:-r/agenticds/inst/examples}
@@ -34,9 +34,13 @@ for dir in "$EX"/c-m[1-4]-v[0-9][0-9]-*/; do
   while IFS=$'\t' read -r tid tex; do
     [ "$tex" = "$name" ] || continue
     # typed commands of the console session: the example's own term.cmds (one command per line) when it has one, else the single source() line
-    if [ -e "$dir/term.cmds" ]; then cp "$dir/term.cmds" "$T/cmds"; else printf 'source("%s/run.R")\n' "$dir" >"$T/cmds"; fi
+    rm -f "${T:?}/cmds"
+    if [ -e "$dir/term.cmds" ]; then { [ -f "$dir/term.cmds" ] && tr -d '\r' <"$dir/term.cmds" >"$T/cmds"; } || { echo "FAIL $tid $dir/term.cmds is not a readable regular file" >&2; exit 1; }
+    else printf 'source("%s/run.R")\n' "$dir" >"$T/cmds"; fi
     grep -q '[^[:space:]]' "$T/cmds" || { echo "FAIL $tid no typed command for $name" >&2; exit 1; }
-    cmds=$(jq -R . "$T/cmds" | jq -s 'map(select(test("[^ \t]")))') || { echo "FAIL $tid commands jq" >&2; exit 1; }
+    # the typed sequence must run the example whose stdout and plots the row carries
+    grep -qxF "source(\"$dir/run.R\")" "$T/cmds" || { echo "FAIL $tid commands do not source $dir/run.R" >&2; exit 1; }
+    cmds=$(jq -R . "$T/cmds" | jq -s 'map(select(test("\\S")))') || { echo "FAIL $tid commands jq" >&2; exit 1; }
     tail -n 1 "$T/rows" | jq -c --arg id "$tid" --argjson cmds "$cmds" '.id=$id | .commands=$cmds | .command=(($cmds|join("\n"))+"\n")' >>"$T/rows" || { echo "FAIL $tid term row jq" >&2; exit 1; }
     nt=$((nt + 1))
   done <"$MAP"
