@@ -44,7 +44,7 @@ jobs:
         run: scripts/r-deps.sh "$RUNNER_TEMP/rlib" && echo "R_LIBS=$RUNNER_TEMP/rlib" >> "$GITHUB_ENV"
       - name: Install the package
         run: R CMD INSTALL --library="$RUNNER_TEMP/rlib" r/agenticds
-      - name: Falsify the emitter (stub R: clean map green; missing example, bad id, duplicate id, empty map red)
+      - name: Falsify the emitter (stub R, clean map green and four planted maps red)
         run: scripts/falsify-emit-demo-json-r.sh
       - name: Run the 40 lesson demos and emit demo.json
         run: scripts/emit-demo-json-r.sh "$RUNNER_TEMP/demo.json"
