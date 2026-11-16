@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  labs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Rust lab proof (starter fails, solution passes, mutants fail)
+        env:
+          LAB_ONLY: rust
+        run: bash scripts/lab-nightly.sh
+
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy, llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust/ads-rust
+      - name: Datasets match their checksums
+        run: make gate-datasets
+      - name: Install cargo-llvm-cov
+        run: cargo install --locked --version 0.8.5 cargo-llvm-cov
+      - name: Rust gate (fmt, clippy, 100% coverage, examples, lab proof)
+        run: make gate-rust

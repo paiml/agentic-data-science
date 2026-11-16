@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# LAB lane (agentic-data-science#143): every lab's falsifier on its REAL toolchain. Never a gate, never on a PR path.
+# LAB lane: every lab's falsifier on its REAL toolchain. Never a gate, never on a PR path.
 # Per lab: solution PASSes, starter FAILs, every mutant / forge arm FAILs (the labs' own run-lab-proof.sh and falsify-grade.sh).
 # A lane is GREEN only if its proof printed its floor lines (PROOF OK, the mutant lines, the arm count): an empty log is never green.
 # Exit 0 all green | 1 any red | 2 nothing red but a lane could not be measured (toolchain absent: NOT RUN, never green).
