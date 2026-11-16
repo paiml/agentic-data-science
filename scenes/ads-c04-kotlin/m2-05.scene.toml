@@ -1,0 +1,17 @@
+# m2-05 kover — scene spec. cue = teleprompter beat index.
+scene = { name = "m2-05-kover", code_font = "Noto Sans Mono" }
+element = [
+  { id = "tests", kind = "card", x = 120, y = 160, w = 560, label = "tests", slots = ["run the code"], show = 1 },
+  { id = "kov", kind = "card", x = 1200, y = 160, w = 560, label = "Kover", slots = ["lines executed", "branches executed"], show = 1 },
+  { id = "e1", kind = "edge", from = "tests", to = "kov", show = 1 },
+  { id = "bar", kind = "strip", x = 120, y = 520, w = 1640, label = "every line, branches >= 95%", tone = "accent", via = "below", show = 2 },
+  { id = "red", kind = "strip", x = 120, y = 680, w = 1640, label = "a test removed: red, names the file", tone = "error", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, target = "kov", action = "highlight" },
+  { cue = 2, target = "bar", action = "highlight" },
+  { cue = 2, offset = 0.8, target = "kov", action = "state", state = "ok" },
+  { cue = 3, target = "tests", action = "exit", from = "left", duration = 1.0 },
+  { cue = 3, offset = 1.0, target = "kov", action = "state", state = "error" },
+  { cue = 3, offset = 1.4, target = "red", action = "state", state = "error" },
+]

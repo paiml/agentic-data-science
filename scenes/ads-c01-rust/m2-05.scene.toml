@@ -1,0 +1,19 @@
+# m2-05 Design matrix. Facts: nine penguins; species is text; Adelie baseline; columns flipper, Chinstrap, Gentoo; golden agrees with all four.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m2-05-design-matrix", code_font = "Noto Sans Mono" }
+element = [
+  { id = "tbl", kind = "code", x = 120, y = 120, w = 840, slots = ["species: text", "flipper: number", "mass: number"], via = "left", show = 1 },
+  { id = "refuse", kind = "strip", x = 120, y = 400, w = 840, label = "coefficient x Gentoo: refused", tone = "error", via = "below", show = 2 },
+  { id = "dum", kind = "code", x = 1100, y = 120, w = 700, slots = ["Chinstrap: s == d, 1 or 0", "Gentoo: s == d, 1 or 0"], via = "right", show = 3 },
+  { id = "base", kind = "chip", x = 1100, y = 400, label = "Adelie baseline: 0 and 0", show = 4 },
+  { id = "mat", kind = "outline", x = 120, y = 620, w = 840, label = "design matrix", slots = ["flipper", "Chinstrap", "Gentoo"], show = 5 },
+  { id = "gold", kind = "strip", x = 1100, y = 700, w = 700, label = "golden: all four match", tone = "ok", via = "below", show = 6 },
+]
+beat = [
+  { cue = 1, target = "tbl", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "refuse", action = "state", state = "error" },
+  { cue = 3, targets = ["dum.1", "dum.2"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 4, target = "base", action = "state", state = "accent" },
+  { cue = 5, target = "mat", action = "state", state = "ok" },
+  { cue = 6, target = "gold", action = "state", state = "ok" },
+]

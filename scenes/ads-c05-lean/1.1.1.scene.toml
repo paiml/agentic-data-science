@@ -1,0 +1,25 @@
+# 1.1.1 Exact rationals versus float. Facts only from the locked narration (srt): float rounds; rationals never round; 1/3 three times with rationals prints 1; float asked 0.1 + 0.2 = 0.3 prints false; rationals give exactly one; exactness lets a proof claim equality instead of closeness; every number is a rational unless said otherwise.
+scene = { name = "1.1.1-exact-rationals-versus-float", code_font = "Noto Sans Mono" }
+element = [
+  { id = "flt", kind = "card", x = 120, y = 140, w = 760, label = "float", slots = ["stores decimals", "rounds"], via = "left", show = 0 },
+  { id = "rat", kind = "card", x = 1040, y = 140, w = 760, label = "exact rationals", slots = ["never round"], via = "right", show = 2 },
+  { id = "sum", kind = "code", x = 1040, y = 420, w = 760, slots = ["(1/3 + 1/3 + 1/3 : ℚ) = 1", "prints 1"], via = "right", show = 3, hide = 8 },
+  { id = "q", kind = "code", x = 120, y = 420, w = 760, slots = ["0.1 + 0.2 = 0.3 ?", "prints false"], via = "left", show = 4, hide = 8 },
+  { id = "why", kind = "chip", x = 120, y = 700, label = "float values are rounded", tone = "error", via = "below", show = 5, hide = 8 },
+  { id = "one", kind = "chip", x = 1040, y = 700, label = "exactly one, no error at all", tone = "ok", via = "below", show = 6, hide = 8 },
+  { id = "eq", kind = "strip", x = 120, y = 860, w = 1680, label = "exactness lets a proof claim equality, not closeness", tone = "accent", via = "below", show = 7 },
+  { id = "all", kind = "strip", x = 120, y = 700, w = 1680, label = "every number in this course is a rational unless we say otherwise", tone = "ok", via = "below", show = 8 },
+]
+beat = [
+  { cue = 2, target = "flt", action = "highlight", duration = 1.5, offset = 2.0 },
+  { cue = 2, target = "flt", action = "highlight", duration = 1.5, offset = 4.0 },
+  { cue = 1, target = "flt", action = "highlight", duration = 1.5 },
+  { cue = 1, target = "flt", action = "highlight", duration = 1.5, offset = 2.0 },
+  { cue = 1, target = "flt", action = "state", state = "error" },
+  { cue = 2, target = "rat", action = "state", state = "ok" },
+  { cue = 3, target = "sum.2", action = "state", state = "ok" },
+  { cue = 4, target = "q.2", action = "state", state = "error" },
+  { cue = 6, target = "one", action = "highlight" },
+  { cue = 7, target = "eq", action = "highlight" },
+  { cue = 8, target = "all", action = "highlight", duration = 1.6 },
+]

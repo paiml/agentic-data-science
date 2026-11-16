@@ -1,0 +1,13 @@
+{
+  "accuracy": 0.976470588235294,
+  "confusion": [
+    [37, 0, 0],
+    [0, 16, 1],
+    [0, 1, 30]
+  ],
+  "classes": ["Adelie", "Chinstrap", "Gentoo"],
+  "kmeans": {
+    "objective": 378.293614632478,
+    "cluster_sizes": [133, 123, 86]
+  }
+}

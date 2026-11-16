@@ -1,0 +1,16 @@
+@prefix ads: <https://paiml.com/ns/ads#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<https://paiml.com/ns/ads#c-m2-p2-cv> a ads:Example ;
+  ads:language "r" ;
+  ads:course "C" ;
+  ads:module "2"^^xsd:integer ;
+  ads:problem "P2" ;
+  ads:dataset ads:penguins ;
+  ads:readme "r/agenticds/inst/examples/c-m2-p2-cv/README.md" ;
+  ads:lineCoverage "100.0"^^xsd:decimal ;
+  ads:lintWarnings "0"^^xsd:integer ;
+  ads:ticket "#4" ;
+  ads:contract "contracts/ads-r-p2-v1.yaml" ;
+  ads:parityGolden "datasets/golden/p2.json" ;
+  ads:branchCasesEnumerated true .

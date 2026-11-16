@@ -1,0 +1,32 @@
+# 3.3.0 Pruning at CP and fit tree — scene spec (c05 plate fix). Three trees: grown, pruned at CP2, fit tree; a branch collapses when the saving is under CP times (leaves - 1).
+scene = { name = "3.3.0-terminal-pruning-at-cp-and-fittree", code_font = "Noto Sans Mono" }
+element = [
+  { id = "g", kind = "card", x = 120, y = 160, w = 520, label = "grown tree", slots = ["fits every row"], show = 1 },
+  { id = "p", kind = "card", x = 700, y = 160, w = 520, label = "pruned CP2", slots = ["fewer branches"], show = 14 },
+  { id = "f", kind = "card", x = 1280, y = 160, w = 520, label = "fit tree", slots = ["root risk / 100"], show = 15 },
+  { id = "rows", kind = "chip", x = 120, y = 640, label = "9 rows", show = 4 },
+  { id = "out", kind = "chip", x = 400, y = 640, label = "one outlier", tone = "error", show = 6 },
+  { id = "rule", kind = "strip", x = 120, y = 760, w = 1680, label = "collapse when saving < CP x (leaves - 1)", tone = "accent", via = "below", show = 7 },
+  { id = "cmp", kind = "strip", x = 120, y = 900, w = 1680, label = "compare the three trees: which branches did pruning remove?", via = "below", show = 16 },
+]
+beat = [
+  { cue = 2, target = "g", action = "move", to_xy = [120, 260], duration = 1.2 },
+  { cue = 3, target = "g", action = "state", state = "error" },
+  { cue = 4, target = "g", action = "move", to_xy = [120, 160], duration = 1.2 },
+  { cue = 5, target = "rows", action = "highlight" },
+  { cue = 5, offset = 1.0, target = "g", action = "move", to_xy = [120, 360], duration = 1.2 },
+  { cue = 6, target = "out", action = "highlight" },
+  { cue = 7, target = "g", action = "move", to_xy = [120, 160], duration = 1.2 },
+  { cue = 8, target = "rule", action = "state", state = "ok" },
+  { cue = 9, target = "g", action = "move", to_xy = [120, 360], duration = 1.2 },
+  { cue = 10, target = "g", action = "move", to_xy = [120, 160], duration = 1.2 },
+  { cue = 11, target = "f", action = "move", to_xy = [1280, 260], duration = 1.2 },
+  { cue = 12, target = "f", action = "move", to_xy = [1280, 160], duration = 1.2 },
+  { cue = 13, target = "g", action = "move", to_xy = [120, 280], duration = 1.0 },
+  { cue = 14, target = "p", action = "move", to_xy = [700, 280], duration = 1.0 },
+  { cue = 15, target = "f", action = "move", to_xy = [1280, 280], duration = 1.0 },
+  { cue = 16, target = "g", action = "move", to_xy = [120, 400], duration = 1.0 },
+  { cue = 16, offset = 0.8, target = "p", action = "move", to_xy = [700, 400], duration = 1.0 },
+  { cue = 16, offset = 1.6, target = "f", action = "move", to_xy = [1280, 400], duration = 1.0 },
+  { cue = 16, offset = 2.4, target = "cmp", action = "state", state = "ok" },
+]

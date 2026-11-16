@@ -1,0 +1,12 @@
+# Environment for the term-<id> demos. A session run elsewhere matches its demo only
+# with these same values. Deterministic-output switches are listed in README.md.
+PATH=/opt/elan/bin:/opt/tools/bin:/usr/bin:/bin
+HOME=/tmp/rts-home-lean
+LC_ALL=C.UTF-8
+TZ=UTC
+TERM=xterm-256color
+BAT_STYLE=plain
+GATE_LEAN_HEARTBEAT_S=0
+BAT_PAGING=never
+PAGER=cat
+GIT_PAGER=cat

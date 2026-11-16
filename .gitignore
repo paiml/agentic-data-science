@@ -1,0 +1,20 @@
+target/
+.lake/
+*.log
+kotlin/.gradle/
+kotlin/build/
+kotlin/ads-kotlin/build/
+.kotlin/
+/plot.png
+
+# pv lint caches
+lean/AgenticDS/plot.*
+.pv/
+contracts/.pv/
+target-lab/
+*.profraw
+
+# copied in by scripts/gate-lean.sh from PlantedWrongSlope.lean.planted, removed after
+lean/AgenticDS/AgenticDSTest/PlantedWrongSlope.lean
+out/lab-preview/
+.dl-cache/

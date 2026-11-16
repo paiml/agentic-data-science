@@ -1,0 +1,14 @@
+# m1-02 typed ingest. Source: teleprompter beats 3 and 4 (cue = beat number). Facts: four measurement columns and sex are Union{Missing, T}; plain Float64 has nowhere to put a hole; explicit types make the schema part of the code.
+scene = { name = "m1-02-typed-ingest-and-the-missing-value-policy", code_font = "Noto Sans Mono" }
+element = [
+  { id = "col", kind = "code", x = 120, y = 140, w = 900, label = "read_penguins column types", slots = ["bill_length_mm: Union{Missing, Float64}", "bill_depth_mm: Union{Missing, Float64}", "flipper_length_mm: Union{Missing, Float64}", "body_mass_g: Union{Missing, Float64}", "sex: Union{Missing, String}"], show = 3, via = "left" },
+  { id = "plain", kind = "chip", x = 1100, y = 200, w = 600, label = "plain Float64: no room for a hole", tone = "error", show = 4, via = "right" },
+  { id = "un", kind = "chip", x = 1100, y = 320, w = 600, label = "Union{Missing, Float64}: says it up front", show = 4, via = "right" },
+  { id = "sch", kind = "strip", x = 120, y = 720, w = 1500, label = "explicit types: the schema is code you can read, review and test", tone = "accent", show = 4, via = "below" },
+]
+beat = [
+  { cue = 3, targets = ["col.1", "col.2", "col.3", "col.4"], action = "highlight", stagger = 0.4 },
+  { cue = 3, target = "col.5", action = "highlight" },
+  { cue = 4, target = "plain", action = "state", state = "error" },
+  { cue = 4, target = "un", action = "state", state = "ok" },
+]

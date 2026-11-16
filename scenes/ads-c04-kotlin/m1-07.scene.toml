@@ -1,0 +1,16 @@
+# m1-07 shacl — scene spec. cue = teleprompter beat index.
+scene = { name = "m1-07-shacl", code_font = "Noto Sans Mono" }
+element = [
+  { id = "meta", kind = "card", x = 120, y = 160, w = 560, label = "example metadata", slots = ["contract name", "source pin"], show = 1 },
+  { id = "shape", kind = "card", x = 1200, y = 160, w = 560, label = "SHACL shape", slots = ["requires contract name", "requires source pin"], show = 1 },
+  { id = "e1", kind = "edge", from = "meta", to = "shape", show = 1 },
+  { id = "bad", kind = "card", x = 120, y = 500, w = 560, label = "example without a pin", slots = ["contract name", "source pin: missing"], tone = "error", show = 2 },
+  { id = "no", kind = "strip", x = 120, y = 760, w = 1640, label = "does not conform: the gate refuses it", tone = "error", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, target = "meta", action = "move", to_xy = [440, 160], duration = 1.2 },
+  { cue = 1, offset = 1.4, target = "shape", action = "state", state = "ok" },
+  { cue = 2, target = "bad", action = "move", to_xy = [440, 500], duration = 1.2 },
+  { cue = 2, offset = 1.4, target = "shape", action = "state", state = "error" },
+  { cue = 2, offset = 1.8, target = "no", action = "state", state = "error" },
+]

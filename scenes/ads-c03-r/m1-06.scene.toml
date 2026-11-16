@@ -1,0 +1,19 @@
+# m1-06 The profile as JSON, equal to the golden. Cues are teleprompter beat numbers. Facts only from the teleprompter: the Gentoo block (n 123, four measurements) and the golden comparison.
+scene = { name = "m1-06-the-profile-as-json-equal-to-the-golden", code_font = "Noto Sans Mono" }
+element = [
+  { id = "doc", kind = "code", x = 120, y = 140, w = 860, label = "profile.json, last 22 lines", slots = ["\"Gentoo\": {", "  \"n\": 123,", "  \"bill length\": mean 47.50, sd 3.08", "  \"bill depth\": mean 14.98, sd 0.98", "  \"flipper length\": mean 217.19, sd 6.48", "  \"body mass\": mean 5076.02, sd 504.12", "}"], show = 1 },
+  { id = "gold", kind = "outline", x = 1100, y = 140, w = 700, label = "golden p1.json", slots = ["whole document: matches"], show = 11 },
+  { id = "tol", kind = "chip", x = 1100, y = 360, label = "within one part in a billion", tone = "accent", show = 12 },
+  { id = "line", kind = "strip", x = 1100, y = 460, w = 700, label = "contract: matches golden p1.json", tone = "ok", via = "below", show = 11 },
+  { id = "code", kind = "chip", x = 120, y = 700, label = "numbers come out of the code", tone = "accent", show = 16 },
+  { id = "judge", kind = "chip", x = 1100, y = 700, label = "the golden file says if they are right", tone = "ok", show = 17 },
+]
+beat = [
+  { cue = 4, target = "doc.2", action = "highlight" },
+  { cue = 6, target = "doc.3", action = "highlight" },
+  { cue = 7, target = "doc.4", action = "highlight" },
+  { cue = 8, target = "doc.5", action = "highlight" },
+  { cue = 9, target = "doc.6", action = "highlight" },
+  { cue = 12, target = "doc", action = "highlight" },
+  { cue = 13, target = "gold.whole-document", action = "state", state = "ok" },
+]

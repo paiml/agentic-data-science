@@ -1,0 +1,18 @@
+# 4.3.1 The P4 golden test. Facts only from the locked narration (srt): the golden file R produced; the pipeline prints row count, train and test count, rmse and R^2 for red and white wine; compare each with the golden file; proofs cover structure, tests cover numbers.
+scene = { name = "4.3.1-the-p4-golden-test", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gold", kind = "outline", x = 120, y = 140, w = 760, label = "golden file, produced by R", slots = ["row count: figure", "train and test count: figure", "rmse: figure", "R squared: figure"], show = 1 },
+  { id = "pipe", kind = "card", x = 1000, y = 140, w = 760, label = "pipeline output", slots = ["row count: its own", "train and test count: its own", "rmse: its own", "R squared: its own"], via = "right", show = 3 },
+  { id = "red", kind = "chip", x = 1000, y = 560, label = "red wine", show = 7 },
+  { id = "white", kind = "chip", x = 1240, y = 560, label = "white wine", show = 7 },
+  { id = "cmp", kind = "strip", x = 120, y = 640, w = 760, label = "compare each figure with the golden file", tone = "accent", via = "below", show = 8 },
+  { id = "proofs", kind = "chip", x = 120, y = 820, label = "proofs cover the structure", tone = "accent", via = "left", show = 10 },
+  { id = "tests", kind = "chip", x = 1000, y = 820, label = "tests cover the numbers", tone = "ok", via = "right", show = 11 },
+]
+beat = [
+  { cue = 1, target = "gold", action = "highlight", duration = 1.6 },
+  { cue = 3, target = "pipe", action = "highlight", duration = 1.6 },
+  { cue = 5, targets = ["red", "white"], action = "state", state = "accent" },
+  { cue = 8, target = "pipe", action = "fit", to = "gold" },
+  { cue = 11, target = "tests", action = "highlight" },
+]

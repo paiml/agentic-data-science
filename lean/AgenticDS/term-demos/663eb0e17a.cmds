@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+bat -p scripts/Axioms.lean
+echo "exit=$? #01"
+lake env lean scripts/Axioms.lean
+echo "exit=$? #02"

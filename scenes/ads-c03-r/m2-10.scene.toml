@@ -1,0 +1,13 @@
+# m2-10 what the gate proved. Cues are teleprompter beat numbers. Facts only from the teleprompter: two examples run their own contract, two lines ending in OK.
+scene = { name = "m2-10-what-the-gate-proved", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ex", kind = "outline", x = 120, y = 140, w = 760, label = "ex: the two examples", slots = ["ols example: run.R", "cv example: run.R"], show = 1 },
+  { id = "keep", kind = "chip", x = 120, y = 460, label = "keep only lines that start with contract", tone = "accent", show = 3 },
+  { id = "lines", kind = "card", x = 1000, y = 140, w = 760, label = "the two contract lines", slots = ["ols matches golden p2: OK", "cv matches golden p2: OK"], via = "right", show = 4 },
+  { id = "req", kind = "strip", x = 1000, y = 460, w = 760, label = "two contracts, both ending in OK", tone = "ok", via = "below", show = 5 },
+  { id = "own", kind = "strip", x = 1000, y = 580, w = 760, label = "the script prints its own contract line", tone = "ok", via = "below", show = 5 },
+]
+beat = [
+  { cue = 2, targets = ["ex.ols-example", "ex.cv-example"], action = "highlight", stagger = 0.5 },
+  { cue = 4, targets = ["lines.ols-matches-golden-p2", "lines.cv-matches-golden-p2"], action = "state", state = "ok", stagger = 0.4 },
+]

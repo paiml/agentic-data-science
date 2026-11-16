@@ -1,0 +1,14 @@
+# m1-04 per-species profile. Source: teleprompter beats 5 and 6 (cue = beat number). Facts: Adelie and Chinstrap near 3700 g, Gentoo over 5000 g; std divides by n or n-1; sample std uses n-1; Julia std does this by default.
+scene = { name = "m1-04-per-species-profile-and-the-n-minus-one", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ad", kind = "chip", x = 120, y = 200, w = 520, label = "Adelie ~3700 g", show = 5, via = "left" },
+  { id = "ch", kind = "chip", x = 120, y = 300, w = 520, label = "Chinstrap ~3700 g", show = 5, via = "left" },
+  { id = "ge", kind = "chip", x = 120, y = 400, w = 520, label = "Gentoo > 5000 g", tone = "accent", show = 5, via = "left" },
+  { id = "pop", kind = "card", x = 800, y = 200, w = 460, label = "population std", slots = ["divide by n"], show = 6, via = "below" },
+  { id = "smp", kind = "card", x = 1340, y = 200, w = 460, label = "sample std", slots = ["divide by n - 1"], show = 6, via = "below" },
+  { id = "def", kind = "strip", x = 800, y = 620, w = 1000, label = "a sample: use n - 1; Julia std does by default", tone = "accent", show = 6, via = "below" },
+]
+beat = [
+  { cue = 5, target = "ge", action = "highlight" },
+  { cue = 6, target = "smp", action = "state", state = "ok" },
+]

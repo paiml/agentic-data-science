@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+bat -p ../../datasets/golden/p3.json
+echo "exit=$? #01"
+lake exe scene-m3 v08
+echo "exit=$? #02"

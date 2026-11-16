@@ -1,0 +1,133 @@
+import AgenticDS.Examples.M4
+
+/-! Module 4 example checks: registry, every example runs, and
+the exact values the examples state. -/
+
+open AgenticDS
+
+-- Compile-time facts the examples state.
+#guard (trainRows (List.range 6497)).length == 5198
+#guard (testRows (List.range 6497)).length == 1299
+#guard testRows (List.range 15) == [4, 9, 14]
+#guard m4v07_sol == some [4 / 5, 7 / 5]
+#guard m4v02_row.features.length == 11
+#guard (validate ⟨m4v03_f, some 11, "red"⟩).isNone
+#guard (validate ⟨m4v03_f, some 10, "white"⟩).isSome
+#guard (validate ⟨m4v03_f, some 6, "rose"⟩).isNone
+#guard (validate ⟨m4v03_f.tail, some 6, "red"⟩).isNone
+#guard (m4v06_leak (List.range 5)).length == 5
+
+/-- Output of a example, captured. -/
+def outOf (act : IO Unit) : IO String := do
+  let (out, _) ← IO.FS.withIsolatedStreams act
+  pure out
+
+def lines (s : String) : List String :=
+  (s.splitOn "\n").filter (· ≠ "")
+
+def has (s sub : String) : Bool := (s.splitOn sub).length > 1
+
+/-- Exact output of the examples whose output is fixed. -/
+def exact : List (String × List String) := [
+  ("v02", ["features 11", "quality 6", "white false",
+    "contract: ads-lean-m4v02-v1 OK"]),
+  ("v03", ["true", "false", "false", "false", "false",
+    "kept 1 of 5", "kept    █████ 1",
+    "refused ████████████████████ 4",
+    "contract: plot_bars_bounded OK",
+    "svg 2 bars plot-m4v03.svg",
+    "contract: plot_svg_bounded OK",
+    "sulphates vs quality: n = 200", "slope 2.247654",
+    "svg 200 points plot-m4v03b.svg",
+    "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK",
+    "contract: ads-lean-m4v03-v1 OK"]),
+  ("v04", ["clean_length_le", "clean_sub", "clean_complete",
+    "clean_in_range", "contract: ads-lean-m4v04-v1 OK"]),
+  ("v05", ["test rows [4, 9, 14]", "clean 6497", "test 1299",
+    "train 5198", "svg 3 bars plot-m4v05.svg",
+    "contract: plot_svg_bounded OK",
+    "contract: ads-lean-m4v05-v1 OK"]),
+  ("v06", ["rows 5", "leaky train 5", "test 1",
+    "rows        ████████████████████ 5",
+    "leaky train ████████████████████ 5",
+    "test        ████ 1",
+    "contract: plot_bars_bounded OK",
+    "svg 3 bars plot-m4v06.svg",
+    "contract: plot_svg_bounded OK",
+    "density vs quality: n = 200", "slope -78.910503",
+    "svg 200 points plot-m4v06b.svg",
+    "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK",
+    "contract: ads-lean-m4v06-v1 OK"]),
+  ("v07", ["(some [4/5, 7/5])",
+    "contract: ads-lean-m4v07-v1 OK"])]
+
+def main (_ : List String) : IO UInt32 := do
+  let dir : System.FilePath := "AgenticDS/Examples"
+  let files := ((← dir.readDir).filter
+    fun e => e.fileName.startsWith "M4V").size
+  let mut ok := true
+  if files != examplesM4.length then
+    IO.eprintln s!"FAIL {files} files, {examplesM4.length} examples"
+    ok := false
+  let mut outs : List (String × String) := []
+  for (id, act) in examplesM4 do
+    try outs := outs ++ [(id, ← outOf act)]
+    catch e => IO.eprintln s!"FAIL {id}: {e}"; ok := false
+  let get := fun id => (outs.lookup id).getD ""
+  for (id, want) in exact do
+    if lines (get id) != want then
+      IO.eprintln s!"FAIL {id} output: {lines (get id)}"
+      ok := false
+  -- v08: the golden file and the pipeline numbers agree.
+  let v8 := get "v08"
+  let want8 := ["\"n_rows\": 6497", "\"n_train\": 5198",
+    "\"n_test\": 1299", "n_rows 6497", "n_train 5198",
+    "n_test 1299", "svg 200 points plot-m4v08.svg",
+    "contract: plot_scatter_bounded OK",
+    "contract: plot_scatter_source OK", "rmse 0.7602",
+    "r2 0.2598", "red 5.636", "white 5.877",
+    "contract: ads-lean-m4v08-v1 OK"]
+  for w in want8 do
+    unless has v8 w do
+      IO.eprintln s!"FAIL v08 lacks {w}"; ok := false
+  -- v01, v10: the scatter of real wine rows.
+  for (id, w) in [("v01", "svg 200 points plot-m4v01.svg"),
+      ("v01", "contract: ads-lean-m4v01-v1 OK"),
+      ("v10", "svg 200 points plot-m4v10.svg"),
+      ("v10", "contract: ads-lean-m4v10-v1 OK")] do
+    unless has (get id) w do
+      IO.eprintln s!"FAIL {id} lacks {w}"; ok := false
+  -- v01: the declarations to grep, in file order.
+  let want1 := ["structure WineRaw", "structure ValidRow",
+    "def validate", "def clean",
+    "theorem clean_length_le", "theorem clean_sub",
+    "theorem clean_complete", "theorem clean_in_range",
+    "def isTest", "def trainRows", "def testRows",
+    "theorem length_filter_split",
+    "theorem split_partition", "def design",
+    "def gaussSolve", "def fitCoefs", "def predictRow",
+    "def sseRows", "def sstRows", "def readWine"]
+  let pl ← IO.FS.readFile "AgenticDS/Pipeline.lean"
+  let decls := (lines pl).filterMap fun l =>
+    match l.splitOn " " with
+    | k :: n :: _ =>
+      if ["structure", "def", "theorem"].contains k
+      then some s!"{k} {n}" else none
+    | _ => none
+  if decls != want1 then
+    IO.eprintln s!"FAIL v01 decls: {decls}"; ok := false
+  -- v09: three fixed count lines first (the clock is on
+  -- stderr), and four tolerance lines in the test.
+  let t4 ← IO.FS.readFile "AgenticDSTest/P4.lean"
+  let tol := (lines t4).filter (has · "1000000")
+  unless tol.length == 4 &&
+      (lines (get "v09")).take 3 ==
+        ["n_rows 6497", "n_train 5198", "n_test 1299"] &&
+      has (get "v09") "svg 196 points plot-m4v09.svg" &&
+      (lines (get "v09")).getLast? ==
+        some "contract: ads-lean-m4v09-v1 OK" do
+    IO.eprintln s!"FAIL v09 output: {get "v09"}"; ok := false
+  if ok then IO.println "contract: ads-lean-examples-m4-v1 OK"
+  pure (if ok then 0 else 1)

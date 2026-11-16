@@ -1,0 +1,15 @@
+# m4-09 Reproducibility across locales. Cues are teleprompter beat numbers. Facts only from the teleprompter: keys b1 A2 a3 B4 c5 C6; order 2 4 6 3 1 5 under C, 2 3 1 4 5 6 under en_US; RMSE 0.76025160619007526 in both.
+scene = { name = "m4-09-reproducibility-across-locales", code_font = "Noto Sans Mono" }
+element = [
+  { id = "keys", kind = "chip", x = 120, y = 140, label = "keys: b1 A2 a3 B4 c5 C6", tone = "accent", show = 3 },
+  { id = "c", kind = "card", x = 120, y = 260, w = 760, label = "locale C", slots = ["order: 2 4 6 3 1 5", "capital letters first"], via = "left", show = 4 },
+  { id = "us", kind = "card", x = 1000, y = 260, w = 760, label = "locale en US", slots = ["order: 2 3 1 4 5 6", "letters sort together"], via = "right", show = 6 },
+  { id = "diff", kind = "strip", x = 120, y = 520, w = 1640, label = "same keys, two orders: the problem is real", tone = "error", via = "below", show = 7 },
+  { id = "pos", kind = "chip", x = 120, y = 600, label = "the pipeline picks every fifth row by position", tone = "ok", show = 11 },
+  { id = "rc", kind = "outline", x = 120, y = 740, w = 760, label = "whole pipeline under C", slots = ["rmse: 0.76025160619007526"], via = "left", show = 14 },
+  { id = "rus", kind = "card", x = 1000, y = 740, w = 760, label = "whole pipeline under en US", slots = ["rmse: 0.76025160619007526"], via = "right", show = 14 },
+]
+beat = [
+  { cue = 7, targets = ["c.order", "us.order"], action = "state", state = "error", stagger = 0.3 },
+  { cue = 15, target = "rus", action = "fit", to = "rc" },
+]

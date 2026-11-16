@@ -1,0 +1,17 @@
+# m1-04 The golden file. Facts: datasets/golden/p1.json, contract ads-rust-p1-v1; 344 rows -> 342, Adelie 151, Chinstrap 68, Gentoo 123; skipping the NA rule gives 152/68/124 and the check refuses.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m1-04-the-golden-file", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gold", kind = "code", x = 120, y = 120, w = 700, slots = ["Adelie", "n: 151", "bill_length_mm: mean 38.79, sd 2.66"], via = "left", show = 1 },
+  { id = "commit", kind = "chip", x = 120, y = 440, label = "commit: golden file", show = 1 },
+  { id = "rust", kind = "card", x = 960, y = 120, w = 840, label = "Rust reads 344 rows", slots = ["drop 2 with NA", "344 to 342"], via = "right", show = 2 },
+  { id = "bins", kind = "code", x = 960, y = 400, w = 840, slots = ["Adelie 151", "Chinstrap 68", "Gentoo 123"], show = 2 },
+  { id = "diff", kind = "strip", x = 120, y = 640, w = 700, label = "|computed - golden| within 1e-9", tone = "ok", via = "below", show = 3 },
+  { id = "mut", kind = "strip", x = 960, y = 760, w = 840, label = "skip NA rule: 152, 68, 124 - REFUSED", tone = "error", via = "below", show = 4 },
+]
+beat = [
+  { cue = 1, target = "gold", action = "highlight", duration = 1.6 },
+  { cue = 2, targets = ["bins.1", "bins.2", "bins.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 3, target = "diff", action = "state", state = "ok" },
+  { cue = 4, target = "mut", action = "state", state = "error" },
+]

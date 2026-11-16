@@ -1,0 +1,15 @@
+# m3-09 Centroids move until stable. Facts: three fixed centroids, z space; assign to nearest, move to mean, repeat until no flips, at most 100 rounds; objective is the summed squared distance.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m3-09-centroids-move", code_font = "Noto Sans Mono" }
+element = [
+  { id = "assign", kind = "card", x = 120, y = 120, w = 840, label = "three fixed centroids", slots = ["each point joins its nearest"], via = "left", show = 1 },
+  { id = "move", kind = "code", x = 1100, y = 120, w = 700, slots = ["centroid moves to the mean", "flipped points change colour", "flip counter per round"], via = "right", show = 2 },
+  { id = "stable", kind = "strip", x = 120, y = 520, w = 840, label = "0 flips: stable gate closes", tone = "ok", via = "below", show = 3 },
+  { id = "obj", kind = "strip", x = 1100, y = 600, w = 760, label = "objective: summed squared distance", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, target = "assign", action = "highlight", duration = 1.6 },
+  { cue = 2, targets = ["move.1", "move.2", "move.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 3, target = "stable", action = "state", state = "ok" },
+  { cue = 3, target = "obj", action = "state", state = "ok" },
+]

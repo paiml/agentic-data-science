@@ -1,0 +1,118 @@
+[package]
+name = "ads-rust"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Agentic Data Science, Course A (Rust): examples P1-P4"
+
+[dependencies]
+linfa = "0.8"
+linfa-linear = "0.8"
+ndarray = "0.16"
+polars = { version = "0.46", default-features = false, features = ["lazy", "csv", "dtype-full"] }
+serde_json = "1"
+plotters = { version = "0.3", default-features = false, features = ["svg_backend", "line_series", "point_series"] }
+
+[[example]]
+name = "a-m1-p1"
+path = "examples/a-m1-p1/main.rs"
+
+[[example]]
+name = "a-m1-p1-profile"
+path = "examples/a-m1-p1-profile/main.rs"
+
+[[example]]
+name = "a-m2-p2-ols"
+path = "examples/a-m2-p2-ols/main.rs"
+
+[[example]]
+name = "a-m2-p2-cv"
+path = "examples/a-m2-p2-cv/main.rs"
+
+[[example]]
+name = "a-m3-p3-tree"
+path = "examples/a-m3-p3-tree/main.rs"
+
+[[example]]
+name = "a-m3-p3-kmeans"
+path = "examples/a-m3-p3-kmeans/main.rs"
+
+[[example]]
+name = "a-m4-p4-pipeline"
+path = "examples/a-m4-p4-pipeline/main.rs"
+
+[[example]]
+name = "a-m4-p4-bench"
+path = "examples/a-m4-p4-bench/main.rs"
+
+[dev-dependencies]
+criterion = { version = "0.5", default-features = false }
+tempfile = "3"
+
+[[bench]]
+name = "p4"
+harness = false
+
+[[example]]
+name = "anscombe"
+path = "examples/anscombe/main.rs"
+
+[[example]]
+name = "hero"
+path = "examples/hero/main.rs"
+
+[[example]]
+name = "least-squares"
+path = "examples/least-squares/main.rs"
+
+[[example]]
+name = "unit-tests"
+path = "examples/unit-tests/main.rs"
+
+[[example]]
+name = "problem-two-result"
+path = "examples/problem-two-result/main.rs"
+
+[[example]]
+name = "fixed-folds"
+path = "examples/fixed-folds/main.rs"
+
+[[example]]
+name = "problem-two-tests"
+path = "examples/problem-two-tests/main.rs"
+
+[[example]]
+name = "decision-tree"
+path = "examples/decision-tree/main.rs"
+
+[[example]]
+name = "benchmark-helper"
+path = "examples/benchmark-helper/main.rs"
+
+[[example]]
+name = "report-artifact"
+path = "examples/report-artifact/main.rs"
+
+[[example]]
+name = "fixed-centroids"
+path = "examples/fixed-centroids/main.rs"
+
+[[example]]
+name = "whole-pipeline"
+path = "examples/whole-pipeline/main.rs"
+
+[[example]]
+name = "data-validation"
+path = "examples/data-validation/main.rs"
+
+[[example]]
+name = "first-data-load"
+path = "examples/first-data-load/main.rs"
+
+[[example]]
+name = "species-profile"
+path = "examples/species-profile/main.rs"
+
+[[example]]
+name = "model-fit-linfa"
+path = "examples/model-fit-linfa/main.rs"

@@ -1,0 +1,21 @@
+# Σ for agentic-data-science, derived from ontology/ads.ttl (classes Example, Dataset, Gate, Artifact).
+schema: ont-sigma-v1
+
+concepts:
+  Entity: {doc: "anything the ontology can name"}
+  Example: {doc: "a runnable course example (ads:Example)"}
+  Dataset: {doc: "a dataset a course example reads (ads:Dataset)"}
+  Gate: {doc: "a check that can block a merge or release (ads:Gate)"}
+  Artifact: {doc: "a built output of an example (ads:Artifact)"}
+
+roles:
+  reads:
+    {domain: Example, range: Dataset, symmetric: false, acyclic: false, doc: "the example loads this dataset"}
+  produces:
+    {domain: Example, range: Artifact, symmetric: false, acyclic: false, doc: "the example emits this artifact"}
+  guards:
+    {domain: Gate, range: Artifact, symmetric: false, acyclic: false, doc: "the gate checks this artifact"}
+
+readers:
+  concepts: ontology/sigma.rs
+  roles: lint/sigma_gate.rs, lint/relations_gate.rs

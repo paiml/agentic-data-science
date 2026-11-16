@@ -1,0 +1,11 @@
+@prefix ads:  <https://paiml.com/ns/ads#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+ads:Example  a owl:Class ; rdfs:label "Example" .
+ads:Dataset  a owl:Class ; rdfs:label "Dataset" .
+ads:Gate     a owl:Class ; rdfs:label "Gate" .
+ads:Artifact a owl:Class ; rdfs:label "Artifact" .
+
+ads:penguins     a ads:Dataset ; rdfs:label "Palmer Penguins (CC0)" .
+ads:wine-quality a ads:Dataset ; rdfs:label "UCI Wine Quality (CC BY 4.0)" .

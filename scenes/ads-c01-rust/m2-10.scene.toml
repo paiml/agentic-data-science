@@ -1,0 +1,21 @@
+# m2-10 Mutants. Facts: golden cv RMSE 394.31; wide tolerance passes anything (352.00); tolerance 1e-6; mutant 1 row parity gives 446.13, diff 51.82; mutant 2 drops species, intercept -4031, slope 40.71, diffs 1749 and 8.98; tally 2 / 2.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m2-10-mutants", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gate", kind = "card", x = 120, y = 120, w = 840, label = "gate: cv RMSE vs golden 394.31", slots = ["inside the slot: PASS"], via = "left", show = 1 },
+  { id = "wide", kind = "strip", x = 1100, y = 120, w = 700, label = "wide slot: 352.00 still PASS", tone = "error", via = "right", show = 2 },
+  { id = "tight", kind = "chip", x = 120, y = 420, label = "tolerance 1e-6", show = 3 },
+  { id = "m1", kind = "code", x = 1100, y = 360, w = 700, slots = ["fold = 1 + i % 2", "pooled error 446.13"], via = "right", show = 4 },
+  { id = "red", kind = "strip", x = 120, y = 600, w = 840, label = "FAIL, diff 51.82", tone = "error", via = "below", show = 5 },
+  { id = "m2", kind = "strip", x = 1100, y = 600, w = 700, label = "no species: diffs 1749 and 8.98", tone = "error", via = "below", show = 7 },
+  { id = "tally", kind = "strip", x = 120, y = 780, w = 840, label = "both mutants caught: 2 / 2", tone = "ok", via = "below", show = 8 },
+]
+beat = [
+  { cue = 1, target = "gate", action = "highlight", duration = 1.6 },
+  { cue = 2, target = "wide", action = "state", state = "error" },
+  { cue = 3, target = "tight", action = "state", state = "ok" },
+  { cue = 4, targets = ["m1.1", "m1.2"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 5, target = "red", action = "state", state = "error" },
+  { cue = 7, target = "m2", action = "state", state = "error" },
+  { cue = 8, target = "tally", action = "state", state = "ok" },
+]

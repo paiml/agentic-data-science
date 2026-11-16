@@ -1,0 +1,23 @@
+# 4.2.1 The train/test split is a partition. Facts only from the locked narration (srt): 15 rows, every fifth held back, train + test = total, 6497 = 5198 + 1299, theorem split_partition.
+scene = { name = "4.2.1-the-train-and-test-split-is-a-partition", code_font = "Noto Sans Mono" }
+element = [
+  { id = "all", kind = "card", x = 120, y = 120, w = 700, label = "15 rows", slots = ["every fifth row", "is held back"], via = "left", show = 0 },
+  { id = "test", kind = "outline", x = 120, y = 410, w = 700, label = "test rows", slots = ["row 4", "row 9", "row 14"], show = 3 },
+  { id = "train", kind = "outline", x = 120, y = 800, w = 700, label = "train rows", slots = ["all the rest"], show = 5 },
+  { id = "trn", kind = "chip", x = 960, y = 140, label = "train count", show = 8 },
+  { id = "tst", kind = "chip", x = 1300, y = 140, label = "test count", show = 9 },
+  { id = "tot", kind = "strip", x = 960, y = 260, w = 840, label = "equals the total row count", tone = "accent", via = "below", show = 10 },
+  { id = "gold", kind = "code", x = 960, y = 440, w = 840, slots = ["golden data:", "6497 = 5198 + 1299"], via = "right", show = 16 },
+  { id = "thm", kind = "strip", x = 960, y = 700, w = 840, label = "theorem split_partition proves it in general", tone = "ok", via = "below", show = 18 },
+]
+beat = [
+  { cue = 1, target = "all", action = "highlight", duration = 1.6 },
+  { cue = 3, target = "test", action = "state", state = "error" },
+  { cue = 5, target = "train", action = "state", state = "ok" },
+  { cue = 8, target = "trn", action = "state", state = "ok" },
+  { cue = 9, target = "tst", action = "state", state = "error" },
+  { cue = 10, target = "tot", action = "state", state = "accent" },
+  { cue = 16, target = "gold", action = "highlight", duration = 1.6 },
+  { cue = 17, targets = ["gold.2"], action = "state", state = "ok" },
+  { cue = 18, target = "thm", action = "state", state = "ok" },
+]

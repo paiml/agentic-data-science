@@ -1,0 +1,2 @@
+bat -r 190:207 src/p3.rs
+cargo run -q --locked --offline --example a-m3-p3-tree

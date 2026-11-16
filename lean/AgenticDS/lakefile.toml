@@ -1,0 +1,106 @@
+name = "AgenticDS"
+version = "0.1.0"
+defaultTargets = ["AgenticDS", "ols-demo", "example-m1", "example-m2", "example-m3", "example-m4", "agentic-ds-test", "ols-test", "planted-slope", "m2v09-slope", "examples-m2-test", "scenes-test", "examples-test-m1", "examples-test-m3", "examples-test-m4", "p4-test", "planted-svg-overflow", "planted-scatter", "scene-m1", "scene-m2", "scene-m3", "scene-m4"]
+allowNonModules = true
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+warningAsError = true
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longLine.maxLineLength = 68
+weak.linter.style.header.license = "Released under MIT license as described in the file LICENSE."
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+
+[[lean_lib]]
+name = "AgenticDS"
+
+
+[[lean_exe]]
+name = "ols-demo"
+root = "AgenticDS.OlsMain"
+
+[[lean_exe]]
+name = "ols-test"
+root = "AgenticDSTest.OlsTest"
+
+[[lean_exe]]
+name = "planted-slope"
+root = "AgenticDSTest.PlantedSlope"
+
+[[lean_exe]]
+name = "m2v09-slope"
+root = "AgenticDS.M2V09Slope"
+
+[[lean_exe]]
+name = "examples-m2-test"
+root = "AgenticDSTest.ExamplesM2"
+
+[[lean_exe]]
+name = "scenes-test"
+root = "AgenticDSTest.Scenes"
+
+[[lean_exe]]
+name = "example-m1"
+root = "AgenticDS.ExampleM1Main"
+
+[[lean_exe]]
+name = "example-m2"
+root = "AgenticDS.ExampleM2Main"
+
+[[lean_exe]]
+name = "example-m3"
+root = "AgenticDS.ExampleM3Main"
+
+[[lean_exe]]
+name = "example-m4"
+root = "AgenticDS.ExampleM4Main"
+
+# Compiled test targets (demo-v2): the gate runs these binaries instead of `lake env lean --run`, which re-elaborates Mathlib (~8 s) per test.
+# Same sources, same leanOptions (warningAsError and the linters), so a test that fails to compile or to run still fails the gate.
+[[lean_exe]]
+name = "agentic-ds-test"
+root = "AgenticDSTest.Main"
+
+[[lean_exe]]
+name = "examples-test-m1"
+root = "AgenticDSTest.ExamplesM1"
+
+[[lean_exe]]
+name = "examples-test-m3"
+root = "AgenticDSTest.ExamplesM3"
+
+[[lean_exe]]
+name = "examples-test-m4"
+root = "AgenticDSTest.ExamplesM4"
+
+[[lean_exe]]
+name = "p4-test"
+root = "AgenticDSTest.P4"
+
+[[lean_exe]]
+name = "planted-svg-overflow"
+root = "AgenticDSTest.PlantedSvgOverflow"
+
+[[lean_exe]]
+name = "planted-scatter"
+root = "AgenticDSTest.PlantedScatter"
+
+[[lean_exe]]
+name = "scene-m1"
+root = "AgenticDS.SceneM1Main"
+
+[[lean_exe]]
+name = "scene-m2"
+root = "AgenticDS.SceneM2Main"
+
+[[lean_exe]]
+name = "scene-m3"
+root = "AgenticDS.SceneM3Main"
+
+[[lean_exe]]
+name = "scene-m4"
+root = "AgenticDS.SceneM4Main"

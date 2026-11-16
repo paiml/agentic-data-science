@@ -1,0 +1,25 @@
+# 4.3.3 The gate and the specialization recap. Facts only from the locked narration (srt): four stages (build, scan, axiom check, golden parity), the exit status says whether all four held, last line lean okay, exit status zero; recap of what the course covered.
+scene = { name = "4.3.3-the-gate-and-the-specialization-recap", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gate", kind = "code", x = 120, y = 120, w = 760, slots = ["1 build", "2 scan", "3 axiom check", "4 golden parity"], via = "left", show = 0 },
+  { id = "exit", kind = "chip", x = 1000, y = 140, label = "exit status", show = 6 },
+  { id = "held", kind = "strip", x = 1000, y = 260, w = 760, label = "tells you if all four held", tone = "accent", via = "below", show = 7 },
+  { id = "out", kind = "code", x = 1000, y = 400, w = 760, slots = ["package builds", "lean okay"], via = "right", show = 9 },
+  { id = "zero", kind = "chip", x = 1000, y = 580, label = "exit status 0", tone = "ok", show = 12 },
+  { id = "r1", kind = "chip", x = 120, y = 560, label = "definitions", show = 15 },
+  { id = "r2", kind = "chip", x = 380, y = 560, label = "theorems", show = 15 },
+  { id = "r3", kind = "chip", x = 620, y = 560, label = "golden tests", show = 16 },
+  { id = "r4", kind = "chip", x = 120, y = 660, label = "mutants that fail", show = 17 },
+  { id = "r5", kind = "chip", x = 120, y = 760, label = "a gate that refuses anything unfinished", show = 19 },
+  { id = "go", kind = "strip", x = 120, y = 880, w = 1500, label = "go and write your own theorem", tone = "ok", via = "below", show = 20 },
+]
+beat = [
+  { cue = 3, targets = ["gate.1", "gate.2", "gate.3"], action = "state", state = "accent", stagger = 0.4 },
+  { cue = 4, target = "gate.4", action = "state", state = "accent" },
+  { cue = 8, targets = ["gate.1", "gate.2", "gate.3", "gate.4"], action = "state", state = "ok", stagger = 0.25 },
+  { cue = 11, target = "out.2", action = "state", state = "ok" },
+  { cue = 12, target = "zero", action = "highlight" },
+  { cue = 15, targets = ["r1", "r2"], action = "state", state = "ok", stagger = 0.3 },
+  { cue = 17, target = "r4", action = "state", state = "ok" },
+  { cue = 19, target = "r5", action = "state", state = "ok" },
+]

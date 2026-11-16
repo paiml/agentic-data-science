@@ -1,0 +1,41 @@
+# ads-kotlin-examples-m1-v1: Course D (Kotlin), Module 1 examples (ingest and profile)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-26"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "Two examples for Course D module 1: m1v01 reads the penguins CSV with typed nulls and applies the NA policy (344 rows read, 342 kept); m1v02 profiles each species and compares every number with the committed R golden. Both end on a PASS or FAIL verdict line."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m1v01/M1v01.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/m1v02/M1v02.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/M1ExamplesTest.kt"
+    - "datasets/golden/p1.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): example output asserted by the test, numeric parity against a golden file"
+
+equations:
+  m1_example_facts:
+    formula: |
+      rows(readPenguins(csv)) = 344,  rows(naPolicy(rows)) = 342
+      max |computed - golden.p1| <= 1e-6 over 27 species/column/stat values
+    domain: "datasets/penguins/penguins.csv and datasets/golden/p1.json"
+    codomain: "two examples that run and print their stated verdicts"
+    postconditions:
+      - "COUNTS: m1v01 prints VERDICT: ingest 344 -> 342 PASS"
+      - "GOLDEN: m1v02 prints VERDICT: profile matches R golden PASS"
+      - "CAN_FAIL: a shifted mean or a missing NA policy makes the golden gap exceed the tolerance"
+
+proof_obligations:
+  - type: invariant
+    property: "Each example prints PASS only when its counts and golden gap hold"
+    formal: "verdict(ok, label) contains PASS iff ok"
+    applies_to: m1_example_facts
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-EXAMPLES-M1-001
+    rule: "Example verdicts reflect the real counts and golden gap"
+    prediction: "M1ExamplesTest passes inside scripts/gate-kotlin.sh"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Add 1.0 to every species mean: goldenGap exceeds 1e-6 and the golden check fails (goldenGapCatchesAShiftedMean)"
+    discriminates: "A profile that drifts from the R golden cannot print PASS"
+    if_fails: "Learners compare their own language against a wrong reference"

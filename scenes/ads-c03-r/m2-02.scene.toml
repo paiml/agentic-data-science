@@ -1,0 +1,13 @@
+# m2-02 closed-form OLS: slope and R2 vs golden. Cues are teleprompter beat numbers. Facts only from the teleprompter: ols closed form on flipper length and body mass, slope 49.69, R squared 0.759, tolerance one in a billion.
+scene = { name = "m2-02-closed-form-ols-slope-and-r2-vs-golden", code_font = "Noto Sans Mono" }
+element = [
+  { id = "data", kind = "card", x = 120, y = 140, w = 760, label = "d: the cleaned penguins data", slots = ["x: flipper length", "y: body mass"], via = "left", show = 2 },
+  { id = "fit", kind = "card", x = 1000, y = 140, w = 760, label = "b: ols closed form", slots = ["slope: 49.69 g per mm", "R squared: 0.759"], via = "right", show = 3 },
+  { id = "gold", kind = "outline", x = 1000, y = 520, w = 760, label = "golden values, tolerance 1e-9", slots = ["slope: number", "R squared: number"], show = 4 },
+  { id = "stop", kind = "strip", x = 120, y = 520, w = 760, label = "differs in either: the script stops", tone = "error", via = "below", show = 7 },
+  { id = "ok", kind = "strip", x = 120, y = 700, w = 760, label = "both match: the contract line prints", tone = "ok", via = "below", show = 8 },
+]
+beat = [
+  { cue = 6, targets = ["fit.slope", "fit.r-squared"], action = "highlight", stagger = 0.4 },
+  { cue = 7, target = "fit", action = "fit", to = "gold" },
+]

@@ -1,0 +1,16 @@
+[package]
+name = "penguin-lab"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Agentic Data Science, Course A (Rust), Module 1 lab: typed load, NA policy, per-species summary"
+
+[lib]
+name = "penguin_lab"
+path = "src/lib.rs"
+
+[dependencies]
+polars = { version = "0.46", default-features = false, features = ["lazy", "csv", "dtype-full"] }
+serde_json = "1"
+
+[workspace]

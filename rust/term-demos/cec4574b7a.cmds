@@ -1,0 +1,2 @@
+bat -r 61:61 -r 63:68 -r 72:72 -r 83:86 tests/p3.rs
+cargo test -q --locked --offline --test p3 can_fail

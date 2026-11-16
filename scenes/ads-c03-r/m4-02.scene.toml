@@ -1,0 +1,18 @@
+# m4-02 Ingest and validate. Cues are teleprompter beat numbers. Facts only from the teleprompter: 1,599 red + 4,898 white, 13 columns, three damaged copies each refused with its own message, 6,497 rows.
+scene = { name = "m4-02-ingest-and-validate", code_font = "Noto Sans Mono" }
+element = [
+  { id = "wine", kind = "card", x = 120, y = 140, w = 760, label = "read wine binds red and white", slots = ["red: 1,599", "white: 4,898", "columns: 13", "quality: integer"], via = "left", show = 2 },
+  { id = "clean", kind = "chip", x = 120, y = 560, label = "validate: clean data passes untouched", tone = "ok", show = 6 },
+  { id = "d1", kind = "card", x = 1000, y = 140, w = 760, label = "copy 1: one alcohol value missing", slots = ["refused: Wine data has missing values."], via = "right", show = 10 },
+  { id = "d2", kind = "card", x = 1000, y = 340, w = 760, label = "copy 2: one quality score set to 11", slots = ["refused: Quality outside 0 to 10."], via = "right", show = 11 },
+  { id = "d3", kind = "card", x = 1000, y = 540, w = 760, label = "copy 3: one colour changed to rose", slots = ["refused: Unknown color."], via = "right", show = 12 },
+  { id = "rule", kind = "strip", x = 120, y = 660, w = 760, label = "one bad table per rule", tone = "accent", via = "below", show = 17 },
+  { id = "line", kind = "strip", x = 120, y = 780, w = 760, label = "contract: 6,497 rows, 3 classes refused", tone = "ok", via = "below", show = 20 },
+  { id = "first", kind = "chip", x = 120, y = 900, label = "validation runs before any model sees the data", tone = "accent", show = 21 },
+]
+beat = [
+  { cue = 4, targets = ["wine.columns", "wine.quality"], action = "highlight", stagger = 0.4 },
+  { cue = 14, target = "d1.refused", action = "state", state = "error" },
+  { cue = 15, target = "d2.refused", action = "state", state = "error" },
+  { cue = 16, target = "d3.refused", action = "state", state = "error" },
+]

@@ -1,0 +1,13 @@
+# m1-08 mutants. Source: teleprompter beats 1 and 5 (cue = beat number). Facts: break the code on purpose, twice, on a scratch copy; real package untouched; errored is weak, failed is the goal; Failed 39, errored 0.
+scene = { name = "m1-08-break-the-code-on-purpose", code_font = "Noto Sans Mono" }
+element = [
+  { id = "real", kind = "card", x = 120, y = 160, w = 560, label = "real package", slots = ["never touched"], show = 1, via = "left" },
+  { id = "cp", kind = "card", x = 800, y = 160, w = 560, label = "scratch copy", slots = ["break it, twice"], show = 1, via = "right" },
+  { id = "q", kind = "strip", x = 120, y = 440, w = 1240, label = "would the tests notice?", tone = "accent", show = 1, via = "below" },
+  { id = "er", kind = "chip", x = 120, y = 700, w = 600, label = "errored 0", show = 5, via = "left" },
+  { id = "fl", kind = "chip", x = 800, y = 700, w = 600, label = "failed 39: ran, answered, rejected", tone = "error", show = 5, via = "right" },
+]
+beat = [
+  { cue = 1, target = "cp", action = "state", state = "error" },
+  { cue = 5, target = "fl", action = "highlight" },
+]

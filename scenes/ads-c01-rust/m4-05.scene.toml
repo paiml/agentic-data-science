@@ -1,0 +1,13 @@
+# m4-05 Score the model. Facts: illustration SSE 2.82, mean 0.470, RMSE 0.686; r2 = 1 - sse/sst; test set 1,299 rows, golden RMSE 0.7603 and r2 0.2599.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m4-05-score-the-model", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gap", kind = "code", x = 120, y = 120, w = 840, slots = ["truth and prediction per wine", "gap squared into a tray", "SSE 2.82"], via = "left", show = 1 },
+  { id = "rm", kind = "code", x = 1100, y = 120, w = 700, slots = ["mean 0.470", "RMSE 0.686", "r2 = 1 - sse/sst"], via = "right", show = 2 },
+  { id = "gold", kind = "strip", x = 120, y = 560, w = 900, label = "1,299 test rows: RMSE 0.7603, r2 0.2599", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["gap.1", "gap.2", "gap.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 2, targets = ["rm.1", "rm.2", "rm.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 3, target = "gold", action = "state", state = "ok" },
+]

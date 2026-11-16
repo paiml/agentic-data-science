@@ -1,0 +1,50 @@
+# ads-kotlin-p2-v1: Course D (Kotlin), Module 2, Problem P2 (OLS of body mass on flipper length)
+
+metadata:
+  version: "1.0.0"
+  created: "2026-10-25"
+  kind: pattern
+  author: "PAIML Engineering"
+  description: "fitSimple and fitQr (commons-math3) on a Kotlin DataFrame cleaned with dropNulls on the two model columns reproduce datasets/golden/p2.json ols: 342 rows, intercept -5780.83, slope 49.69. The example PenguinsOls.kt plots the scatter and fitted line with Kandy."
+  references:
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/Ols.kt"
+    - "kotlin/ads-kotlin/src/main/kotlin/com/paiml/ads/PenguinsOls.kt"
+    - "kotlin/ads-kotlin/src/test/kotlin/com/paiml/ads/OlsTest.kt"
+    - "datasets/golden/p2.json"
+    - "CLASSIFICATION (kind: pattern, not kernel): numeric parity against a golden file, no kani harness"
+
+equations:
+  p2_kotlin_ols_matches_golden:
+    formula: |
+      rows(dropNulls(penguins, flipper_length_mm, body_mass_g)) = 342
+      beta                 = argmin sum_i (y_i - a - b x_i)^2       x = flipper_length_mm, y = body_mass_g
+      |intercept - golden.ols.intercept|   <= 1e-6      (golden -5780.83135807716, prints -5780.83)
+      |slope - golden.ols.slope|           <= 1e-6      (golden 49.6855664061006, prints 49.69)
+      |fitSimple - fitQr|                  <= 1e-8
+      |sum_i (y_i - a - b x_i)|            <= 1e-6
+    domain: "datasets/penguins/penguins.csv, NA dropped only in the two model columns"
+    codomain: "intercept, slope, residual sum"
+    postconditions:
+      - "NA_POLICY: rows are dropped only when flipper_length_mm or body_mass_g is NA, never by a whole-table na.omit"
+      - "ROW_COUNT: the example prints rows used = 342"
+      - "TWO_SOLVERS: SimpleRegression and the QR OLS agree within 1e-8"
+      - "CAN_FAIL: a shifted intercept makes agrees() false and the residual sum equal to -n (-342)"
+
+proof_obligations:
+  - type: invariant
+    property: "Residuals of an OLS fit with an intercept sum to zero"
+    formal: "|sum_i (y_i - (a + b x_i))| <= 1e-6 for the fitted (a, b)"
+    applies_to: p2_kotlin_ols_matches_golden
+  - type: invariant
+    property: "Both library solvers return the golden coefficients"
+    formal: "|coef - golden| <= 1e-6 and |fitSimple - fitQr| <= 1e-8"
+    applies_to: p2_kotlin_ols_matches_golden
+
+falsification_tests:
+  - id: FALSIFY-ADS-KOTLIN-P2-001
+    rule: "Coefficients match the golden within 1e-6 and the two solvers agree within 1e-8"
+    prediction: "make gate-kotlin passes with OlsTest green, Kover LINE = 100 and BRANCH >= 95"
+    test: "scripts/gate-kotlin.sh"
+    mutation: "Shift the fitted intercept by 1: the residual sum becomes -342 and agrees() is false (residualSumCanFail, agreesRejectsADifferentFit)"
+    discriminates: "A fit that is not the least squares solution cannot sum its residuals to zero"
+    if_fails: "Learners plot a line that is not the OLS fit"

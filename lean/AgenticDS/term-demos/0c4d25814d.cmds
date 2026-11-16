@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+cat lean-toolchain && bat -r 1:12 lakefile.toml
+echo "exit=$? #01"
+lake build AgenticDS.Stats
+echo "exit=$? #02"

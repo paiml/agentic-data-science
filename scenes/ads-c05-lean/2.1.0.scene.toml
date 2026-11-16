@@ -1,0 +1,19 @@
+# 2.1.0 Terminal: a tour of the verified OLS module. Facts only from the locked narration (srt): module 2 proves things about ordinary least squares, the straight line fit; the source file starts with a license header; Lake builds it with exit status zero; the definitions work for rationals, reals or any number system with division; later lessons read it piece by piece.
+scene = { name = "2.1.0-terminal-a-tour-of-the-verified-ols-module", code_font = "Noto Sans Mono" }
+element = [
+  { id = "mod", kind = "card", x = 100, y = 120, w = 700, label = "Module 2: OLS", slots = ["ordinary least squares", "the straight line fit"], via = "left", show = 0 },
+  { id = "src", kind = "card", x = 100, y = 420, w = 700, label = "the OLS source file", slots = ["license header", "definitions"], show = 4, via = "below" },
+  { id = "e1", kind = "edge", from = "mod", to = "src", show = 4 },
+  { id = "cmd", kind = "strip", x = 900, y = 160, label = "lake build", show = 8, via = "right" },
+  { id = "ok", kind = "chip", x = 900, y = 280, w = 500, label = "exit status 0", show = 9, via = "scale" },
+  { id = "q", kind = "chip", x = 900, y = 480, w = 300, label = "rationals", show = 11, via = "left" },
+  { id = "r", kind = "chip", x = 900, y = 580, w = 300, label = "reals", show = 11, via = "left" },
+  { id = "f", kind = "chip", x = 900, y = 680, w = 700, label = "any field: a number system with division", show = 12, via = "left" },
+  { id = "next", kind = "chip", x = 100, y = 800, w = 700, label = "next lessons: piece by piece", show = 13, via = "scale" },
+]
+beat = [
+  { cue = 7, target = "src", action = "highlight" },
+  { cue = 9, target = "ok", action = "state", state = "ok" },
+  { cue = 12, target = "f", action = "highlight" },
+  { cue = 15, target = "next", action = "highlight" },
+]

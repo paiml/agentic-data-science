@@ -1,0 +1,16 @@
+# m1-05 detekt — scene spec. cue = teleprompter beat index.
+scene = { name = "m1-05-detekt", code_font = "Noto Sans Mono" }
+element = [
+  { id = "det", kind = "card", x = 120, y = 160, w = 560, label = "detekt", slots = ["static analyser"], show = 1 },
+  { id = "cfg", kind = "chip", x = 800, y = 190, label = "maxIssues: 0", show = 2 },
+  { id = "find", kind = "strip", x = 120, y = 500, w = 1640, label = "one finding fails the build", tone = "error", via = "below", show = 2 },
+  { id = "green", kind = "strip", x = 120, y = 640, w = 1640, label = "green: no smells it knows about", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, target = "det", action = "highlight" },
+  { cue = 2, target = "cfg", action = "highlight" },
+  { cue = 2, offset = 0.8, target = "find", action = "state", state = "error" },
+  { cue = 3, target = "find", action = "exit", from = "right", duration = 1.0 },
+  { cue = 3, target = "det", action = "state", state = "ok" },
+  { cue = 3, offset = 0.6, target = "green", action = "state", state = "ok" },
+]

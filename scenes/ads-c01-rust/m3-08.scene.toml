@@ -1,0 +1,15 @@
+# m3-08 Standardising the axes. Facts: mass in grams swamps bill depth in millimetres; z-score = subtract mean, divide by sample sd; centroids rescaled the same way (kmeans_fixed).
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m3-08-standardising-axes", code_font = "Noto Sans Mono" }
+element = [
+  { id = "units", kind = "code", x = 120, y = 120, w = 840, slots = ["mass in thousands dominates", "bill depth in tens: a sliver"], via = "left", show = 1 },
+  { id = "z", kind = "code", x = 1100, y = 120, w = 700, slots = ["subtract the column mean", "divide by sample sd", "axes in z units"], via = "right", show = 2 },
+  { id = "cent", kind = "strip", x = 120, y = 540, w = 840, label = "centroids rescaled the same way", tone = "accent", via = "below", show = 3 },
+  { id = "bal", kind = "strip", x = 1100, y = 600, w = 700, label = "both axes pull equally", tone = "ok", via = "below", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["units.1", "units.2"], action = "state", state = "accent", stagger = 0.6 },
+  { cue = 2, targets = ["z.1", "z.2", "z.3"], action = "state", state = "accent", stagger = 0.5 },
+  { cue = 3, target = "cent", action = "state", state = "accent" },
+  { cue = 3, target = "bal", action = "state", state = "ok" },
+]

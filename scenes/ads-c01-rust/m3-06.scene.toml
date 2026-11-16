@@ -1,0 +1,17 @@
+# m3-06 Growing the tree. Facts: stop if rows < 20 or saved < CP x root risk (CP 0.01); leaves predict the majority class; predict_one walks the splits.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m3-06-growing-the-tree", code_font = "Noto Sans Mono" }
+element = [
+  { id = "root", kind = "code", x = 120, y = 120, w = 840, slots = ["best split", "rows go left or right"], via = "left", show = 1 },
+  { id = "gate", kind = "code", x = 1100, y = 120, w = 700, slots = ["rows >= 20", "saved >= CP x root risk"], via = "right", show = 2 },
+  { id = "stop", kind = "strip", x = 1100, y = 400, w = 700, label = "fails the gate: leaf, stop", tone = "error", via = "below", show = 2 },
+  { id = "leaf", kind = "strip", x = 120, y = 500, w = 840, label = "leaf predicts its majority class", tone = "ok", via = "below", show = 3 },
+  { id = "pred", kind = "chip", x = 1100, y = 640, label = "new dot falls to a leaf: predict_one", show = 3 },
+]
+beat = [
+  { cue = 1, targets = ["root.1", "root.2"], action = "state", state = "accent", stagger = 0.6 },
+  { cue = 2, targets = ["gate.1", "gate.2"], action = "state", state = "accent", stagger = 0.6 },
+  { cue = 2, target = "stop", action = "state", state = "error" },
+  { cue = 3, target = "leaf", action = "state", state = "ok" },
+  { cue = 3, target = "pred", action = "state", state = "ok" },
+]

@@ -1,0 +1,26 @@
+# P3 (a): species decision tree.
+# Usage: ADS_ROOT=/path/to/repo Rscript run.R
+root <- Sys.getenv("ADS_ROOT", unset = ".")
+library(agenticds)
+d <- na_policy(read_penguins(
+  file.path(root, "datasets", "penguins", "penguins.csv")
+))
+s <- read_split(
+  file.path(root, "datasets", "fixtures", "split.csv")
+)
+fit <- fit_species_clf(d[s == "train", ])
+pred <- predict_species_clf(fit, d[s == "test", ])
+truth <- factor(d$species[s == "test"], levels = levels(pred))
+print(confusion(truth, pred))
+cat("accuracy:", accuracy(truth, pred), "\n")
+g <- jsonlite::fromJSON(
+  file.path(root, "datasets", "golden", "p3.json")
+)
+stopifnot(isTRUE(all.equal(
+  accuracy(truth, pred), g$accuracy,
+  tolerance = 1e-9
+)))
+cat("contract: ads-r-p3 tree matches golden/p3.json OK\n")
+
+# The lesson figure (plot.svg in ADS_OUT; no-op when unset).
+invisible(agenticds::figure_demo("c-m3-p3-tree"))

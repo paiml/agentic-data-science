@@ -1,0 +1,16 @@
+# m1-08 The pmat quality gate. Facts: scripts/gate-pmat.sh checks; worst function 4 against 30 (cyclomatic) and 5 against 25 (cognitive); duplicates listed and refused until measured; a 34-branch function is complexity 35 and fails; coverage 100.0.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m1-08-the-pmat-quality-gate", code_font = "Noto Sans Mono" }
+element = [
+  { id = "cx", kind = "card", x = 120, y = 120, w = 840, label = "worst function against its limit", slots = ["cyclomatic 4 of 30", "cognitive 5 of 25"], via = "left", show = 1 },
+  { id = "rows", kind = "outline", x = 120, y = 440, w = 840, label = "beside it", slots = ["dead code", "TODO notes", "coverage (cargo llvm-cov)", "duplicates: no number, refused"], show = 2 },
+  { id = "big", kind = "strip", x = 960, y = 120, w = 860, label = "34 branches: complexity 35 over 30, gate fails", tone = "error", via = "below", show = 3 },
+  { id = "nm", kind = "chip", x = 960, y = 360, label = "coverage: not measured", show = 3 },
+  { id = "okv", kind = "strip", x = 960, y = 600, w = 860, label = "every row has a number: pmat OK", tone = "ok", via = "below", show = 4 },
+]
+beat = [
+  { cue = 1, target = "cx", action = "state", state = "accent" },
+  { cue = 2, target = "rows", action = "highlight", duration = 1.6 },
+  { cue = 3, target = "big", action = "state", state = "error" },
+  { cue = 4, target = "okv", action = "state", state = "ok" },
+]

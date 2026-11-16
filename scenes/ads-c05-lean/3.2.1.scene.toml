@@ -1,0 +1,36 @@
+# 3.2.1 decide inside the kernel and the ban on native decide — scene spec (c05 plate fix). Plain decide is rechecked by the kernel; the marker scan refuses a planted native file.
+scene = { name = "3.2.1-terminal-decide-inside-the-kernel-and-the-ban-on-native-decide", code_font = "Noto Sans Mono" }
+element = [
+  { id = "dec", kind = "card", x = 120, y = 160, w = 520, label = "decide", slots = ["plain computation"], show = 1 },
+  { id = "ker", kind = "card", x = 700, y = 160, w = 520, label = "kernel", slots = ["rechecks the answer"], show = 2 },
+  { id = "nat", kind = "card", x = 1280, y = 160, w = 520, label = "native decide", slots = ["never checked"], tone = "error", show = 3 },
+  { id = "scan", kind = "code", x = 120, y = 520, w = 1100, slots = ["$ make lean-scan"], via = "left", show = 9 },
+  { id = "pl", kind = "card", x = 1280, y = 520, w = 520, label = "scratch file", slots = ["native decide"], tone = "error", show = 13 },
+  { id = "ok", kind = "strip", x = 120, y = 760, w = 1100, label = "No markers found, exit status 0", tone = "accent", via = "below", show = 10 },
+  { id = "bad", kind = "strip", x = 120, y = 900, w = 1100, label = "refused: line 1 native decide, exit status 2", tone = "error", via = "below", show = 14 },
+]
+beat = [
+  { cue = 2, target = "dec", action = "move", to_xy = [120, 260], duration = 1.2 },
+  { cue = 3, target = "ker", action = "move", to_xy = [700, 260], duration = 1.2 },
+  { cue = 4, target = "nat", action = "move", to_xy = [1280, 260], duration = 1.2 },
+  { cue = 5, target = "dec", action = "move", to_xy = [120, 160], duration = 1.2 },
+  { cue = 6, target = "ker", action = "move", to_xy = [700, 160], duration = 1.2 },
+  { cue = 7, target = "ker", action = "state", state = "ok" },
+  { cue = 8, target = "dec", action = "move", to_xy = [120, 260], duration = 1.2 },
+  { cue = 9, target = "scan", action = "highlight" },
+  { cue = 10, target = "scan", action = "move", to_xy = [120, 580], duration = 1.2 },
+  { cue = 11, target = "ok", action = "state", state = "ok" },
+  { cue = 12, target = "pl", action = "move", to_xy = [1280, 620], duration = 1.2 },
+  { cue = 13, target = "scan", action = "move", to_xy = [120, 520], duration = 1.2 },
+  { cue = 14, target = "bad", action = "state", state = "error" },
+  { cue = 15, target = "pl", action = "move", to_xy = [1280, 520], duration = 1.2 },
+  { cue = 16, target = "scan", action = "move", to_xy = [120, 600], duration = 1.2 },
+  { cue = 17, target = "pl", action = "move", to_xy = [1280, 660], duration = 1.2 },
+  { cue = 19, target = "nat", action = "move", to_xy = [1280, 160], duration = 1.2 },
+  { cue = 20, target = "scan", action = "move", to_xy = [120, 520], duration = 1.2 },
+  { cue = 21, target = "pl", action = "exit", from = "right", duration = 1.0 },
+  { cue = 22, target = "bad", action = "exit", from = "below", duration = 1.0 },
+  { cue = 23, target = "ok", action = "state", state = "ok" },
+  { cue = 24, target = "ker", action = "move", to_xy = [700, 260], duration = 1.2 },
+  { cue = 25, target = "dec", action = "move", to_xy = [120, 160], duration = 1.2 },
+]

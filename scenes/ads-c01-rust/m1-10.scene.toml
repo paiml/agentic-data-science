@@ -1,0 +1,16 @@
+# m1-10 The Rust course gates. Facts: Makefile gate-datasets, gate-shacl, gate-rust, gate-pmat in that order; a function without a test drops coverage under 100% and the Rust gate goes red, so pmat never runs; the test restores all four green.
+# CUES ARE PROVISIONAL: cue/show = the teleprompter beat (line) index; it becomes the srt row when Noah records (re-key to the locked srt then). Facts only from the teleprompter script.
+scene = { name = "m1-10-the-rust-course-gates", code_font = "Noto Sans Mono" }
+element = [
+  { id = "chain", kind = "card", x = 120, y = 120, w = 1680, label = "four gates in order", slots = ["datasets", "shacl", "rust", "pmat"], via = "left", show = 1 },
+  { id = "done", kind = "strip", x = 120, y = 440, w = 1680, label = "all four green: merge opens", tone = "ok", via = "below", show = 2 },
+  { id = "red", kind = "strip", x = 120, y = 600, w = 900, label = "untested function: coverage under 100%, rust red", tone = "error", via = "below", show = 3 },
+  { id = "grey", kind = "chip", x = 1100, y = 620, label = "pmat never runs", show = 3 },
+  { id = "fix", kind = "strip", x = 120, y = 800, w = 820, label = "test added: coverage 100%, all four green", tone = "ok", via = "below", show = 4 },
+]
+beat = [
+  { cue = 1, target = "chain", action = "state", state = "accent" },
+  { cue = 2, target = "done", action = "state", state = "ok" },
+  { cue = 3, target = "red", action = "state", state = "error" },
+  { cue = 4, target = "fix", action = "state", state = "ok" },
+]

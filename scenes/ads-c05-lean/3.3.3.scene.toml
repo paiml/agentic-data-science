@@ -1,0 +1,25 @@
+# 3.3.3 The Lean gate on the module 3 commit — scene spec (c05 plate fix). Four stages run in order; the last line says lean ok, exit 0.
+scene = { name = "3.3.3-terminal-the-lean-gate-on-the-module-3-commit", code_font = "Noto Sans Mono" }
+element = [
+  { id = "s1", kind = "card", x = 120, y = 260, w = 400, label = "build", slots = ["package"], show = 3 },
+  { id = "s2", kind = "card", x = 580, y = 260, w = 400, label = "scan", slots = ["markers"], show = 3 },
+  { id = "s3", kind = "card", x = 1040, y = 260, w = 400, label = "axioms", slots = ["allowed set"], show = 3 },
+  { id = "s4", kind = "card", x = 1500, y = 260, w = 400, label = "golden parity", slots = ["rows match"], show = 3 },
+  { id = "gate", kind = "strip", x = 120, y = 640, w = 1780, label = "gate runs on the module 3 commit", via = "below", show = 1 },
+  { id = "ok", kind = "strip", x = 120, y = 800, w = 1780, label = "lean ok, exit status 0", tone = "accent", via = "below", show = 5 },
+  { id = "next", kind = "strip", x = 120, y = 940, w = 1780, label = "next, module 4: a data pipeline", via = "below", show = 8 },
+]
+beat = [
+  { cue = 2, target = "gate", action = "move", to_xy = [120, 700], duration = 1.2 },
+  { cue = 3, target = "s1", action = "move", to_xy = [120, 360], duration = 1.2 },
+  { cue = 3, offset = 1.0, target = "s2", action = "move", to_xy = [580, 360], duration = 1.2 },
+  { cue = 3, offset = 2.0, target = "s3", action = "move", to_xy = [1040, 360], duration = 1.2 },
+  { cue = 3, offset = 3.0, target = "s4", action = "move", to_xy = [1500, 360], duration = 1.2 },
+  { cue = 4, target = "s1", action = "state", state = "ok" },
+  { cue = 5, targets = ["s2", "s3", "s4"], action = "state", state = "ok", stagger = 0.5 },
+  { cue = 6, target = "ok", action = "move", to_xy = [120, 740], duration = 1.2 },
+  { cue = 7, target = "gate", action = "state", state = "ok" },
+  { cue = 7, offset = 1.5, targets = ["s1", "s2", "s3", "s4"], action = "move", to_xy = [800, 480], duration = 1.2, stagger = 0.3 },
+  { cue = 8, target = "next", action = "move", to_xy = [120, 900], duration = 1.2 },
+  { cue = 8, offset = 2.5, target = "ok", action = "move", to_xy = [120, 800], duration = 1.2 },
+]

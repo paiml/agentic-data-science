@@ -1,0 +1,3 @@
+cd lean/AgenticDS
+bat -r 16:21 AgenticDS/Kmeans.lean
+wc -l AgenticDS/Kmeans.lean AgenticDS/Confusion.lean AgenticDS/Tree.lean

@@ -1,0 +1,14 @@
+# m1-09 pmat — scene spec. cue = teleprompter beat index.
+scene = { name = "m1-09-pmat", code_font = "Noto Sans Mono" }
+element = [
+  { id = "pmat", kind = "card", x = 120, y = 160, w = 560, label = "pmat", slots = ["what gradle does not check"], show = 1 },
+  { id = "cx", kind = "chip", x = 800, y = 160, label = "cyclomatic + cognitive complexity", show = 1 },
+  { id = "debt", kind = "chip", x = 800, y = 260, label = "debt markers: TODO", show = 1 },
+  { id = "dup", kind = "chip", x = 800, y = 360, label = "duplicated code", show = 1 },
+  { id = "quiet", kind = "strip", x = 120, y = 600, w = 1640, label = "quiet run: the code passes", tone = "ok", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, targets = ["cx", "debt", "dup"], action = "highlight", stagger = 0.8 },
+  { cue = 2, targets = ["cx", "debt", "dup"], action = "state", state = "ok" },
+  { cue = 2, offset = 0.8, target = "quiet", action = "state", state = "ok" },
+]

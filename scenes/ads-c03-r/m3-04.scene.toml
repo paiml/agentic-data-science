@@ -1,0 +1,15 @@
+# m3-04 fixed split, fixed centroids: every run identical. Cues are teleprompter beat numbers. Facts only from the teleprompter: fixture files, run twice, seed state read before and after, 85 test and 257 train rows.
+scene = { name = "m3-04-fixed-split-fixed-centroids-every-run-identical", code_font = "Noto Sans Mono" }
+element = [
+  { id = "fix", kind = "outline", x = 120, y = 140, w = 760, label = "fixture files, never a random draw", slots = ["split: 85 test, 257 train", "starting centroids: fixed"], show = 2 },
+  { id = "r1", kind = "outline", x = 1000, y = 140, w = 760, label = "run one", slots = ["classifier: fitted", "k-means: fitted"], via = "right", show = 3 },
+  { id = "r2", kind = "card", x = 1000, y = 460, w = 760, label = "run two", slots = ["classifier: fitted", "k-means: fitted"], via = "right", show = 3 },
+  { id = "seed", kind = "chip", x = 120, y = 460, label = "random-number state read before and after k-means", tone = "accent", show = 5 },
+  { id = "eq", kind = "strip", x = 120, y = 580, w = 760, label = "run one equals run two: TRUE", tone = "ok", via = "below", show = 7 },
+  { id = "un", kind = "strip", x = 120, y = 700, w = 760, label = "the seed is untouched: TRUE", tone = "ok", via = "below", show = 8 },
+  { id = "line", kind = "strip", x = 120, y = 820, w = 760, label = "contract line prints OK", tone = "ok", via = "below", show = 9 },
+]
+beat = [
+  { cue = 4, target = "r2", action = "fit", to = "r1" },
+  { cue = 6, target = "fix.split", action = "highlight" },
+]

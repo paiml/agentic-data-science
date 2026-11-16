@@ -1,0 +1,16 @@
+# m2-08 cross-validated error vs in-sample. Cues are teleprompter beat numbers. Facts only from the teleprompter: in-sample 393.1, cross-validated 394.3, species model 376.6, 17.7 g better.
+scene = { name = "m2-08-cross-validated-error-vs-in-sample", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ins", kind = "outline", x = 120, y = 140, w = 760, label = "the line, in-sample", slots = ["rmse: 393.1 g"], via = "left", show = 2 },
+  { id = "cv", kind = "card", x = 1000, y = 140, w = 760, label = "the line, cross-validated", slots = ["rmse: 394.3 g"], via = "right", show = 3 },
+  { id = "up", kind = "chip", x = 1000, y = 340, label = "a little higher, as it should be", tone = "accent", show = 3 },
+  { id = "sp", kind = "card", x = 1000, y = 460, w = 760, label = "species model, cross-validated", slots = ["rmse: 376.6 g"], via = "below", show = 4 },
+  { id = "better", kind = "chip", x = 1000, y = 660, label = "17.7 g better than the line", tone = "ok", show = 4 },
+  { id = "req", kind = "outline", x = 120, y = 460, w = 760, label = "the script requires", slots = ["cv above in-sample: yes", "species below the line: yes", "species equals golden: yes"], show = 5 },
+  { id = "line", kind = "strip", x = 120, y = 800, w = 760, label = "contract line prints", tone = "ok", via = "below", show = 6 },
+]
+beat = [
+  { cue = 3, target = "cv", action = "fit", to = "ins" },
+  { cue = 4, target = "sp.rmse", action = "state", state = "ok" },
+  { cue = 5, targets = ["req.cv-above-in-sample", "req.species-below-the-line", "req.species-equals-golden"], action = "state", state = "ok", stagger = 0.5 },
+]

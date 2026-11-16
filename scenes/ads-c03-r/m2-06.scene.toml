@@ -1,0 +1,14 @@
+# m2-06 fixed folds: the same CV twice. Cues are teleprompter beat numbers. Facts only from the teleprompter: folds of 69, 69, 68, 68, 68 rows; two runs both 394.3 and 376.6.
+scene = { name = "m2-06-fixed-folds-the-same-cv-twice", code_font = "Noto Sans Mono" }
+element = [
+  { id = "folds", kind = "card", x = 120, y = 140, w = 760, label = "folds assigned by row index", slots = ["fold 1: 69 rows", "fold 2: 69 rows", "fold 3: 68 rows", "fold 4: 68 rows", "fold 5: 68 rows"], via = "left", show = 2 },
+  { id = "run1", kind = "outline", x = 1000, y = 140, w = 760, label = "cv rmse, run one", slots = ["line: 394.3", "species model: 376.6"], via = "right", show = 4 },
+  { id = "run2", kind = "card", x = 1000, y = 460, w = 760, label = "cv rmse, run two", slots = ["line: 394.3", "species model: 376.6"], via = "right", show = 5 },
+  { id = "same", kind = "strip", x = 120, y = 620, w = 760, label = "the two runs are identical", tone = "ok", via = "below", show = 6 },
+  { id = "ten", kind = "chip", x = 120, y = 740, label = "first ten rows: folds 1 to 5 twice over", tone = "accent", show = 6 },
+  { id = "line", kind = "strip", x = 120, y = 840, w = 760, label = "contract line prints", tone = "ok", via = "below", show = 7 },
+]
+beat = [
+  { cue = 3, targets = ["folds.fold-1", "folds.fold-2", "folds.fold-3", "folds.fold-4", "folds.fold-5"], action = "highlight", stagger = 0.3 },
+  { cue = 5, target = "run2", action = "fit", to = "run1" },
+]

@@ -1,0 +1,7 @@
+cd lean/AgenticDS
+ls AgenticDS
+echo "exit=$? #01"
+bat -r 6:17 AgenticDS/Regression.lean
+echo "exit=$? #02"
+lake build AgenticDS.Regression
+echo "exit=$? #03"

@@ -1,0 +1,3 @@
+cd rust/ads-rust
+cargo run -q --locked --offline --example unit-tests
+run

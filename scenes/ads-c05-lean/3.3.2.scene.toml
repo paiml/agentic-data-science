@@ -1,0 +1,29 @@
+# 3.3.2 A changed golden row is detected — scene spec (c05 plate fix). A mutant copy of the golden file differs by one row; the line-by-line compare refuses it.
+scene = { name = "3.3.2-a-changed-golden-row-is-detected", code_font = "Noto Sans Mono" }
+element = [
+  { id = "gold", kind = "card", x = 120, y = 160, w = 560, label = "golden file", slots = ["row 1: 37, 0, 0"], show = 1 },
+  { id = "mut", kind = "card", x = 760, y = 160, w = 560, label = "mutant copy", slots = ["row 1: 36, 1, 0"], tone = "error", show = 5 },
+  { id = "tmp", kind = "chip", x = 1380, y = 190, label = "temp file", show = 6 },
+  { id = "diff", kind = "code", x = 120, y = 560, w = 1200, slots = ["$ diff golden mutant"], via = "left", show = 12 },
+  { id = "exit", kind = "strip", x = 120, y = 760, w = 1200, label = "mismatch shown, exit status 1", tone = "error", via = "below", show = 15 },
+  { id = "safe", kind = "strip", x = 120, y = 900, w = 1200, label = "the real golden file is untouched", tone = "accent", via = "below", show = 11 },
+]
+beat = [
+  { cue = 2, target = "gold", action = "move", to_xy = [120, 260], duration = 1.2 },
+  { cue = 3, target = "gold", action = "move", to_xy = [120, 160], duration = 1.2 },
+  { cue = 4, target = "gold", action = "state", state = "ok" },
+  { cue = 5, target = "mut", action = "move", to_xy = [760, 260], duration = 1.2 },
+  { cue = 6, target = "mut", action = "move", to_xy = [760, 160], duration = 1.2 },
+  { cue = 7, target = "mut", action = "move", to_xy = [760, 300], duration = 1.2 },
+  { cue = 8, target = "mut", action = "state", state = "error" },
+  { cue = 9, target = "mut", action = "move", to_xy = [760, 160], duration = 1.2 },
+  { cue = 10, target = "mut", action = "move", to_xy = [760, 300], duration = 1.2 },
+  { cue = 11, target = "safe", action = "state", state = "ok" },
+  { cue = 11, offset = 1.2, target = "gold", action = "move", to_xy = [120, 300], duration = 1.2 },
+  { cue = 12, target = "diff", action = "highlight" },
+  { cue = 13, target = "diff", action = "move", to_xy = [120, 600], duration = 1.2 },
+  { cue = 14, targets = ["gold", "mut"], action = "move", to_xy = [440, 380], duration = 1.2, stagger = 0.4 },
+  { cue = 15, target = "diff", action = "move", to_xy = [120, 560], duration = 1.2 },
+  { cue = 16, target = "exit", action = "state", state = "error" },
+  { cue = 16, offset = 1.5, target = "mut", action = "exit", from = "right", duration = 1.0 },
+]

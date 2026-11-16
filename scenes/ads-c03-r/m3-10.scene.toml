@@ -1,0 +1,12 @@
+# m3-10 what the gate proved: both P3 examples hold their contract. Cues are teleprompter beat numbers. Facts only from the teleprompter: the tree and the k-means, two contract lines, all OK.
+scene = { name = "m3-10-what-the-gate-proved-both-p3-examples-hold-their-contract", code_font = "Noto Sans Mono" }
+element = [
+  { id = "ex", kind = "outline", x = 120, y = 140, w = 760, label = "two worked examples", slots = ["the tree: run script", "the k-means: run script"], show = 2 },
+  { id = "lines", kind = "card", x = 1000, y = 140, w = 760, label = "contract lines R collected", slots = ["tree matches golden p3: OK", "k-means matches golden p3: OK"], via = "right", show = 4 },
+  { id = "wrap", kind = "strip", x = 120, y = 460, w = 760, label = "wrap-up contract line prints OK", tone = "ok", via = "below", show = 5 },
+  { id = "green", kind = "chip", x = 1000, y = 460, label = "module three is green", tone = "ok", show = 6 },
+]
+beat = [
+  { cue = 3, targets = ["ex.the-tree", "ex.the-k-means"], action = "highlight", stagger = 0.5 },
+  { cue = 4, targets = ["lines.tree-matches-golden-p3", "lines.k-means-matches-golden-p3"], action = "state", state = "ok", stagger = 0.4 },
+]

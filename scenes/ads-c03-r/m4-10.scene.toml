@@ -1,0 +1,20 @@
+# m4-10 Wrap-up. Cues are teleprompter beat numbers. Facts only from the teleprompter: three contract lines; held-out RMSE 0.7603, R squared 0.2599; what was and was not proved.
+scene = { name = "m4-10-wrap-up", code_font = "Noto Sans Mono" }
+element = [
+  { id = "c1", kind = "strip", x = 120, y = 140, w = 760, label = "contract: pipeline matches golden/p4.json", tone = "neutral", via = "left", show = 2 },
+  { id = "chain", kind = "card", x = 120, y = 240, w = 760, label = "the chain from this module", slots = ["validate the data", "split every fifth row", "fit the linear model", "held-out RMSE 0.7603, R squared 0.2599"], via = "below", show = 3 },
+  { id = "c2", kind = "strip", x = 120, y = 640, w = 760, label = "contract: dplyr and data.table agree", tone = "neutral", via = "left", show = 4 },
+  { id = "c3", kind = "strip", x = 120, y = 740, w = 760, label = "contract: both example contracts passed", tone = "neutral", via = "left", show = 6 },
+  { id = "proved", kind = "outline", x = 1000, y = 140, w = 760, label = "what the gates showed", slots = ["the data is the data", "the artifact has its shape", "results match the goldens"], show = 9 },
+  { id = "not", kind = "card", x = 1000, y = 480, w = 760, label = "what they did not show", slots = ["coverage and lint were not run", "bias in the data not measured", "wine from elsewhere: nothing said"], via = "below", show = 10 },
+  { id = "resp", kind = "strip", x = 1000, y = 820, w = 760, label = "an agent may do it; you own the gap", tone = "accent", via = "below", show = 16 },
+]
+beat = [
+  { cue = 2, target = "c1", action = "state", state = "ok" },
+  { cue = 4, target = "c2", action = "state", state = "ok" },
+  { cue = 6, target = "c3", action = "state", state = "ok" },
+  { cue = 9, targets = ["proved.the-data-is-the-data", "proved.the-artifact-has-its-shape", "proved.results-match-the-goldens"], action = "state", state = "ok", stagger = 0.4 },
+  { cue = 10, target = "not.coverage-and-lint-were-not-run", action = "state", state = "error" },
+  { cue = 11, target = "not.bias-in-the-data-not-measured", action = "state", state = "error" },
+  { cue = 12, target = "not.wine-from-elsewhere", action = "state", state = "error" },
+]

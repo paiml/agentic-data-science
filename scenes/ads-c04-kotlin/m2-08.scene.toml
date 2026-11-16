@@ -1,0 +1,17 @@
+# m2-08 gate-kotlin — scene spec. cue = teleprompter beat index.
+scene = { name = "m2-08-gate-kotlin", code_font = "Noto Sans Mono" }
+element = [
+  { id = "cmd", kind = "code", x = 120, y = 160, w = 700, slots = ["$ make gate-kotlin"], show = 1 },
+  { id = "t", kind = "chip", x = 120, y = 360, label = "unit tests", show = 1 },
+  { id = "k", kind = "chip", x = 420, y = 360, label = "Kover coverage", show = 1 },
+  { id = "l", kind = "chip", x = 760, y = 360, label = "ktlint", show = 1 },
+  { id = "d", kind = "chip", x = 1000, y = 360, label = "detekt", show = 1 },
+  { id = "p", kind = "chip", x = 1240, y = 360, label = "pmat: complexity, debt, duplicates", show = 1 },
+  { id = "e1", kind = "edge", from = "cmd", to = "t", show = 1 },
+  { id = "v", kind = "strip", x = 120, y = 700, w = 1640, label = "one command, one verdict", tone = "ok", via = "below", show = 2 },
+]
+beat = [
+  { cue = 1, targets = ["t", "k", "l", "d", "p"], action = "highlight", stagger = 0.9 },
+  { cue = 2, targets = ["t", "k", "l", "d", "p"], action = "state", state = "ok" },
+  { cue = 2, offset = 0.8, target = "v", action = "state", state = "ok" },
+]

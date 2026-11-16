@@ -1,0 +1,6 @@
+'AgenticDS.mean_const' depends on axioms: [propext, Classical.choice, Quot.sound]
+'AgenticDS.variance_nonneg' depends on axioms: [propext, Classical.choice, Quot.sound]
+'AgenticDS.variance_shift' depends on axioms: [propext, Classical.choice, Quot.sound]
+'AgenticDS.sum_residuals' depends on axioms: [propext, Classical.choice, Quot.sound]
+'residuals_sum' depends on axioms: [propext, Classical.choice, Quot.sound]
+'AgenticDS.sum_map_add_const' depends on axioms: [propext, Quot.sound]

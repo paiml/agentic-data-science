@@ -1,0 +1,5 @@
+cd lean/AgenticDS
+grep -nE "^(structure|def|theorem) " AgenticDS/Pipeline.lean
+echo "exit=$? #01"
+lake build AgenticDS.Pipeline
+echo "exit=$? #02"

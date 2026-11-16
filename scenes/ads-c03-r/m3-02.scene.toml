@@ -1,0 +1,13 @@
+# m3-02 the tree on the fixed split. Cues are teleprompter beat numbers. Facts only from the teleprompter: train rows fit, test rows scored, two off-diagonal ones, accuracy 0.9765, two errors of 85.
+scene = { name = "m3-02-the-tree-on-the-fixed-split", code_font = "Noto Sans Mono" }
+element = [
+  { id = "split", kind = "outline", x = 120, y = 140, w = 760, label = "s: the fixed split", slots = ["train rows: fit species clf", "test rows: predict species clf"], show = 2 },
+  { id = "truth", kind = "chip", x = 120, y = 460, label = "truth: their real species", tone = "accent", show = 3 },
+  { id = "cm", kind = "card", x = 1000, y = 140, w = 760, label = "confusion matrix", slots = ["off-diagonal ones: 2", "accuracy: 0.9765", "errors of 85: 2"], via = "right", show = 4 },
+  { id = "gold", kind = "outline", x = 1000, y = 520, w = 760, label = "golden numbers", slots = ["off-diagonal ones: 2", "accuracy: 0.9765", "errors of 85: 2"], show = 4 },
+  { id = "ok", kind = "strip", x = 120, y = 640, w = 760, label = "the checks pass: contract line prints OK", tone = "ok", via = "below", show = 5 },
+]
+beat = [
+  { cue = 3, target = "split.train-rows", action = "highlight" },
+  { cue = 4, target = "cm", action = "fit", to = "gold" },
+]
